@@ -17,8 +17,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 18,
-  "iteration": 1567577567546,
   "links": [],
   "panels": [
     {
@@ -774,8 +772,5 @@
     ]
   },
   "timezone": "",
-  "title": "Kruize Dashboard",
-  "uid": "FY1CqRDWz",
-  "version": 2
+  "title": "Kruize Dashboard"
 }
-

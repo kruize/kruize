@@ -2,5 +2,5 @@
 # Add names of the containers that you want kruize to monitor, one per line in double quotes
 containers:
   - name: "kruize"
-  - name: acmeair-mono
-  - name: acmeair-db1
+#  - name: "acmeair-mono"
+#  - name: "acmeair-db1"
