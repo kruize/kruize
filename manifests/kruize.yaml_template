@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kruize
+  labels:
+    app: kruize
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kruize
+        name: kruize
+        org.kubernetes.io/name: "kruize"
+    spec:
+      serviceAccountName: kruize-sa
+      containers:
+      - name: kruize
+        image: dinogun/kruize:0.6.2
+        imagePullPolicy: Always
+        env:
+        - name: CLUSTER_TYPE
+          value: "kubernetes"
+        - name: K8S_TYPE
+          value: "{{ K8S_TYPE }}"
+        - name: AUTH_TYPE
+          value: OIDC
+        - name: AUTH_TOKEN
+          value: "{{ BEARER_AUTH_TOKEN }}"
+        - name: MONITORING_AGENT
+          value: "prometheus"
+        - name: MONITORING_AGENT_ENDPOINT
+          value: "{{ MONITORING_AGENT_ENDPOINT }}"
+        ports:
+        - name: http
+          containerPort: 31313
+      nodeSelector:
+        node-role.kubernetes.io/master: 'true'
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kruize
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    app: kruize
+spec:
+  type: NodePort
+  selector:
+    app: kruize
+  ports:
+  - name: http
+    port: 31313
+    nodePort: 31313
+    targetPort: 31313
