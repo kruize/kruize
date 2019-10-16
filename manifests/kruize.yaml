@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kruize
+  labels:
+    app: kruize
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kruize
+        name: kruize
+        org.kubernetes.io/name: "kruize"
+    spec:
+      serviceAccountName: kruize-sa
+      containers:
+      - name: kruize
+        image: dinogun/kruize:0.6.2
+        imagePullPolicy: Always
+        env:
+        - name: CLUSTER_TYPE
+          value: "kubernetes"
+        - name: K8S_TYPE
+          value: "ICP"
+        - name: AUTH_TYPE
+          value: OIDC
+        - name: AUTH_TOKEN
+          value: "Bearer 08c06a27d95377170ef1371d4fd267d5609eff7c0753937bd4f9c76d5358ae8d02298f37bbaf3691d8f2d7e47380cb2c832da6817bb100589928ffb2c158d602236e56721a4c931b0fffeebdb5312aa5d9626733d3cdbe8981e2723bf7a2b2b40f636509e03136801485d4bab7721980acff720402696053c9b88ca0b0b7af60d5023c3efd416eb87170346d053b7a42051a3173668a264e7d49862d7045258051e9b3c15a175d8c5958fb9eb41fc9d9520b2ba4fb2fc2062bfa609f6d786fad57cb32fe7328c5dee8a92a3581c7b2e1a92a648ab64ac5c1f347dbe41a7c2d58ac8961b58d81f33192b818f6780f5168bdf67ffbfc80166d5f68bb63652f33d2c57f5b1b6808b8e71f70b0029243e24bbb73de9c8bc0276468469342d3851c6f546c9a6cf9a3bb8c99b5930e6b60441ce29394c382f40462914c3bc45e31b3badb3063dfa1ed4615e3afd52cf6b55b8c248e661a98d770cb75aa5d6448b82c13906174583f5b3f51234cd9b58fc4eda405a96ec0b4b87f046fd81ff59612227faa6fd40d21d32c964221e0ac1fe35e97d47551dcaf934c5e756334028903b30a8db60b3842dee0d7e797f5b75285935012ac7d5114628045cc2a91f0857554753c8d8ece29c685dd4c13b0963d094228b8a6b474b4542be9a91425931d53dff056b4450242555edd92852649b3f7c9e96d5b0103a853c158f263eeb4e510c787"
+        - name: MONITORING_AGENT
+          value: "prometheus"
+        - name: MONITORING_AGENT_ENDPOINT
+          value: "https://192.168.122.156:8443/prometheus"
+        ports:
+        - name: http
+          containerPort: 31313
+      nodeSelector:
+        node-role.kubernetes.io/master: 'true'
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kruize
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    app: kruize
+spec:
+  type: NodePort
+  selector:
+    app: kruize
+  ports:
+  - name: http
+    port: 31313
+    nodePort: 31313
+    targetPort: 31313
