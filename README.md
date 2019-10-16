@@ -6,7 +6,7 @@
 
 Are you an IT Admin and worry about
 
-1. How do I right size my containers
+1. How do I right size my containers ?
 2. How do I plan the K8s capacity that I need ?
 3. How do I optimize my containers for best startup / resource usage / throughput ?
 4. For any Runtime ?
@@ -86,7 +86,7 @@ Copy the contents of the `/grafana/kruize_dashboard.json` and paste into the imp
 
 ![Import dashboard into Grafana](/docs/grafana-import.png)
 
-Once imported, the grafana dashboard should like something like this.
+Once imported, the grafana dashboard should look something like this.
 
 ![Kruize Grafana Dashboard](/docs/grafana-dash.png)
 
