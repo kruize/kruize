@@ -234,6 +234,6 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             return podName.substring(0, podName.indexOf(hash) - 1);
         } else {
             return parseApplicationNameFromInstanceName(podName);
-		}
+        }
     }
 }
