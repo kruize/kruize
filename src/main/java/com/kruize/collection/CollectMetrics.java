@@ -57,11 +57,9 @@ public class CollectMetrics implements Runnable
     {
         String monitoringAgentEndPoint = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
 
-        for (AbstractMetrics metrics : (ArrayList<AbstractMetrics>) envType.applicationRecommendations.applicationMap.get(application))
-        {
+        for (AbstractMetrics metrics : (ArrayList<AbstractMetrics>) envType.applicationRecommendations.applicationMap.get(application)) {
             /* TODO add better checks to see if instance is still running */
-            if (metrics.getStatus().equals("Running"))
-            {
+            if (metrics.getStatus().equals("Running")) {
                 String instanceName = metrics.getName();
 
                 String rssQuery = query.getRssQuery(instanceName);
@@ -69,8 +67,7 @@ public class CollectMetrics implements Runnable
                 /* TODO replace it by seconds and calculate ourselves? */
                 String cpuQuery = query.getCpuQuery(instanceName);
 
-                try
-                {
+                try {
                     CurrentMetrics currentMetrics =
                             new CurrentMetrics(monitoringAgentEndPoint, metrics, rssQuery, cpuQuery).invoke();
 
@@ -101,12 +98,9 @@ public class CollectMetrics implements Runnable
 
         if (cpuRequests > 0) {
             Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
-        } else {
-            Kruize.cpuRequests.labels(namespace, application).set(-1);
-        }
-        if (cpuLimit > 0) {
             Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
         } else {
+            Kruize.cpuRequests.labels(namespace, application).set(-1);
             Kruize.cpuLimits.labels(namespace, application).set(-1);
         }
 
@@ -118,7 +112,7 @@ public class CollectMetrics implements Runnable
 
         Kruize.originalMemoryRequests.labels(namespace, application).set(metrics.getOriginalMemoryRequests());
         Kruize.originalMemoryLimits.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
-}
+    }
 
     private void analyseMetrics(Metrics metrics)
     {
@@ -133,27 +127,21 @@ public class CollectMetrics implements Runnable
     @SuppressWarnings("InfiniteLoopStatement")
     public void run()
     {
-        try
-        {
-            for(String application : applicationRecommendations.applicationMap.keySet())
-            {
+        try {
+
+            for (String application : applicationRecommendations.applicationMap.keySet()) {
                 getPreviousData(application);
                 getPreviousKruizeRecs(application, query);
             }
 
-            while(true)
-            {
-                for(String application : applicationRecommendations.applicationMap.keySet())
-                {
+            while (true) {
+                for (String application : applicationRecommendations.applicationMap.keySet()) {
                     getMetrics(application);
                 }
                 TimeUnit.SECONDS.sleep(10);
                 envType.getAllApps();
             }
-        }
-
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -161,11 +149,10 @@ public class CollectMetrics implements Runnable
     private String getDataFromURL(URL url)
     {
         String result = null;
-        try
-        {
+        try {
             HttpURLConnection connection;
 
-            if(url.toString().contains("https")) {
+            if (url.toString().contains("https")) {
                 connection = (HttpsURLConnection) url.openConnection();
             } else {
                 connection = (HttpURLConnection) url.openConnection();
@@ -176,26 +163,18 @@ public class CollectMetrics implements Runnable
 
             connection.setRequestProperty("Authorization", bearerToken);
 
-            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK)
-            {
+            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 result = getDataFromConnection(connection);
-            }
-
-            else
-            {
+            } else {
                 System.out.println(connection.getResponseCode());
-                if (connection.getResponseCode() == 403)
-                {
+                if (connection.getResponseCode() == 403) {
                     System.out.println("Please refresh your auth token");
                     System.exit(1);
                 }
                 System.out.println("Response Failure!");
                 System.out.println(url.toString());
             }
-        }
-
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -240,13 +219,10 @@ public class CollectMetrics implements Runnable
         HostnameVerifier allHostsValid = (hostname, session) -> true;
 
         SSLContext sslContext = null;
-        try
-        {
+        try {
             sslContext = SSLContext.getInstance("SSL");
             sslContext.init(null, dummyTrustManager, new java.security.SecureRandom());
-        }
-        catch (NoSuchAlgorithmException | KeyManagementException e)
-        {
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();
         }
 
@@ -257,13 +233,11 @@ public class CollectMetrics implements Runnable
 
     private void getPreviousData(String application)
     {
-        for (AbstractMetrics metrics : applicationRecommendations.applicationMap.get(application))
-        {
+        for (AbstractMetrics metrics : applicationRecommendations.applicationMap.get(application)) {
             ArrayList<Double> rssList = new ArrayList<>();
             ArrayList<Double> cpuList = new ArrayList<>();
 
-            try
-            {
+            try {
                 String prometheusURL = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
 
                 String instanceName = metrics.getName();
@@ -271,34 +245,23 @@ public class CollectMetrics implements Runnable
                 JsonArray rssArray = getAsJsonArray(new URL(prometheusURL + query.getPreviousRssQuery(instanceName)), "values");
                 JsonArray cpuArray = getAsJsonArray(new URL(prometheusURL + query.getPreviousCpuQuery(instanceName)), "values");
 
-                for (JsonElement rssValue : rssArray)
-                {
+                for (JsonElement rssValue : rssArray) {
                     rssList.add(rssValue.getAsJsonArray().get(1).getAsDouble());
                 }
 
-                for (JsonElement cpuValue : cpuArray)
-                {
+                for (JsonElement cpuValue : cpuArray) {
                     cpuList.add(cpuValue.getAsJsonArray().get(1).getAsDouble());
                 }
 
-                if (rssList.size() == cpuList.size())
-                {
-                    for (int i = 0; i < rssList.size(); i++)
-                    {
+                if (rssList.size() == cpuList.size()) {
+                    for (int i = 0; i < rssList.size(); i++) {
                         metrics.metricCollector.add(new MetricCollector(rssList.get(i), cpuList.get(i), 0));
-
                     }
                 }
-            }
-
-            catch (NullPointerException | MalformedURLException e)
-            {
+            } catch (NullPointerException | MalformedURLException e) {
                 System.out.println("Could not get previous data. Please check your prometheus version");
-            }
-
-            catch (IndexOutOfBoundsException e)
-            {
-                System.out.println("Could not get data.");
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println("Could not get previous data.");
             }
         }
     }
@@ -324,9 +287,8 @@ public class CollectMetrics implements Runnable
     {
         String prometheusURL = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
 
-        for (Metrics metrics : applicationRecommendations.applicationMap.get(application))
-        {
-            String applicationName  = envType.getApplicationNameFromInstanceName(metrics.getName());
+        for (Metrics metrics : applicationRecommendations.applicationMap.get(application)) {
+            String applicationName  = metrics.getApplicationName();
 
             double previousCpuLimit = 0;
             double previousRssLimit = 0;
@@ -358,8 +320,7 @@ public class CollectMetrics implements Runnable
     private double getPreviousKruizeData(String recommendationURL)
     {
         System.out.println(recommendationURL);
-        try
-        {
+        try {
             JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
 
             //get last old value
@@ -368,72 +329,69 @@ public class CollectMetrics implements Runnable
                     .getAsJsonArray()
                     .get(1)
                     .getAsDouble();
-        }
-
-        catch (IndexOutOfBoundsException | MalformedURLException e)
-        {
+        } catch (IndexOutOfBoundsException | MalformedURLException e) {
             System.out.println("Could not get previous recommendations");
             return -1;
         }
     }
 
-private class CurrentMetrics
-{
-    private String monitoringAgentEndPoint;
-    private AbstractMetrics metrics;
-    private String rssQuery;
-    private String cpuQuery;
-    private double rss;
-    private double cpu;
-    private double MIN_CPU = 0.02;
-
-    CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
+    private class CurrentMetrics
     {
-        this.monitoringAgentEndPoint = monitoringAgentEndPoint;
-        this.metrics = metrics;
-        this.rssQuery = rssQuery;
-        this.cpuQuery = cpuQuery;
-    }
+        private String monitoringAgentEndPoint;
+        private AbstractMetrics metrics;
+        private String rssQuery;
+        private String cpuQuery;
+        private double rss;
+        private double cpu;
+        private double MIN_CPU = 0.02;
 
-    double getRss()
-    {
-        return rss;
-    }
-
-    double getCpu()
-    {
-        return cpu;
-    }
-
-    CurrentMetrics invoke() throws MalformedURLException
-    {
-        try {
-            cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
-            System.out.println("CPU: " + cpu);
-
-            if (cpu < MIN_CPU)
-                throw new ApplicationIdleStateException();
-
-            rss = getValueForQuery(new URL(monitoringAgentEndPoint + rssQuery));
-            System.out.println("RSS: " + rss);
-
-            //TODO Get network data from monitoring agent
-            double network = 0;
-
-            metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
-            return this;
-
-        } catch (IndexOutOfBoundsException | ApplicationIdleStateException e) {
-            return this;
+        CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
+        {
+            this.monitoringAgentEndPoint = monitoringAgentEndPoint;
+            this.metrics = metrics;
+            this.rssQuery = rssQuery;
+            this.cpuQuery = cpuQuery;
         }
 
-    }
+        double getRss()
+        {
+            return rss;
+        }
 
-    private double getValueForQuery(URL url) throws IndexOutOfBoundsException
-    {
-        return getAsJsonArray(url, "value")
-                .get(1)
-                .getAsDouble();
+        double getCpu()
+        {
+            return cpu;
+        }
+
+        CurrentMetrics invoke() throws MalformedURLException
+        {
+            try {
+                cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
+                System.out.println("CPU: " + cpu);
+
+                if (cpu < MIN_CPU)
+                    throw new ApplicationIdleStateException();
+
+                rss = getValueForQuery(new URL(monitoringAgentEndPoint + rssQuery));
+                System.out.println("RSS: " + rss);
+
+                //TODO Get network data from monitoring agent
+                double network = 0;
+
+                metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
+                return this;
+
+            } catch (IndexOutOfBoundsException | ApplicationIdleStateException e) {
+                return this;
+            }
+
+        }
+
+        private double getValueForQuery(URL url) throws IndexOutOfBoundsException
+        {
+            return getAsJsonArray(url, "value")
+                    .get(1)
+                    .getAsDouble();
+        }
     }
-}
 }

@@ -22,6 +22,7 @@ import com.kruize.recommendations.instance.Recommendations;
 public class PodMetrics extends AbstractMetrics
 {
     private String namespace;
+    private String podTemplateHash;
 
     private double originalMemoryLimit = 0;
     private double originalMemoryRequests = 0;
@@ -80,6 +81,16 @@ public class PodMetrics extends AbstractMetrics
     public void setNamespace(String namespace)
     {
         this.namespace = namespace;
+    }
+
+    public String getPodTemplateHash()
+    {
+        return podTemplateHash;
+    }
+
+    public void setPodTemplateHash(String podTemplateHash)
+    {
+        this.podTemplateHash = podTemplateHash;
     }
 
     public double getCpuRequests()
@@ -152,11 +163,13 @@ public class PodMetrics extends AbstractMetrics
         return currentRecommendations.getRssRequest();
     }
 
-    public double getCurrentCpuLimit() { return currentRecommendations.getCpuLimit(); }
+    public double getCurrentCpuLimit()
+    {
+        return currentRecommendations.getCpuLimit();
+    }
 
     public double getCurrentRssLimit()
     {
         return currentRecommendations.getRssLimit();
     }
-
 }

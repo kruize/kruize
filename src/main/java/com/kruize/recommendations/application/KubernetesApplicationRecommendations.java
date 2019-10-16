@@ -23,21 +23,34 @@ import java.util.HashMap;
 
 public class KubernetesApplicationRecommendations extends AbstractApplicationRecommendations<PodMetrics>
 {
-    public KubernetesApplicationRecommendations()
+    private KubernetesApplicationRecommendations()
     {
         applicationMap = new HashMap<>();
+    }
+
+    private static KubernetesApplicationRecommendations kubernetesApplicationRecommendations = null;
+
+    static {
+        getInstance();
+    }
+
+    public static KubernetesApplicationRecommendations getInstance()
+    {
+        if (kubernetesApplicationRecommendations == null) {
+            kubernetesApplicationRecommendations = new KubernetesApplicationRecommendations();
+        }
+
+        return kubernetesApplicationRecommendations;
     }
 
     @SuppressWarnings("unused")
     public double getCpuRequests(String applicationName) throws NoSuchApplicationException
     {
-        if(applicationMap.containsKey(applicationName))
-        {
+        if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for(PodMetrics podMetrics : applicationMap.get(applicationName))
-            {
+            for (PodMetrics podMetrics : applicationMap.get(applicationName)) {
                 int numberOfValues = podMetrics.metricCollector.size();
                 weightedCpuRequests += podMetrics.getCpuRequests() * numberOfValues;
 
@@ -46,9 +59,7 @@ public class KubernetesApplicationRecommendations extends AbstractApplicationRec
 
             return weightedCpuRequests / totalValues;
 
-        }
-        else
-        {
+        } else {
             throw new NoSuchApplicationException();
         }
     }
@@ -56,24 +67,18 @@ public class KubernetesApplicationRecommendations extends AbstractApplicationRec
     @SuppressWarnings("unused")
     public double getCpuLimit(String applicationName) throws NoSuchApplicationException
     {
-        if(applicationMap.containsKey(applicationName))
-        {
+        if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for(PodMetrics podMetrics : applicationMap.get(applicationName))
-            {
+            for (PodMetrics podMetrics : applicationMap.get(applicationName)) {
                 int numberOfValues = podMetrics.metricCollector.size();
                 weightedCpuRequests += podMetrics.getCpuLimit() * numberOfValues;
 
                 totalValues += numberOfValues;
             }
-
             return weightedCpuRequests / totalValues;
-
-        }
-        else
-        {
+        } else {
             throw new NoSuchApplicationException();
         }
     }
@@ -81,24 +86,18 @@ public class KubernetesApplicationRecommendations extends AbstractApplicationRec
     @SuppressWarnings("unused")
     public double getRssRequests(String applicationName) throws NoSuchApplicationException
     {
-        if(applicationMap.containsKey(applicationName))
-        {
+        if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for(PodMetrics podMetrics : applicationMap.get(applicationName))
-            {
+            for (PodMetrics podMetrics : applicationMap.get(applicationName)) {
                 int numberOfValues = podMetrics.metricCollector.size();
                 weightedCpuRequests += podMetrics.getRssRequests() * numberOfValues;
 
                 totalValues += numberOfValues;
             }
-
             return weightedCpuRequests / totalValues;
-
-        }
-        else
-        {
+        } else {
             throw new NoSuchApplicationException();
         }
     }
@@ -106,23 +105,18 @@ public class KubernetesApplicationRecommendations extends AbstractApplicationRec
     @SuppressWarnings("unused")
     public double getRssLimits(String applicationName) throws NoSuchApplicationException
     {
-        if(applicationMap.containsKey(applicationName))
-        {
+        if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for(PodMetrics podMetrics : applicationMap.get(applicationName))
-            {
+            for (PodMetrics podMetrics : applicationMap.get(applicationName)) {
                 int numberOfValues = podMetrics.metricCollector.size();
                 weightedCpuRequests += podMetrics.getRssLimits() * numberOfValues;
 
                 totalValues += numberOfValues;
             }
-
             return weightedCpuRequests / totalValues;
-        }
-        else
-        {
+        } else {
             throw new NoSuchApplicationException();
         }
     }

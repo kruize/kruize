@@ -18,12 +18,9 @@ package com.kruize.environment;
 
 public interface EnvType
 {
-    boolean setupMonitoringAgent();
-    void setupInstanceRecommendations();
+    void setupMonitoringAgent();
     void setupApplicationRecommendations();
-    void setupMetrics();
     void setupAnalysis();
-    void setupCollectionWorker();
     void setupQuery();
     void getAllApps();
 }

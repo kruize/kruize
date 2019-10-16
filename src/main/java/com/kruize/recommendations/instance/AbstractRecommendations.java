@@ -23,5 +23,4 @@ public abstract class AbstractRecommendations implements Recommendations
 
     private double rssLimit;
     private double rssRequest;
-
 }

@@ -16,7 +16,7 @@ Look no further, Kruize is here to help !
 
 Kruize needs to be deployed to your Kubernetes cluster in the same namespace as Prometheus. Kruize monitors application containers running in your Kubernetes cluster using metrics provided by Prometheus and offers recommendations on the right CPU and Memory `request` and `limit` values for your application container. The recommendations can be viewed in a Grafana dashboard on a per application basis. This helps IT admins to review and apply the recommendations knowing that their applications and even the cluster is optimally sized !
 
-### Deploying Kruize
+## Deploying Kruize
 
 To deploy kruize to your kubernetes cluster, you need the run the `deploy.sh` script. Make sure you deploy `kruize` to the same namespace as `prometheus`.
 
@@ -78,7 +78,7 @@ spec:
         org.kubernetes.io/name: "myapp"    <--- Add this label to your app yaml
 ```
 
-### Install the Grafana dashboard
+## Install the Grafana dashboard
 
 Import the Grafana dashboard into your kubernetes cluster.
 
@@ -90,7 +90,7 @@ Once imported, the grafana dashboard should like something like this.
 
 ![Kruize Grafana Dashboard](/docs/grafana-dash.png)
 
-### Building Kruize
+## Building Kruize
 
 ```
 $ ./build.sh

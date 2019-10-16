@@ -23,27 +23,19 @@ public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
 {
     @Override
     public void calculateCpuLimit(ContainerMetrics metrics)
-    {
-
-    }
+    {}
 
     @Override
     public void calculateMemLimit(ContainerMetrics metrics)
-    {
-
-    }
+    {}
 
     @Override
     public void calculateCpuRequests(ContainerMetrics metrics)
-    {
-
-    }
+    {}
 
     @Override
     public void calculateMemRequests(ContainerMetrics metrics, int referenceIndex, int targetIndex)
-    {
-
-    }
+    {}
 
     @Override
     public void finalizeY2DRecommendations(ContainerMetrics metrics)

@@ -88,5 +88,4 @@ public class Initialize
         System.out.println(DeploymentInfo.getMonitoringAgentEndpoint());
         System.out.println(DeploymentInfo.getMonitoringAgentService());
     }
-
 }

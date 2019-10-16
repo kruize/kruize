@@ -18,6 +18,22 @@ package com.kruize.query;
 
 public class PrometheusQuery implements Query
 {
+    private PrometheusQuery() {}
+
+    private static PrometheusQuery prometheusQuery = null;
+
+    static {
+        getInstance();
+    }
+
+    public static PrometheusQuery getInstance()
+    {
+        if (prometheusQuery == null)
+            prometheusQuery = new PrometheusQuery();
+
+        return prometheusQuery;
+    }
+
     @Override
     public String getCpuQuery(String podName)
     {

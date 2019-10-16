@@ -21,7 +21,6 @@ import com.kruize.environment.docker.DockerEnvImpl;
 import com.kruize.environment.kubernetes.KubernetesEnvImpl;
 import com.kruize.metrics.AbstractMetrics;
 import com.kruize.query.Query;
-import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.application.AbstractApplicationRecommendations;
 
 import java.util.regex.Matcher;
@@ -29,7 +28,6 @@ import java.util.regex.Pattern;
 
 public abstract class EnvTypeImpl implements EnvType
 {
-    public Recommendations recommendations;
     public AbstractMetrics metrics;
     public Analysis analysis;
     public Query query;
@@ -37,39 +35,36 @@ public abstract class EnvTypeImpl implements EnvType
 
     private static EnvTypeImpl envType = null;
 
+    static {
+        getInstance();
+    }
+
     public static EnvTypeImpl getInstance()
     {
-        if (envType == null)
-        {
+        if (envType == null) {
             if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER")) {
                 envType = new DockerEnvImpl();
             } else {
                 envType = new KubernetesEnvImpl();
             }
             envType.setupMonitoringAgent();
-            envType.setupInstanceRecommendations();
             envType.setupApplicationRecommendations();
-            envType.setupMetrics();
             envType.setupAnalysis();
-            envType.setupCollectionWorker();
             envType.setupQuery();
             envType.getAllApps();
         }
-
         return envType;
     }
 
-    public String getApplicationNameFromInstanceName(String podName)
+    public static String parseApplicationNameFromInstanceName(String podName)
     {
         Pattern pattern = Pattern.compile("-[a-zA-Z]*?\\d+");
         Matcher matcher = pattern.matcher(podName);
 
-        if (matcher.find())
-        {
+        if (matcher.find()) {
             int index = matcher.start();
             return podName.substring(0, index);
         }
         return podName;
     }
-
 }

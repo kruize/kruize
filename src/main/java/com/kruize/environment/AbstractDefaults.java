@@ -29,9 +29,10 @@ public abstract class AbstractDefaults implements Defaults
 
     public static AbstractDefaults getInstance(String clusterType)
     {
-        if (clusterType.toUpperCase().equals("DOCKER"))
+        if (clusterType.toUpperCase().equals("DOCKER")) {
             return new DockerDefaults();
-        else
+        } else {
             return new KubernetesDefaults();
+        }
     }
 }

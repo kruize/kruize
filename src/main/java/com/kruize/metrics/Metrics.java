@@ -18,7 +18,6 @@ package com.kruize.metrics;
 
 public interface Metrics
 {
-
     /* Get original application deployment parameters */
     double getOriginalMemoryRequests();
     double getOriginalMemoryLimit();
@@ -26,6 +25,7 @@ public interface Metrics
     double getOriginalCpuLimit();
 
     String getName();
+    String getApplicationName();
     String getStatus();
     String getNamespace();
 
@@ -51,6 +51,4 @@ public interface Metrics
     double getCurrentRssRequests();
     double getCurrentCpuLimit();
     double getCurrentRssLimit();
-
-
 }

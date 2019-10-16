@@ -28,6 +28,22 @@ import java.util.ArrayList;
 
 public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
 {
+    private KubernetesAnalysisImpl() { }
+
+    private static KubernetesAnalysisImpl kubernetesAnalysis = null;
+
+    static {
+        getInstance();
+    }
+
+    public static KubernetesAnalysisImpl getInstance()
+    {
+        if (kubernetesAnalysis == null)
+            kubernetesAnalysis = new KubernetesAnalysisImpl();
+
+        return kubernetesAnalysis;
+    }
+
     public void calculateCpuLimit(PodMetrics pod)
     {
         double maxCpu = 0;
@@ -40,12 +56,10 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
             return;
         }
 
-        for (MetricCollector metricCollector : metrics)
-        {
+        for (MetricCollector metricCollector : metrics) {
             double cpu = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
-            if (maxCpu < cpu) {
+            if (maxCpu < cpu)
                 maxCpu = cpu;
-            }
         }
 
         double cpuLimit = maxCpu * BUFFER;
@@ -69,8 +83,7 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
             return;
         }
 
-        for (MetricCollector metricCollector : metrics)
-        {
+        for (MetricCollector metricCollector : metrics) {
             double mem = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
             rssValues.add(mem);
             if (maxMem < mem)
@@ -102,8 +115,7 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
 
         DescriptiveStatistics referenceValues = new DescriptiveStatistics();
 
-        for (MetricCollector metric : metrics)
-        {
+        for (MetricCollector metric : metrics) {
             double value = metric.getFromIndex(INDEX);
             referenceValues.addValue(value);
             System.out.print(value + "\t");
@@ -112,11 +124,8 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
         double percentileValue = Statistics.getPercentile(referenceValues, PERCENTILE);
         System.out.println(PERCENTILE + "th percentile is " + percentileValue);
 
-        for (MetricCollector metric : metrics)
-        {
-            if (metric.getFromIndex(INDEX) >= percentileValue)
-            {
-
+        for (MetricCollector metric : metrics) {
+            if (metric.getFromIndex(INDEX) >= percentileValue) {
                 MetricCollector temp = MetricCollector.Copy(metric);
                 DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
                 singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
@@ -147,8 +156,7 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
 
         DescriptiveStatistics referenceValues = new DescriptiveStatistics();
 
-        for (MetricCollector metric : metrics)
-        {
+        for (MetricCollector metric : metrics) {
             double value = metric.getFromIndex(referenceIndex);
             referenceValues.addValue(value);
             System.out.print(value + "\t");
@@ -157,10 +165,8 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
         double percentileValue = Statistics.getPercentile(referenceValues, PERCENTILE);
         System.out.println(PERCENTILE + "th percentile is " + percentileValue);
 
-        for (MetricCollector metric : metrics)
-        {
-            if (metric.getFromIndex(referenceIndex) >= percentileValue)
-            {
+        for (MetricCollector metric : metrics) {
+            if (metric.getFromIndex(referenceIndex) >= percentileValue) {
                 MetricCollector temp = MetricCollector.Copy(metric);
                 temp.setForIndex(roundToNearestMultiple(temp.getFromIndex(targetIndex), ROUND_TO_MUL_OF), targetIndex);
                 percentileList.add(temp);
@@ -181,19 +187,16 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
 
     private static double getLargestSpike(ArrayList<Double> arrayList)
     {
-        double largestSpike = Double.MIN_VALUE;
-        final double minDifference = 50;
+        final double ONE_MB = 1024 * 1024;
+        double largestSpike = 50 * ONE_MB;
 
-        for (int i = 1; i < arrayList.size(); i++)
-        {
+        for (int i = 1; i < arrayList.size(); i++) {
             double difference = (arrayList.get(i) - arrayList.get(i - 1));
             if (difference > largestSpike)
-            {
                 largestSpike = difference;
-            }
         }
 
-        return Math.max(minDifference, largestSpike);
+        return largestSpike;
     }
 
     public void finalizeY2DRecommendations(PodMetrics pod)

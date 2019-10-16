@@ -21,19 +21,7 @@ import com.kruize.environment.EnvTypeImpl;
 public class DockerEnvImpl extends EnvTypeImpl
 {
     @Override
-    public boolean setupMonitoringAgent()
-    {
-        return false;
-    }
-
-    @Override
-    public void setupInstanceRecommendations()
-    {
-
-    }
-
-    @Override
-    public void setupMetrics()
+    public void setupMonitoringAgent()
     {
 
     }
@@ -46,12 +34,6 @@ public class DockerEnvImpl extends EnvTypeImpl
 
     @Override
     public void setupAnalysis()
-    {
-
-    }
-
-    @Override
-    public void setupCollectionWorker()
     {
 
     }

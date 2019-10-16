@@ -33,16 +33,14 @@ public class Statistics
     {
         double modeValue = 0;
         int maxCount = 0;
-        for (int i = 0; i < metricCollector.size(); ++i)
-        {
+        for (int i = 0; i < metricCollector.size(); ++i) {
             int count = 0;
             for (MetricCollector metric : metricCollector) {
                 if (metric.getFromIndex(targetIndex) == metricCollector.get(i).getFromIndex(targetIndex))
                     ++count;
             }
 
-            if (count > maxCount)
-            {
+            if (count > maxCount) {
                 maxCount = count;
                 modeValue = metricCollector.get(i).getFromIndex(targetIndex);
             }
