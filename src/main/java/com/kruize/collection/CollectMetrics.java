@@ -369,14 +369,14 @@ public class CollectMetrics implements Runnable
                 cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
                 System.out.println("CPU: " + cpu);
 
-                if (cpu < MIN_CPU)
-                    throw new ApplicationIdleStateException();
-
                 rss = getValueForQuery(new URL(monitoringAgentEndPoint + rssQuery));
                 System.out.println("RSS: " + rss);
 
                 //TODO Get network data from monitoring agent
                 double network = 0;
+
+                if (cpu < MIN_CPU)
+                    throw new ApplicationIdleStateException();
 
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
                 return this;
