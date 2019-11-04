@@ -143,7 +143,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podList != null) {
             for(V1Pod pod : podList.getItems()) {
                 try {
-                    boolean containsLabel = pod.getMetadata().getLabels().containsKey("org.kubernetes.io/name");
+                    final String label = "app.kubernetes.io/name";
+                    boolean containsLabel = pod.getMetadata().getLabels().containsKey(label);
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
                     if (containsLabel || isAppsodyApplication) {
