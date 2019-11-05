@@ -24,13 +24,20 @@ public interface Metrics
     double getOriginalCpuRequests();
     double getOriginalCpuLimit();
 
+    void setOriginalMemoryRequests(double originalMemoryRequests);
+    void setOriginalMemoryLimit(double originalMemoryLimit);
+    void setOriginalCpuRequests(double originalCpuRequests);
+    void setOriginalCpuLimit(double originalCpuLimit);
+
     String getName();
     String getApplicationName();
     String getStatus();
     String getNamespace();
 
     void setName(String name);
+    void setApplicationName(String applicationName);
     void setStatus(String status);
+    void setNamespace(String namespace);
 
     double getCpuRequests();
     double getCpuLimit();

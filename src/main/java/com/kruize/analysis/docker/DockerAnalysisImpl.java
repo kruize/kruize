@@ -18,26 +18,132 @@ package com.kruize.analysis.docker;
 
 import com.kruize.analysis.Analysis;
 import com.kruize.metrics.ContainerMetrics;
+import com.kruize.metrics.MetricCollector;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
 {
-    @Override
-    public void calculateCpuLimit(ContainerMetrics metrics)
-    {}
+    private DockerAnalysisImpl() { }
+
+    private static DockerAnalysisImpl dockerAnalysis = null;
+
+    static {
+        getInstance();
+    }
+
+    public static DockerAnalysisImpl getInstance()
+    {
+        if (dockerAnalysis == null)
+            dockerAnalysis = new DockerAnalysisImpl();
+
+        return dockerAnalysis;
+    }
 
     @Override
-    public void calculateMemLimit(ContainerMetrics metrics)
-    {}
+    public void calculateCpuLimit(ContainerMetrics container)
+    {
+        double maxCpu = 0;
+        final double BUFFER = 1.15;
+
+        ArrayList<MetricCollector> metrics = container.metricCollector;
+
+        if (metrics.size() == 0) {
+            container.setCurrentCpuLimit(-1);
+            return;
+        }
+
+        for (MetricCollector metricCollector : metrics)
+        {
+            double cpu = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
+            if (maxCpu < cpu) {
+                maxCpu = cpu;
+            }
+        }
+
+        double cpuLimit = maxCpu * BUFFER;
+        DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+
+        cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
+        container.setCurrentCpuLimit(cpuLimit);
+    }
 
     @Override
-    public void calculateCpuRequests(ContainerMetrics metrics)
-    {}
+    public void calculateMemLimit(ContainerMetrics container)
+    {
+        double spike;
+        double maxMem = 0;
+        final double BUFFER = 1.2;
+
+        ArrayList<Double> rssValues = new ArrayList<>();
+        ArrayList<MetricCollector> metrics = container.metricCollector;
+
+        if (metrics.size() == 0) {
+            container.setCurrentRssLimit(-1);
+            return;
+        }
+
+        for (MetricCollector metricCollector : metrics)
+        {
+            double mem = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
+            rssValues.add(mem);
+            if (maxMem < mem)
+                maxMem = mem;
+        }
+
+        spike = getLargestSpike(rssValues);
+        System.out.println("Spike for " + MetricCollector.CPU_INDEX + " is " + spike + "\n\n");
+
+        double memRequests = container.getRssRequests();
+
+        // If spike is very low
+        double memLimit = Math.max(memRequests + spike, maxMem * BUFFER);
+        container.setCurrentRssLimit(memLimit);
+    }
 
     @Override
-    public void calculateMemRequests(ContainerMetrics metrics, int referenceIndex, int targetIndex)
-    {}
+    public void calculateCpuRequests(ContainerMetrics container)
+    {
+        double cpuRequests = 0;
+        container.setCurrentCpuRequests(cpuRequests);
+    }
 
     @Override
-    public void finalizeY2DRecommendations(ContainerMetrics metrics)
-    {}
+    public void calculateMemRequests(ContainerMetrics container, int referenceIndex, int targetIndex)
+    {
+        double memRequests = 0;
+        container.setCurrentRssRequests(memRequests);
+    }
+
+    private static double getLargestSpike(ArrayList<Double> arrayList)
+    {
+        final double ONE_MB = 1024 * 1024;
+        double largestSpike = 50 * ONE_MB;
+
+        for (int i = 1; i < arrayList.size(); i++)
+        {
+            double difference = (arrayList.get(i) - arrayList.get(i - 1));
+            if (difference > largestSpike)
+            {
+                largestSpike = difference;
+            }
+        }
+
+        return largestSpike;
+    }
+
+    @Override
+    public void finalizeY2DRecommendations(ContainerMetrics container)
+    {
+        double currentCpuLimit = container.getCurrentCpuLimit();
+        double currentCpuRequests = container.getCurrentCpuRequests();
+        double currentRssLimit = container.getCurrentRssLimit();
+        double currentRssRequests = container.getCurrentRssRequests();
+
+        container.setRssLimit(Math.max(container.getRssLimits(), currentRssLimit));
+        container.setRssRequests(Math.max(container.getRssRequests(), currentRssRequests));
+        container.setCpuLimit(Math.max(container.getCpuLimit(), currentCpuLimit));
+        container.setCpuRequests(Math.max(container.getCpuRequests(), currentCpuRequests));
+    }
 }

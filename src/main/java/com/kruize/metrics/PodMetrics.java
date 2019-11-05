@@ -21,67 +21,10 @@ import com.kruize.recommendations.instance.Recommendations;
 
 public class PodMetrics extends AbstractMetrics
 {
-    private String namespace;
     private String podTemplateHash;
-
-    private double originalMemoryLimit = 0;
-    private double originalMemoryRequests = 0;
-
-    private double originalCpuLimit = 0;
-    private double originalCpuRequests = 0;
 
     private Recommendations y2dRecommendations = new PodRecommendations();
     private Recommendations currentRecommendations = new PodRecommendations();
-
-    public double getOriginalMemoryRequests()
-    {
-        return originalMemoryRequests;
-    }
-
-    public void setOriginalMemoryRequests(double originalMemoryRequests)
-    {
-        this.originalMemoryRequests = originalMemoryRequests;
-    }
-
-    public double getOriginalMemoryLimit()
-    {
-        return originalMemoryLimit;
-    }
-
-    public void setOriginalMemoryLimit(double originalMemoryLimit)
-    {
-        this.originalMemoryLimit = originalMemoryLimit;
-    }
-
-    public double getOriginalCpuRequests()
-    {
-        return originalCpuRequests;
-    }
-
-    public void setOriginalCpuRequests(double originalCpuRequests)
-    {
-        this.originalCpuRequests = originalCpuRequests;
-    }
-
-    public double getOriginalCpuLimit()
-    {
-        return originalCpuLimit;
-    }
-
-    public void setOriginalCpuLimit(double originalCpuLimit)
-    {
-        this.originalCpuLimit = originalCpuLimit;
-    }
-
-    public String getNamespace()
-    {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace)
-    {
-        this.namespace = namespace;
-    }
 
     public String getPodTemplateHash()
     {

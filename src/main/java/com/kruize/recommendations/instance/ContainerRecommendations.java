@@ -18,51 +18,57 @@ package com.kruize.recommendations.instance;
 
 public class ContainerRecommendations extends AbstractRecommendations
 {
+    private double cpuLimit;
+    private double cpuRequest = 0;
+
+    private double rssLimit;
+    private double rssRequest = 0;
+
     @Override
     public double getCpuLimit()
     {
-        return 0;
+        return cpuLimit;
     }
 
     @Override
     public void setCpuLimit(double cpuLimit)
     {
-
+        this.cpuLimit = cpuLimit;
     }
 
     @Override
     public double getCpuRequest()
     {
-        return 0;
+        return cpuRequest;
     }
 
     @Override
     public void setCpuRequest(double cpuRequest)
     {
-
+        this.cpuRequest = cpuRequest;
     }
 
     @Override
     public double getRssLimit()
     {
-        return 0;
+        return rssLimit;
     }
 
     @Override
     public void setRssLimit(double rssLimit)
     {
-
+        this.rssLimit = rssLimit;
     }
 
     @Override
     public double getRssRequest()
     {
-        return 0;
+        return rssRequest;
     }
 
     @Override
     public void setRssRequest(double rssRequest)
     {
-
+        this.rssRequest = rssRequest;
     }
 }

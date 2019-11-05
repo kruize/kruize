@@ -16,6 +16,8 @@
 
 package com.kruize.query;
 
+import com.kruize.environment.DeploymentInfo;
+
 public class PrometheusQuery implements Query
 {
     private PrometheusQuery() {}
@@ -35,42 +37,72 @@ public class PrometheusQuery implements Query
     }
 
     @Override
-    public String getCpuQuery(String podName)
+    public String getCpuQuery(String instanceName)
     {
-        return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + podName + "\",container_name!=\"POD\"}[1m])";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "rate(container_cpu_usage_seconds_total{name=~\"" + instanceName + "\"}[1m])";
+        }
+        else {
+            return "rate(container_cpu_usage_seconds_total{" +
+                    "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])";
+        }
     }
 
     @Override
-    public String getRssQuery(String podName)
+    public String getRssQuery(String instanceName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + podName + "\"}";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}";
+        }
+        else {
+            return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        }
     }
 
     @Override
-    public String getNetworkBytesTransmitted(String podName)
+    public String getNetworkBytesTransmitted(String instanceName)
     {
-        return "container_network_transmit_bytes_total{container_name=\"\",pod_name=\"" + podName + "\"}";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_network_transmit_bytes_total{name=\"" + instanceName + "\"}";
+        }
+        else {
+            return "container_network_transmit_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        }
     }
 
     @Override
-    public String getNetworkBytesReceived(String podName)
+    public String getNetworkBytesReceived(String instanceName)
     {
-        return "container_network_receive_bytes_total{container_name=\"\",pod_name=\"" + podName + "\"}";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_network_receive_bytes_total{name=\"" + instanceName + "\"}";
+        }
+        else {
+            return "container_network_receive_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        }
     }
 
     @Override
-    public String getMemoryRequests(String podName)
+    public String getMemoryRequests(String instanceName)
     {
-        return "container_spec_memory_reservation_limit_bytes{container_name=\"\"," +
-                "pod_name=~\"" + podName + ".*\"}";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_spec_memory_reservation_limit_bytes{name=\"" + instanceName + "\"}";
+        }
+        else {
+            return "container_spec_memory_reservation_limit_bytes{container_name=\"\"," +
+                    "pod_name=~\"" + instanceName + ".*\"}";
+        }
     }
 
     @Override
-    public String getMemoryLimit(String podName)
+    public String getMemoryLimit(String instanceName)
     {
-        return "container_spec_memory_limit_bytes{container_name=\"\"," +
-                "pod_name=~\"" + podName + ".*\"}";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_spec_memory_limit_bytes{name=\"" + instanceName + "\"}";
+        }
+        else {
+            return "container_spec_memory_limit_bytes{container_name=\"\"," +
+                    "pod_name=~\"" + instanceName + ".*\"}";
+        }
     }
 
     @Override
@@ -80,16 +112,26 @@ public class PrometheusQuery implements Query
     }
 
     @Override
-    public String getPreviousCpuQuery(String podName)
+    public String getPreviousCpuQuery(String instanceName)
     {
-        return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + podName + "\",container_name!=\"POD\"}[1m])[5h]";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "rate(container_cpu_usage_seconds_total{name=\"" + instanceName + "\"}[1m])[5h]";
+        }
+        else {
+            return "rate(container_cpu_usage_seconds_total{" +
+                    "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])[5h]";
+        }
     }
 
     @Override
-    public String getPreviousRssQuery(String podName)
+    public String getPreviousRssQuery(String instanceName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + podName + "\"}[5h]";
+        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}[5h]";
+        }
+        else {
+            return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h]";
+        }
     }
 
     @Override
