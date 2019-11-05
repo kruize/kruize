@@ -31,7 +31,7 @@ openshift_ns="openshift-monitoring"
 
 function usage() {
 	echo
-	echo "Usage: $0 [-u url] [-c [docker|icp|openshift]]" 
+	echo "Usage: $0 [-k url] [-c [docker|icp|openshift]] [-u user] [-p password] [-n namespace]" 
 	exit -1
 }
 
@@ -164,7 +164,7 @@ function icp_first() {
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
 	if [ ! -z ${kurl} ]; then
-		cloudctl login -a ${kurl}
+		cloudctl login -u ${user} -p ${password} -n ${icp_ns} -a ${kurl}
 	else
 		cloudctl login
 	fi
@@ -291,15 +291,24 @@ function openshift() {
 ###############################  ^ OpenShift ^ ################################
 
 # Iterate through the commandline options
-while getopts c:u: gopts
+while getopts c:k:u:p:n: gopts
 do
 	case ${gopts} in
 	c)
 		cluster_type="${OPTARG}"
 		check_cluster_type
 		;;
-	u)
+	k)
 		kurl="${OPTARG}"
+		;;
+	u)
+		user="${OPTARG}"
+		;;
+	p)
+		password="${OPTARG}"
+		;;
+	n)
+		icp_ns="${OPTARG}"
 		;;
 	[?])
 		usage
