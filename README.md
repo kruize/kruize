@@ -66,7 +66,7 @@ service/kruize unchanged
 kruize-866d48ddd-5qw2v                                         1/1       Running             0          10s
 ```
 
-kruize is now ready to monitor applications in your cluster ! Note however that kruize only monitors applications with the label `org.kubernetes.io/name: "myapp"` currently.
+kruize is now ready to monitor applications in your cluster ! Note however that kruize only monitors applications with the label `app.kubernetes.io/name: "myapp"` currently.
 ```
 spec:
   replicas: 1
@@ -75,7 +75,7 @@ spec:
       labels:
         app: myapp
         name: myapp
-        org.kubernetes.io/name: "myapp"    <--- Add this label to your app yaml
+        app.kubernetes.io/name: "myapp"    <--- Add this label to your app yaml
 ```
 
 ## Install the Grafana dashboard
