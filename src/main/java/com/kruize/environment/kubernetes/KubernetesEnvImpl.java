@@ -141,7 +141,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
 
         if (podList != null) {
-            for(V1Pod pod : podList.getItems()) {
+            for (V1Pod pod : podList.getItems()) {
                 try {
                     boolean containsLabel = pod.getMetadata().getLabels().containsKey("org.kubernetes.io/name");
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
@@ -193,7 +193,6 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 podMetrics.getPodTemplateHash());
 
         podMetrics.setApplicationName(applicationName);
-
 
         V1ResourceRequirements resources = pod.getSpec().getContainers().get(0).getResources();
 

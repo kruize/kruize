@@ -90,7 +90,7 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
                 maxMem = mem;
         }
 
-        spike = getLargestSpike(rssValues);
+        spike = Analysis.getLargestSpike(rssValues);
         System.out.println("Spike for " + MetricCollector.CPU_INDEX + " is " + spike + "\n\n");
 
         double memRequests = pod.getRssRequests();
@@ -183,20 +183,6 @@ public class KubernetesAnalysisImpl implements Analysis<PodMetrics>
     private static double roundToNearestMultiple(double number, double multipleOf)
     {
         return multipleOf * (Math.ceil(Math.abs(number/multipleOf)));
-    }
-
-    private static double getLargestSpike(ArrayList<Double> arrayList)
-    {
-        final double ONE_MB = 1024 * 1024;
-        double largestSpike = 50 * ONE_MB;
-
-        for (int i = 1; i < arrayList.size(); i++) {
-            double difference = (arrayList.get(i) - arrayList.get(i - 1));
-            if (difference > largestSpike)
-                largestSpike = difference;
-        }
-
-        return largestSpike;
     }
 
     public void finalizeY2DRecommendations(PodMetrics pod)

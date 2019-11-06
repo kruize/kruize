@@ -17,11 +17,11 @@
 package com.kruize.query;
 
 import com.kruize.environment.DeploymentInfo;
+import com.kruize.query.docker.DockerPrometheusQuery;
+import com.kruize.query.kubernetes.KubernetesPrometheusQuery;
 
-public class PrometheusQuery implements Query
+public abstract class PrometheusQuery implements Query
 {
-    private PrometheusQuery() {}
-
     private static PrometheusQuery prometheusQuery = null;
 
     static {
@@ -30,108 +30,20 @@ public class PrometheusQuery implements Query
 
     public static PrometheusQuery getInstance()
     {
-        if (prometheusQuery == null)
-            prometheusQuery = new PrometheusQuery();
-
+        if (prometheusQuery == null) {
+            if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER")) {
+                prometheusQuery = new DockerPrometheusQuery();
+            } else {
+                prometheusQuery = new KubernetesPrometheusQuery();
+            }
+        }
         return prometheusQuery;
-    }
-
-    @Override
-    public String getCpuQuery(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "rate(container_cpu_usage_seconds_total{name=~\"" + instanceName + "\"}[1m])";
-        }
-        else {
-            return "rate(container_cpu_usage_seconds_total{" +
-                    "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])";
-        }
-    }
-
-    @Override
-    public String getRssQuery(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}";
-        }
-        else {
-            return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}";
-        }
-    }
-
-    @Override
-    public String getNetworkBytesTransmitted(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_network_transmit_bytes_total{name=\"" + instanceName + "\"}";
-        }
-        else {
-            return "container_network_transmit_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
-        }
-    }
-
-    @Override
-    public String getNetworkBytesReceived(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_network_receive_bytes_total{name=\"" + instanceName + "\"}";
-        }
-        else {
-            return "container_network_receive_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
-        }
-    }
-
-    @Override
-    public String getMemoryRequests(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_spec_memory_reservation_limit_bytes{name=\"" + instanceName + "\"}";
-        }
-        else {
-            return "container_spec_memory_reservation_limit_bytes{container_name=\"\"," +
-                    "pod_name=~\"" + instanceName + ".*\"}";
-        }
-    }
-
-    @Override
-    public String getMemoryLimit(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_spec_memory_limit_bytes{name=\"" + instanceName + "\"}";
-        }
-        else {
-            return "container_spec_memory_limit_bytes{container_name=\"\"," +
-                    "pod_name=~\"" + instanceName + ".*\"}";
-        }
     }
 
     @Override
     public String getAPIEndpoint()
     {
         return "/api/v1/query?query=";
-    }
-
-    @Override
-    public String getPreviousCpuQuery(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "rate(container_cpu_usage_seconds_total{name=\"" + instanceName + "\"}[1m])[5h]";
-        }
-        else {
-            return "rate(container_cpu_usage_seconds_total{" +
-                    "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])[5h]";
-        }
-    }
-
-    @Override
-    public String getPreviousRssQuery(String instanceName)
-    {
-        if(DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}[5h]";
-        }
-        else {
-            return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h]";
-        }
     }
 
     @Override

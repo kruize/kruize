@@ -18,6 +18,8 @@ package com.kruize.analysis;
 
 import com.kruize.metrics.Metrics;
 
+import java.util.ArrayList;
+
 public interface Analysis<T extends Metrics>
 {
     void calculateCpuLimit(T metrics);
@@ -25,4 +27,18 @@ public interface Analysis<T extends Metrics>
     void calculateCpuRequests(T metrics);
     void calculateMemRequests(T metrics, int referenceIndex, int targetIndex);
     void finalizeY2DRecommendations(T metrics);
+
+    static double getLargestSpike(ArrayList<Double> arrayList)
+    {
+        final double ONE_MB = 1024 * 1024;
+        double largestSpike = 50 * ONE_MB;
+
+        for (int i = 1; i < arrayList.size(); i++) {
+            double difference = (arrayList.get(i) - arrayList.get(i - 1));
+            if (difference > largestSpike)
+                largestSpike = difference;
+        }
+
+        return largestSpike;
+    }
 }

@@ -82,8 +82,7 @@ public class CollectMetrics implements Runnable
         }
     }
 
-    private void setKruizeRecommendations(String application, Metrics metrics,
-                                         CurrentMetrics currentMetrics)
+    private void setKruizeRecommendations(String application, Metrics metrics, CurrentMetrics currentMetrics)
     {
         final double MIN_CPU_REQUEST = 0.5;
         final double MIN_CPU_LIMIT = 1;

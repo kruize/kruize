@@ -109,7 +109,10 @@ public class ContainerMetrics extends AbstractMetrics
     }
 
     @Override
-    public double getCurrentCpuLimit() { return currentRecommendations.getCpuLimit(); }
+    public double getCurrentCpuLimit()
+    {
+        return currentRecommendations.getCpuLimit();
+    }
 
     @Override
     public double getCurrentRssLimit()

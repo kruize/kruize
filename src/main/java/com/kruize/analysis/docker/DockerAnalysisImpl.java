@@ -92,7 +92,7 @@ public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
                 maxMem = mem;
         }
 
-        spike = getLargestSpike(rssValues);
+        spike = Analysis.getLargestSpike(rssValues);
         System.out.println("Spike for " + MetricCollector.CPU_INDEX + " is " + spike + "\n\n");
 
         double memRequests = container.getRssRequests();
@@ -105,32 +105,17 @@ public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
     @Override
     public void calculateCpuRequests(ContainerMetrics container)
     {
-        double cpuRequests = 0;
+        // Docker cannot enforce cpu requests
+        double cpuRequests = -1;
         container.setCurrentCpuRequests(cpuRequests);
     }
 
     @Override
     public void calculateMemRequests(ContainerMetrics container, int referenceIndex, int targetIndex)
     {
-        double memRequests = 0;
+        // Docker cannot enforce memory requests
+        double memRequests = -1;
         container.setCurrentRssRequests(memRequests);
-    }
-
-    private static double getLargestSpike(ArrayList<Double> arrayList)
-    {
-        final double ONE_MB = 1024 * 1024;
-        double largestSpike = 50 * ONE_MB;
-
-        for (int i = 1; i < arrayList.size(); i++)
-        {
-            double difference = (arrayList.get(i) - arrayList.get(i - 1));
-            if (difference > largestSpike)
-            {
-                largestSpike = difference;
-            }
-        }
-
-        return largestSpike;
     }
 
     @Override
