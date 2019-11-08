@@ -24,7 +24,6 @@ public class DeploymentInfo
     private static String authToken;
     private static String monitoringAgent = "prometheus";
     private static String monitoringAgentService = "prometheus-k8s";
-
     private static String monitoringAgentEndpoint = "";
 
     public static String getMonitoringAgentEndpoint()

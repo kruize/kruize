@@ -16,14 +16,10 @@
 
 package com.kruize.analysis.docker;
 
-import com.kruize.analysis.Analysis;
+import com.kruize.analysis.AnalysisImpl;
 import com.kruize.metrics.ContainerMetrics;
-import com.kruize.metrics.MetricCollector;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-
-public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
+public class DockerAnalysisImpl extends AnalysisImpl<ContainerMetrics>
 {
     private DockerAnalysisImpl() { }
 
@@ -42,67 +38,6 @@ public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
     }
 
     @Override
-    public void calculateCpuLimit(ContainerMetrics container)
-    {
-        double maxCpu = 0;
-        final double BUFFER = 1.15;
-
-        ArrayList<MetricCollector> metrics = container.metricCollector;
-
-        if (metrics.size() == 0) {
-            container.setCurrentCpuLimit(-1);
-            return;
-        }
-
-        for (MetricCollector metricCollector : metrics)
-        {
-            double cpu = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
-            if (maxCpu < cpu) {
-                maxCpu = cpu;
-            }
-        }
-
-        double cpuLimit = maxCpu * BUFFER;
-        DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
-
-        cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
-        container.setCurrentCpuLimit(cpuLimit);
-    }
-
-    @Override
-    public void calculateMemLimit(ContainerMetrics container)
-    {
-        double spike;
-        double maxMem = 0;
-        final double BUFFER = 1.2;
-
-        ArrayList<Double> rssValues = new ArrayList<>();
-        ArrayList<MetricCollector> metrics = container.metricCollector;
-
-        if (metrics.size() == 0) {
-            container.setCurrentRssLimit(-1);
-            return;
-        }
-
-        for (MetricCollector metricCollector : metrics)
-        {
-            double mem = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
-            rssValues.add(mem);
-            if (maxMem < mem)
-                maxMem = mem;
-        }
-
-        spike = Analysis.getLargestSpike(rssValues);
-        System.out.println("Spike for " + MetricCollector.CPU_INDEX + " is " + spike + "\n\n");
-
-        double memRequests = container.getRssRequests();
-
-        // If spike is very low
-        double memLimit = Math.max(memRequests + spike, maxMem * BUFFER);
-        container.setCurrentRssLimit(memLimit);
-    }
-
-    @Override
     public void calculateCpuRequests(ContainerMetrics container)
     {
         // Docker cannot enforce cpu requests
@@ -116,19 +51,5 @@ public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
         // Docker cannot enforce memory requests
         double memRequests = -1;
         container.setCurrentRssRequests(memRequests);
-    }
-
-    @Override
-    public void finalizeY2DRecommendations(ContainerMetrics container)
-    {
-        double currentCpuLimit = container.getCurrentCpuLimit();
-        double currentCpuRequests = container.getCurrentCpuRequests();
-        double currentRssLimit = container.getCurrentRssLimit();
-        double currentRssRequests = container.getCurrentRssRequests();
-
-        container.setRssLimit(Math.max(container.getRssLimits(), currentRssLimit));
-        container.setRssRequests(Math.max(container.getRssRequests(), currentRssRequests));
-        container.setCpuLimit(Math.max(container.getCpuLimit(), currentCpuLimit));
-        container.setCpuRequests(Math.max(container.getCpuRequests(), currentCpuRequests));
     }
 }
