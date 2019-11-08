@@ -23,10 +23,10 @@ import java.util.Set;
 public class SupportedTypes
 {
     public static final Set<String> CLUSTER_TYPES_SUPPORTED =
-            new HashSet<>(Arrays.asList("KUBERNETES"));
+            new HashSet<>(Arrays.asList("KUBERNETES", "DOCKER"));
 
     public static final Set<String> K8S_TYPES_SUPPORTED =
-            new HashSet<>(Arrays.asList("MINIKUBE", "OPENSHIFT", "ICP", "DOCKER"));
+            new HashSet<>(Arrays.asList("MINIKUBE", "OPENSHIFT", "ICP", null));
 
     public static final Set<String> AUTH_TYPES_SUPPORTED =
             new HashSet<>(Arrays.asList("SAML", "OIDC", "", null));

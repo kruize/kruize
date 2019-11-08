@@ -42,7 +42,7 @@ public abstract class EnvTypeImpl implements EnvType
     public static EnvTypeImpl getInstance()
     {
         if (envType == null) {
-            if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER")) {
+            if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
                 envType = new DockerEnvImpl();
             } else {
                 envType = new KubernetesEnvImpl();

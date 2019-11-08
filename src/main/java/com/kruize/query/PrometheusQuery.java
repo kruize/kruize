@@ -31,7 +31,7 @@ public abstract class PrometheusQuery implements Query
     public static PrometheusQuery getInstance()
     {
         if (prometheusQuery == null) {
-            if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER")) {
+            if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
                 prometheusQuery = new DockerPrometheusQuery();
             } else {
                 prometheusQuery = new KubernetesPrometheusQuery();
