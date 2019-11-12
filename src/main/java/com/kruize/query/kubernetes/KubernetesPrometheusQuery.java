@@ -62,12 +62,12 @@ public class KubernetesPrometheusQuery extends PrometheusQuery {
     public String getPreviousCpuQuery(String instanceName)
     {
         return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])[5h]";
+                "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])[5h:]";
     }
 
     @Override
     public String getPreviousRssQuery(String instanceName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h]";
+        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h:]";
     }
 }

@@ -89,8 +89,7 @@ public class DockerEnvImpl extends EnvTypeImpl
                 if (container != null && container.getAsJsonObject().size() > 0)
                     insertContainerMetrics(container);
             }
-        }
-        else {
+        } else {
             System.out.println("Looks like you do not have containers to monitor.");
             System.exit(1);
         }

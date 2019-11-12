@@ -59,12 +59,12 @@ public class DockerPrometheusQuery extends PrometheusQuery {
     @Override
     public String getPreviousCpuQuery(String instanceName)
     {
-        return "rate(container_cpu_usage_seconds_total{name=\"" + instanceName + "\"}[1m])[5h]";
+        return "rate(container_cpu_usage_seconds_total{name=\"" + instanceName + "\"}[1m])[5h:]";
     }
 
     @Override
     public String getPreviousRssQuery(String instanceName)
     {
-        return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}[5h]";
+        return "container_memory_working_set_bytes{name=\"" + instanceName + "\"}[5h:]";
     }
 }

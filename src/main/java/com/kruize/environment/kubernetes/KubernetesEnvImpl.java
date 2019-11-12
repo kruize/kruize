@@ -184,8 +184,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     .getLabels().get(podHashLabel);
 
             podMetrics.setPodTemplateHash(podTemplateHash);
-        }
-        catch (NullPointerException e) {
+        } catch (NullPointerException e) {
             podMetrics.setPodTemplateHash(null);
         }
 
