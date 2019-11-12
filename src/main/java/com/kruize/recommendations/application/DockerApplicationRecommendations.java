@@ -17,31 +17,89 @@
 package com.kruize.recommendations.application;
 
 import com.kruize.exceptions.NoSuchApplicationException;
-import com.kruize.metrics.AbstractMetrics;
+import com.kruize.metrics.ContainerMetrics;
 
-public class DockerApplicationRecommendations extends AbstractApplicationRecommendations<AbstractMetrics>
+import java.util.HashMap;
+
+public class DockerApplicationRecommendations extends AbstractApplicationRecommendations<ContainerMetrics>
 {
+    private DockerApplicationRecommendations()
+    {
+        applicationMap = new HashMap<>();
+    }
+
+    private static DockerApplicationRecommendations dockerApplicationRecommendations = null;
+
+    static {
+        getInstance();
+    }
+
+    public static DockerApplicationRecommendations getInstance()
+    {
+        if (dockerApplicationRecommendations == null) {
+            dockerApplicationRecommendations = new DockerApplicationRecommendations();
+        }
+
+        return dockerApplicationRecommendations;
+    }
+
     @Override
     public double getCpuRequests(String applicationName) throws NoSuchApplicationException
     {
-        return 0;
+        if (applicationMap.containsKey(applicationName)) {
+            // Docker cannot enforce cpu requests
+            return -1;
+        } else {
+            throw new NoSuchApplicationException();
+        }
     }
 
     @Override
     public double getCpuLimit(String applicationName) throws NoSuchApplicationException
     {
-        return 0;
+        if (applicationMap.containsKey(applicationName)) {
+            double weightedCpuRequests = 0;
+            double totalValues = 0;
+
+            for (ContainerMetrics containerMetrics : applicationMap.get(applicationName)) {
+                int numberOfValues = containerMetrics.metricCollector.size();
+                weightedCpuRequests += containerMetrics.getCpuLimit() * numberOfValues;
+
+                totalValues += numberOfValues;
+            }
+            return weightedCpuRequests / totalValues;
+        } else {
+            throw new NoSuchApplicationException();
+        }
     }
 
     @Override
     public double getRssRequests(String applicationName) throws NoSuchApplicationException
     {
-        return 0;
+        if (applicationMap.containsKey(applicationName)) {
+            // Docker cannot enforce memory requests
+            return -1;
+        } else {
+            throw new NoSuchApplicationException();
+        }
     }
 
     @Override
     public double getRssLimits(String applicationName) throws NoSuchApplicationException
     {
-        return 0;
+        if (applicationMap.containsKey(applicationName)) {
+            double weightedCpuRequests = 0;
+            double totalValues = 0;
+
+            for (ContainerMetrics containerMetrics : applicationMap.get(applicationName)) {
+                int numberOfValues = containerMetrics.metricCollector.size();
+                weightedCpuRequests += containerMetrics.getRssLimits() * numberOfValues;
+
+                totalValues += numberOfValues;
+            }
+            return weightedCpuRequests / totalValues;
+        } else {
+            throw new NoSuchApplicationException();
+        }
     }
 }

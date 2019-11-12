@@ -16,28 +16,40 @@
 
 package com.kruize.analysis.docker;
 
-import com.kruize.analysis.Analysis;
+import com.kruize.analysis.AnalysisImpl;
 import com.kruize.metrics.ContainerMetrics;
 
-public class DockerAnalysisImpl implements Analysis<ContainerMetrics>
+public class DockerAnalysisImpl extends AnalysisImpl<ContainerMetrics>
 {
-    @Override
-    public void calculateCpuLimit(ContainerMetrics metrics)
-    {}
+    private DockerAnalysisImpl() { }
+
+    private static DockerAnalysisImpl dockerAnalysis = null;
+
+    static {
+        getInstance();
+    }
+
+    public static DockerAnalysisImpl getInstance()
+    {
+        if (dockerAnalysis == null)
+            dockerAnalysis = new DockerAnalysisImpl();
+
+        return dockerAnalysis;
+    }
 
     @Override
-    public void calculateMemLimit(ContainerMetrics metrics)
-    {}
+    public void calculateCpuRequests(ContainerMetrics container)
+    {
+        // Docker cannot enforce cpu requests
+        double cpuRequests = -1;
+        container.setCurrentCpuRequests(cpuRequests);
+    }
 
     @Override
-    public void calculateCpuRequests(ContainerMetrics metrics)
-    {}
-
-    @Override
-    public void calculateMemRequests(ContainerMetrics metrics, int referenceIndex, int targetIndex)
-    {}
-
-    @Override
-    public void finalizeY2DRecommendations(ContainerMetrics metrics)
-    {}
+    public void calculateMemRequests(ContainerMetrics container, int referenceIndex, int targetIndex)
+    {
+        // Docker cannot enforce memory requests
+        double memRequests = -1;
+        container.setCurrentRssRequests(memRequests);
+    }
 }

@@ -16,10 +16,12 @@
 
 package com.kruize.query;
 
-public class PrometheusQuery implements Query
-{
-    private PrometheusQuery() {}
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.query.docker.DockerPrometheusQuery;
+import com.kruize.query.kubernetes.KubernetesPrometheusQuery;
 
+public abstract class PrometheusQuery implements Query
+{
     private static PrometheusQuery prometheusQuery = null;
 
     static {
@@ -28,68 +30,20 @@ public class PrometheusQuery implements Query
 
     public static PrometheusQuery getInstance()
     {
-        if (prometheusQuery == null)
-            prometheusQuery = new PrometheusQuery();
-
+        if (prometheusQuery == null) {
+            if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+                prometheusQuery = new DockerPrometheusQuery();
+            } else {
+                prometheusQuery = new KubernetesPrometheusQuery();
+            }
+        }
         return prometheusQuery;
-    }
-
-    @Override
-    public String getCpuQuery(String podName)
-    {
-        return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + podName + "\",container_name!=\"POD\"}[1m])";
-    }
-
-    @Override
-    public String getRssQuery(String podName)
-    {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + podName + "\"}";
-    }
-
-    @Override
-    public String getNetworkBytesTransmitted(String podName)
-    {
-        return "container_network_transmit_bytes_total{container_name=\"\",pod_name=\"" + podName + "\"}";
-    }
-
-    @Override
-    public String getNetworkBytesReceived(String podName)
-    {
-        return "container_network_receive_bytes_total{container_name=\"\",pod_name=\"" + podName + "\"}";
-    }
-
-    @Override
-    public String getMemoryRequests(String podName)
-    {
-        return "container_spec_memory_reservation_limit_bytes{container_name=\"\"," +
-                "pod_name=~\"" + podName + ".*\"}";
-    }
-
-    @Override
-    public String getMemoryLimit(String podName)
-    {
-        return "container_spec_memory_limit_bytes{container_name=\"\"," +
-                "pod_name=~\"" + podName + ".*\"}";
     }
 
     @Override
     public String getAPIEndpoint()
     {
         return "/api/v1/query?query=";
-    }
-
-    @Override
-    public String getPreviousCpuQuery(String podName)
-    {
-        return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + podName + "\",container_name!=\"POD\"}[1m])[5h]";
-    }
-
-    @Override
-    public String getPreviousRssQuery(String podName)
-    {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + podName + "\"}[5h]";
     }
 
     @Override

@@ -22,7 +22,14 @@ public abstract class AbstractMetrics implements Metrics
 {
     String name;
     String applicationName;
+    String namespace;
     String status;
+
+    private double originalMemoryLimit = 0;
+    private double originalMemoryRequests = 0;
+
+    private double originalCpuLimit = 0;
+    private double originalCpuRequests = 0;
 
     public ArrayList<MetricCollector> metricCollector = new ArrayList<>();
 
@@ -36,6 +43,16 @@ public abstract class AbstractMetrics implements Metrics
     public void setName(String name)
     {
         this.name = name;
+    }
+
+    public String getNamespace()
+    {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace)
+    {
+        this.namespace = namespace;
     }
 
     @Override
@@ -58,5 +75,45 @@ public abstract class AbstractMetrics implements Metrics
     public void setApplicationName(String applicationName)
     {
         this.applicationName = applicationName;
+    }
+
+    public double getOriginalMemoryRequests()
+    {
+        return originalMemoryRequests;
+    }
+
+    public void setOriginalMemoryRequests(double originalMemoryRequests)
+    {
+        this.originalMemoryRequests = originalMemoryRequests;
+    }
+
+    public double getOriginalMemoryLimit()
+    {
+        return originalMemoryLimit;
+    }
+
+    public void setOriginalMemoryLimit(double originalMemoryLimit)
+    {
+        this.originalMemoryLimit = originalMemoryLimit;
+    }
+
+    public double getOriginalCpuRequests()
+    {
+        return originalCpuRequests;
+    }
+
+    public void setOriginalCpuRequests(double originalCpuRequests)
+    {
+        this.originalCpuRequests = originalCpuRequests;
+    }
+
+    public double getOriginalCpuLimit()
+    {
+        return originalCpuLimit;
+    }
+
+    public void setOriginalCpuLimit(double originalCpuLimit)
+    {
+        this.originalCpuLimit = originalCpuLimit;
     }
 }
