@@ -65,7 +65,8 @@ public class Initialize
 
         DeploymentInfo.setMonitoringAgentEndpoint(monitoring_agent_endpoint);
 
-        DeploymentInfo.setMonitoringAgentService(monitoring_agent_service);
+        if (monitoring_agent_service != null)
+            DeploymentInfo.setMonitoringAgentService(monitoring_agent_service.toUpperCase());
 
         printDeploymentInfo();
     }

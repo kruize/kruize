@@ -17,6 +17,7 @@
 package com.kruize.environment;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,5 +33,5 @@ public class SupportedTypes
             new HashSet<>(Arrays.asList("SAML", "OIDC", "", null));
 
     public static final Set<String> MONITORING_AGENTS_SUPPORTED =
-            new HashSet<>(Arrays.asList("PROMETHEUS"));
+            new HashSet<>(Collections.singletonList("PROMETHEUS"));
 }

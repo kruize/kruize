@@ -25,6 +25,7 @@ import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.PodMetrics;
 import com.kruize.query.PrometheusQuery;
 import com.kruize.recommendations.application.KubernetesApplicationRecommendations;
+import com.kruize.util.HttpUtil;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
@@ -34,6 +35,8 @@ import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.Config;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -43,17 +46,27 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     public void setupMonitoringAgent()
     {
         try {
+
+            if (DeploymentInfo.getMonitoringAgentEndpoint() == null) {
+                if (DeploymentInfo.getMonitoringAgentService() != null) {
+                    getMonitoringEndpointFromService();
+                } else {
+                    throw new MonitoringAgentMissingException("ERROR: No service or endpoint specified");
+                }
+            }
             if (!checkMonitoringAgentSupported()) {
                 throw new MonitoringAgentNotSupportedException();
             }
             if (!checkMonitoringAgentRunning()) {
                 throw new MonitoringAgentMissingException(DeploymentInfo.getMonitoringAgent() + " not running");
             }
+            setMonitoringLabels();
         } catch (MonitoringAgentNotSupportedException |
                 MonitoringAgentMissingException |
                 IOException |
                 ApiException e) {
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -77,10 +90,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
         for (V1Service service : serviceList.getItems()) {
             String serviceName = service.getMetadata().getName();
-            for (String monitoring_agent : SupportedTypes.MONITORING_AGENTS_SUPPORTED) {
-                if (serviceName.toUpperCase().contains(monitoring_agent))
-                    return true;
-            }
+            if (serviceName.toUpperCase().contains(DeploymentInfo.getMonitoringAgent()))
+                return true;
         }
 
         return false;
@@ -158,6 +169,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void insertPodMetrics(V1Pod pod)
     {
         PodMetrics podMetrics = getPodMetrics(pod);
@@ -233,6 +245,54 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             return podName.substring(0, podName.indexOf(hash) - 1);
         } else {
             return parseApplicationNameFromInstanceName(podName);
+        }
+    }
+
+    private void getMonitoringEndpointFromService() throws IOException, ApiException
+    {
+        ApiClient client = Config.defaultClient();
+        Configuration.setDefaultApiClient(client);
+        CoreV1Api api = new CoreV1Api();
+
+        V1ServiceList serviceList = api.listServiceForAllNamespaces(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        for (V1Service service : serviceList.getItems()) {
+            String serviceName = service.getMetadata().getName();
+            if (serviceName.toUpperCase().equals(DeploymentInfo.getMonitoringAgentService())) {
+                String clusterIP = service.getSpec().getClusterIP();
+                int port = service.getSpec().getPorts().get(0).getPort();
+                DeploymentInfo.setMonitoringAgentEndpoint("http://" + clusterIP + ":" + port);
+            }
+        }
+    }
+
+    private void setMonitoringLabels()
+    {
+        try {
+            URL labelURL = new URL(DeploymentInfo.getMonitoringAgentEndpoint() + "/api/v1/labels");
+            String result = HttpUtil.getDataFromURL(labelURL);
+            PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
+
+            if (result.contains("\"pod\"")) {
+                prometheusQuery.setPodLabel("pod");
+                prometheusQuery.setContainerLabel("container");
+            } else {
+                prometheusQuery.setPodLabel("pod_name");
+                prometheusQuery.setContainerLabel("container_name");
+            }
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -16,6 +16,4 @@
 
 package com.kruize.exceptions;
 
-public class MonitoringAgentNotSupportedException extends Exception
-{
-}
+public class MonitoringAgentNotSupportedException extends Exception { }

@@ -28,17 +28,10 @@ import com.kruize.recommendations.application.AbstractApplicationRecommendations
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.kruize.util.HttpUtil;
 
-import javax.net.ssl.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -46,13 +39,16 @@ public class CollectMetrics implements Runnable
 {
     private EnvTypeImpl envType = EnvTypeImpl.getInstance();
     private Query query = envType.query;
+
+    @SuppressWarnings("unchecked")
     private AbstractApplicationRecommendations<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
 
     static
     {
-        disableSSLVertification();
+        HttpUtil.disableSSLVertification();
     }
 
+    @SuppressWarnings("unchecked")
     private void getMetrics(String application)
     {
         String monitoringAgentEndPoint = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
@@ -82,7 +78,8 @@ public class CollectMetrics implements Runnable
         }
     }
 
-    private void setKruizeRecommendations(String application, Metrics metrics, CurrentMetrics currentMetrics)
+    private void setKruizeRecommendations(String application, Metrics metrics,
+                                         CurrentMetrics currentMetrics)
     {
         final double MIN_CPU_REQUEST = 0.5;
         final double MIN_CPU_LIMIT = 1;
@@ -117,6 +114,7 @@ public class CollectMetrics implements Runnable
         Kruize.originalMemoryLimits.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
     }
 
+    @SuppressWarnings("unchecked")
     private void analyseMetrics(Metrics metrics)
     {
         envType.analysis.calculateCpuRequests(metrics);
@@ -147,91 +145,6 @@ public class CollectMetrics implements Runnable
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getDataFromURL(URL url)
-    {
-        String result = null;
-        try {
-            HttpURLConnection connection;
-
-            if (url.toString().contains("https")) {
-                connection = (HttpsURLConnection) url.openConnection();
-            } else {
-                connection = (HttpURLConnection) url.openConnection();
-            }
-
-            //TODO Find another way to authorize
-            String bearerToken = DeploymentInfo.getAuthToken();
-
-            connection.setRequestProperty("Authorization", bearerToken);
-
-            if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-                result = getDataFromConnection(connection);
-            } else {
-                System.out.println(connection.getResponseCode());
-                if (connection.getResponseCode() == 403) {
-                    System.out.println("Please refresh your auth token");
-                    System.exit(1);
-                }
-                System.out.println("Response Failure!");
-                System.out.println(url.toString());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    private String getDataFromConnection(HttpURLConnection connection) throws IOException
-    {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
-                connection.getInputStream()
-        ));
-
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-
-        while ((inputLine = bufferedReader.readLine()) != null) {
-            response.append(inputLine);
-        }
-
-        bufferedReader.close();
-        return response.toString();
-    }
-
-    private static void disableSSLVertification()
-    {
-        TrustManager[] dummyTrustManager = new TrustManager[]{new X509TrustManager()
-        {
-            public X509Certificate[] getAcceptedIssuers()
-            {
-                return null;
-            }
-
-            public void checkClientTrusted(X509Certificate[] certs, String authType)
-            {
-            }
-
-            public void checkServerTrusted(X509Certificate[] certs, String authType)
-            {
-            }
-        }};
-
-        HostnameVerifier allHostsValid = (hostname, session) -> true;
-
-        SSLContext sslContext = null;
-        try {
-            sslContext = SSLContext.getInstance("SSL");
-            sslContext.init(null, dummyTrustManager, new java.security.SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            e.printStackTrace();
-        }
-
-        assert sslContext != null;
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
     }
 
     private void getPreviousData(String application)
@@ -271,7 +184,7 @@ public class CollectMetrics implements Runnable
 
     private JsonArray getAsJsonArray(URL url, String values) throws IndexOutOfBoundsException
     {
-        String response = getDataFromURL(url);
+        String response = HttpUtil.getDataFromURL(url);
 
         return new JsonParser()
                 .parse(response)
@@ -346,7 +259,6 @@ public class CollectMetrics implements Runnable
         private String cpuQuery;
         private double rss;
         private double cpu;
-        private double MIN_CPU = 0.02;
 
         CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
         {
@@ -368,6 +280,7 @@ public class CollectMetrics implements Runnable
 
         CurrentMetrics invoke() throws MalformedURLException
         {
+            double MIN_CPU = 0.02;
             try {
                 cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
                 System.out.println("CPU: " + cpu);

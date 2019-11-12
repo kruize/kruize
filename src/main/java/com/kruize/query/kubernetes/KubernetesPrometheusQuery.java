@@ -21,53 +21,59 @@ import com.kruize.query.PrometheusQuery;
 public class KubernetesPrometheusQuery extends PrometheusQuery {
 
     @Override
-    public String getCpuQuery(String instanceName)
+    public String getCpuQuery(String podName)
     {
         return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])";
+                podLabel + "=~\"" + podName + "\"," + containerLabel + "!=\"POD\"}[1m])";
     }
 
     @Override
-    public String getRssQuery(String instanceName)
+    public String getRssQuery(String podName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        return "container_memory_working_set_bytes{" + containerLabel + "=\"\"," +
+                podLabel + "=\"" + podName + "\"}";
     }
 
     @Override
-    public String getNetworkBytesTransmitted(String instanceName)
+    public String getNetworkBytesTransmitted(String podName)
     {
-        return "container_network_transmit_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        return "container_network_transmit_bytes_total{" + containerLabel + "=\"\"," +
+                podLabel + "=\"" + podName + "\"}";
     }
 
     @Override
-    public String getNetworkBytesReceived(String instanceName)
+    public String getNetworkBytesReceived(String podName)
     {
-        return "container_network_receive_bytes_total{container_name=\"\",pod_name=\"" + instanceName + "\"}";
+        return "container_network_receive_bytes_total{" + containerLabel + "=\"\"," +
+                podLabel + "=\"" + podName + "\"}";
     }
 
     @Override
-    public String getMemoryRequests(String instanceName)
+    public String getMemoryRequests(String podName)
     {
-        return "container_spec_memory_reservation_limit_bytes{container_name=\"\"," +
-                "pod_name=~\"" + instanceName + ".*\"}";
+        return "container_spec_memory_reservation_limit_bytes{" + containerLabel + "=\"\"," +
+                podLabel + "=~\"" + podName + ".*\"}";
     }
 
     @Override
-    public String getMemoryLimit(String instanceName)
+    public String getMemoryLimit(String podName)
     {
-        return "container_spec_memory_limit_bytes{container_name=\"\"," + "pod_name=~\"" + instanceName + ".*\"}";
+        return "container_spec_memory_limit_bytes{" + containerLabel + "=\"\"," +
+                podLabel + "=~\"" + podName + ".*\"}";
     }
-
     @Override
-    public String getPreviousCpuQuery(String instanceName)
+    public String getPreviousCpuQuery(String podName)
     {
         return "rate(container_cpu_usage_seconds_total{" +
-                "pod_name=~\"" + instanceName + "\",container_name!=\"POD\"}[1m])[5h:]";
+                podLabel + "=~\"" + podName + "\"," +
+                containerLabel + "!=\"POD\"}[1m])[5h:]";
     }
 
     @Override
-    public String getPreviousRssQuery(String instanceName)
+    public String getPreviousRssQuery(String podName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h]";
+        return "container_memory_working_set_bytes{" +
+                containerLabel + "=\"\"," +
+                podLabel + "=\"" + podName + "\"}[5h]";
     }
 }
