@@ -68,6 +68,6 @@ public class KubernetesPrometheusQuery extends PrometheusQuery {
     @Override
     public String getPreviousRssQuery(String instanceName)
     {
-        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h:]";
+        return "container_memory_working_set_bytes{container_name=\"\",pod_name=\"" + instanceName + "\"}[5h]";
     }
 }
