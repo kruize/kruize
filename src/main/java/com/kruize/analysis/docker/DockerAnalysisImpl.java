@@ -37,19 +37,4 @@ public class DockerAnalysisImpl extends AnalysisImpl<ContainerMetrics>
         return dockerAnalysis;
     }
 
-    @Override
-    public void calculateCpuRequests(ContainerMetrics container)
-    {
-        // Docker cannot enforce cpu requests
-        double cpuRequests = -1;
-        container.setCurrentCpuRequests(cpuRequests);
-    }
-
-    @Override
-    public void calculateMemRequests(ContainerMetrics container, int referenceIndex, int targetIndex)
-    {
-        // Docker cannot enforce memory requests
-        double memRequests = -1;
-        container.setCurrentRssRequests(memRequests);
-    }
 }
