@@ -23,7 +23,12 @@ public class DockerPrometheusQuery extends PrometheusQuery {
     @Override
     public String getCpuQuery(String instanceName)
     {
-        return "rate(container_cpu_usage_seconds_total{name=~\"" + instanceName + "\"}[1m])";
+        /* CAdvisor gives the CPU used by the application on each core for a container.
+         * This is in contrast to a pod, where the total CPU used is reported instead.
+         * To get the total CPU used by the application for Docker, we sum up
+         * the individual core values.
+         */
+        return "sum(rate(container_cpu_usage_seconds_total{name=~\"" + instanceName + "\"}[1m]))";
     }
 
     @Override

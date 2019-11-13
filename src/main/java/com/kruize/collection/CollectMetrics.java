@@ -97,9 +97,13 @@ public class CollectMetrics implements Runnable
 
         if (cpuRequests > 0) {
             Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
-            Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
         } else {
             Kruize.cpuRequests.labels(namespace, application).set(-1);
+        }
+
+        if (cpuLimit > 0) {
+            Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
+        } else {
             Kruize.cpuLimits.labels(namespace, application).set(-1);
         }
 
