@@ -30,18 +30,26 @@ RUN mvn install dependency:copy-dependencies
 
 RUN mvn clean package
 
-FROM adoptopenjdk:11-jre-openj9
+RUN jlink --strip-debug --compress 2 --no-header-files --no-man-pages --module-path /opt/java/openjdk/jmods --add-modules java.base,java.compiler,java.desktop,java.logging,java.management,java.naming,java.security.jgss,java.sql,java.xml,jdk.compiler,jdk.httpserver,jdk.unsupported --exclude-files=**java_**.properties,**J9TraceFormat**.dat,**OMRTraceFormat**.dat,**j9ddr**.dat,**public_suffix_list**.dat --output jre
+
+#####################################################################
+
+FROM dinogun/alpine:3.10-glibc
 
 ARG KRUIZE_VERSION
 
 WORKDIR /opt/app
 
-RUN useradd -u 1001 -r -g root -s /usr/sbin/nologin kruize \
-    && chown -R 1001:0 /opt \
-    && chmod -R g+rw /opt
+RUN adduser -u 1001 -S -G root -s /usr/sbin/nologin kruize \
+    && chown -R 1001:0 /opt/app \
+    && chmod -R g+rw /opt/app
 
 USER 1001
 
+COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/jre /opt/app/jre
 COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/target/kruize-monitoring-${KRUIZE_VERSION}-jar-with-dependencies.jar /opt/app/kruize-monitoring-with-dependencies.jar
+
+ENV JAVA_HOME=/opt/app/jre \
+    PATH="/opt/app/jre/bin:$PATH"
 
 CMD ["java", "-jar", "/opt/app/kruize-monitoring-with-dependencies.jar"]
