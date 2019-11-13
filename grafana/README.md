@@ -3,8 +3,8 @@
 
 There are 2 json files provided for the Kruize Grafana dashboard depending upon the cluster type: 
 
-1. `kruize_docker_dashboard.json` for Docker cluster type 
-2. `kruize_kubernetes_dashboard.json` for Kubernetes cluster type 
+1. [kruize_docker_dashboard.json](manifests/docker/grafana/dashboards/kruize_docker_dashboard.json) for Docker cluster type 
+2. [kruize_kubernetes_dashboard.json](grafana/kruize_kubernetes_dashboard.json) for Kubernetes cluster type 
 
 The differences between the 2 json files are: 
 
