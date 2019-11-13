@@ -22,10 +22,16 @@ SA_TEMPLATE="manifests/kruize-sa_rbac.yaml_template"
 SA_MANIFEST="manifests/kruize-sa_rbac.yaml"
 SA_NAME="kruize-sa"
 
-PROMETHEUS_MANIFEST="manifests/docker/prometheus.yml"
 DOCKER_MANIFEST="manifests/docker/kruize-docker.yaml"
 DOCKER_TMP_JSON="kruize-docker-tmp.json"
 DOCKER_JSON="kruize-docker.json"
+PROMETHEUS_MANIFEST="manifests/docker/prometheus.yaml"
+GRAFANA_MANIFESTS="manifests/docker/grafana/"
+
+CADVISOR_DOCKER_IMAGE="google/cadvisor:latest"
+PROMETHEUS_DOCKER_IMAGE="prom/prometheus:latest"
+GRAFANA_DOCKER_IMAGE="grafana/grafana:latest"
+KRUIZE_DOCKER_IMAGE="dinogun/kruize":${KRUIZE_VERSION}
 
 cluster_type="icp"
 setup=1
@@ -38,7 +44,8 @@ openshift_ns="openshift-monitoring"
 
 function usage() {
 	echo
-	echo "Usage: $0 [-k url] [-c [docker|icp|openshift]] [-u user] [-p password] [-n namespace]" 
+	echo "Usage: $0 [-k url] [-c [docker|icp|openshift]] [-s|t] [-u user] [-p password] [-n namespace]" 
+	echo "       -s = start(default), -t = terminate"
 	exit -1
 }
 
@@ -140,31 +147,31 @@ function docker_prereq() {
 	echo
 	echo "Info: Checking pre requisites for Docker..."
 
-	docker pull google/cadvisor:latest
-	check_err "Error: Unable to pull prometheus docker image"
+	docker pull ${CADVISOR_DOCKER_IMAGE}
+	check_err "Error: Unable to pull prometheus docker image: ${CADVISOR_DOCKER_IMAGE}"
 
-	docker pull prom/prometheus:latest
-	check_err "Error: Unable to pull prometheus docker image"
+	docker pull ${PROMETHEUS_DOCKER_IMAGE}
+	check_err "Error: Unable to pull prometheus docker image: ${PROMETHEUS_DOCKER_IMAGE}"
 
-	docker pull grafana/grafana:latest
-	check_err "Error: Unable to pull grafana docker image"
+	docker pull ${GRAFANA_DOCKER_IMAGE}
+	check_err "Error: Unable to pull grafana docker image: ${GRAFANA_DOCKER_IMAGE}"
 
-	docker pull kruize:${KRUIZE_VERSION}
-	check_err "Error: Unable to pull kruize docker image"
+	docker pull ${KRUIZE_DOCKER_IMAGE}
+	check_err "Error: Unable to pull kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
 }
 
 #
 function docker_setup() {
 	echo "Starting cadvisor container"
-	docker run -d --rm --name=cadvisor   -p 8000:8080 --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro   google/cadvisor:latest
+	docker run -d --rm --name=cadvisor   -p 8000:8080 --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro  ${CADVISOR_DOCKER_IMAGE}
 	check_err "Error: cadvisor did not start up"
 
 	echo "Starting prometheus container"
-	docker run -d --rm --name=prometheus -p 9090:9090 --net=host -v ${PWD}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml prom/prometheus
+	docker run -d --rm --name=prometheus -p 9090:9090 --net=host -v ${PWD}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml ${PROMETHEUS_DOCKER_IMAGE}
 	check_err "Error: prometheus did not start up"
 
 	echo "Starting grafana container"
-	docker run -d --rm --name=grafana    -p 3000:3000 --net=host grafana/grafana
+	docker run -d --rm --name=grafana    -p 3000:3000 --net=host -v ${PWD}/${GRAFANA_MANIFESTS}:/etc/grafana/provisioning/ ${GRAFANA_DOCKER_IMAGE}
 	check_err "Error: grafana did not start up"
 }
 
@@ -175,7 +182,7 @@ function docker_deploy() {
 	echo "Info: Waiting for prometheus/grafana/cadvisor to be up and running"
 	sleep 5
 	echo "Starting kruize container"
-	docker run -d --rm --name=kruize --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:9090" --env MONITORING_AGENT="Prometheus" -v ${PWD}/kruize-docker.json:/opt/app/kruize-docker.json kruize:${KRUIZE_VERSION}
+	docker run -d --rm --name=kruize --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:9090" --env MONITORING_AGENT="Prometheus" -v ${PWD}/kruize-docker.json:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
 	check_err "Error: kruize did not start up"
 	echo "Waiting for kruize container to come up"
 	sleep 10
@@ -183,7 +190,7 @@ function docker_deploy() {
 }
 
 # 
-function docker_install() {
+function docker_start() {
 	echo
 	echo "###   Installing kruize for docker..."
 	echo
@@ -192,7 +199,7 @@ function docker_install() {
 	docker_deploy
 }
 
-function docker_uninstall() {
+function docker_terminate() {
 	echo -n "###   Uninstalling kruize for docker..."
 	docker stop kruize grafana prometheus cadvisor 2>/dev/null
 	rm -f ${DOCKER_TMP_JSON} ${DOCKER_JSON}
@@ -265,7 +272,7 @@ function icp_deploy() {
 }
 
 # Deploy kruize to IBM Cloud Private
-function icp_install() {
+function icp_start() {
 	echo
 	echo "###   Installing kruize for ICP"
 	echo
@@ -275,7 +282,7 @@ function icp_install() {
 	icp_deploy
 }
 
-function icp_uninstall() {
+function icp_terminate() {
 	# Add ICP cleanup code
 	echo 
 }
@@ -344,7 +351,7 @@ function openshift_deploy() {
 	oc get pods | grep kruize
 }
 
-function openshift_install() {
+function openshift_start() {
 	echo
 	echo "OpenShift support coming soon!"
 	exit -1;
@@ -355,7 +362,7 @@ function openshift_install() {
 	openshift_deploy
 }
 
-function openshift_uninstall() {
+function openshift_terminate() {
 	# Add OpenShift cleanup code
 	echo 
 }
@@ -395,7 +402,7 @@ done
 
 # Call the proper setup function based on the cluster_type
 if [ ${setup} == 1 ]; then
-	${cluster_type}_install
+	${cluster_type}_start
 else
-	${cluster_type}_uninstall
+	${cluster_type}_terminate
 fi
