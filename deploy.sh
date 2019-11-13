@@ -14,14 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-cluster_type="icp"
+KRUIZE_VERSION=$(cat .kruize-version)
+
 DEPLOY_TEMPLATE="manifests/kruize.yaml_template"
 DEPLOY_MANIFEST="manifests/kruize.yaml"
 SA_TEMPLATE="manifests/kruize-sa_rbac.yaml_template"
 SA_MANIFEST="manifests/kruize-sa_rbac.yaml"
-DOCKER_MANIFEST="manifest/kruize-docker.yaml"
-DOCKER_JSON="kruize-docker.json"
 SA_NAME="kruize-sa"
+
+PROMETHEUS_MANIFEST="manifests/docker/prometheus.yml"
+DOCKER_MANIFEST="manifests/docker/kruize-docker.yaml"
+DOCKER_TMP_JSON="kruize-docker-tmp.json"
+DOCKER_JSON="kruize-docker.json"
+
+cluster_type="icp"
+setup=1
 
 # Determine namespace into which kruize will be deployed
 # ICP       = kube-system namespace
@@ -58,31 +65,44 @@ function check_cluster_type() {
 ################################  v Docker v ##################################
 
 # Read the docker manifest and build a list of containers to be monitored
-function get_all_containers() {
-	all_containers=$(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | awk -F '"' '{ print $2 }')
-	all_containers="${all_containers} $(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | grep -v '"' | awk -F ':' '{ print $2 }')"
-	all_containers=$(echo ${all_containers} | sort | uniq)
+function get_all_monitored_containers() {
+	all_monitored_containers=$(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | awk -F '"' '{ print $2 }')
+	all_monitored_containers="${all_monitored_containers} $(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | grep -v '"' | awk -F ':' '{ print $2 }')"
+	all_monitored_containers=$(echo ${all_monitored_containers} | sort | uniq)
 
-	echo ${all_containers}
+	echo ${all_monitored_containers}
+}
+
+function create_dummy_json_file() {
+	printf '{\n  "containers": [' > ${DOCKER_JSON}
+	printf '     { "name": "kruize", "cpu_limit": "0", "mem_limit": "0" }' >> ${DOCKER_JSON}
+	printf '  ]\n}\n' >> ${DOCKER_JSON}
 }
 
 function create_json_file() {
-	printf '{\n  "containers": [\n' > ${DOCKER_JSON}
+	printf '{\n  "containers": [' > ${DOCKER_TMP_JSON}
 }
 
 function close_json_file() {
-	printf '  ]\n}' >> ${DOCKER_JSON}
-	sed -i "$(sed -n '/name/ =' ${DOCKER_JSON} | tail -n 1)"' s/,$//' ${DOCKER_JSON}
+	printf '\n  ]\n}' >> ${DOCKER_TMP_JSON}
+	sed -i "$(sed -n '/name/ =' ${DOCKER_TMP_JSON} | tail -n 1)"' s/,$//' ${DOCKER_TMP_JSON}
 }
 
 function create_json_entry() {
-	printf '    { "name": "$1", "cpu_limit": "$2", "mem_limit": "$3" },' >> ${DOCKER_JSON}
+	printf "\n    { \"name\": \"$1\", \"cpu_limit\": \"$2\", \"mem_limit\": \"$3\" }," >> ${DOCKER_TMP_JSON}
 }
 
 function get_container_info() {
 	create_json_file
-	for ctnr in $(get_all_containers)
+	for ctnr in $(get_all_monitored_containers)
 	do
+		docker inspect ${ctnr} >/dev/null 2>/dev/null
+		if [ $? -ne 0 ]; then
+			echo " ${ctnr}: not found running. Ignoring..."
+			continue;
+		else
+			echo " ${ctnr}: found. Adding to list of containers to be monitored."
+		fi
 		# Get the container id from docker inspect
 		cont_id=$(docker inspect ${ctnr} | grep '\"Id\":' | awk -F'"' '{ print $4 }')
 		# Get quota and period
@@ -98,49 +118,85 @@ function get_container_info() {
 			cont_cpu_limit=$(( ${cont_cpu_quota} / ${cont_cpu_period} ))
 		fi
 
-		create_json_entry cntr cont_cpu_limit cont_mem_limit
+		create_json_entry ${ctnr} ${cont_cpu_limit} ${cont_mem_limit}
 	done
 	close_json_file
+	cp ${DOCKER_TMP_JSON} ${DOCKER_JSON}
+}
+
+#
+function app_monitor_loop() {
+	echo "#####     Starting App Monitor loop     #####"
+	echo "Info: Press CTRL-C to exit"
+	while true
+	do
+		get_container_info
+		sleep 10
+	done
 }
 
 #
 function docker_prereq() {
 	echo
-	echo -n "Info: Checking pre requisites for Docker..."
+	echo "Info: Checking pre requisites for Docker..."
+
+	docker pull google/cadvisor:latest
+	check_err "Error: Unable to pull prometheus docker image"
 
 	docker pull prom/prometheus:latest
 	check_err "Error: Unable to pull prometheus docker image"
+
 	docker pull grafana/grafana:latest
 	check_err "Error: Unable to pull grafana docker image"
-	docker pull dinogun/kruize:0.6.1
+
+	docker pull kruize:${KRUIZE_VERSION}
 	check_err "Error: Unable to pull kruize docker image"
 }
 
 #
-function docker_first() {
-	echo
-}
-
-#
 function docker_setup() {
-	echo
+	echo "Starting cadvisor container"
+	docker run -d --rm --name=cadvisor   -p 8000:8080 --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro   google/cadvisor:latest
+	check_err "Error: cadvisor did not start up"
+
+	echo "Starting prometheus container"
+	docker run -d --rm --name=prometheus -p 9090:9090 --net=host -v ${PWD}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml prom/prometheus
+	check_err "Error: prometheus did not start up"
+
+	echo "Starting grafana container"
+	docker run -d --rm --name=grafana    -p 3000:3000 --net=host grafana/grafana
+	check_err "Error: grafana did not start up"
 }
 
 #
 function docker_deploy() {
 	echo 
+	create_dummy_json_file
+	echo "Info: Waiting for prometheus/grafana/cadvisor to be up and running"
+	sleep 5
+	echo "Starting kruize container"
+	docker run -d --rm --name=kruize --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:9090" --env MONITORING_AGENT="Prometheus" -v ${PWD}/kruize-docker.json:/opt/app/kruize-docker.json kruize:${KRUIZE_VERSION}
+	check_err "Error: kruize did not start up"
+	echo "Waiting for kruize container to come up"
+	sleep 10
+	app_monitor_loop
 }
 
 # 
-function docker() {
+function docker_install() {
 	echo
-	echo "Docker support coming soon!"
-	exit -1;
-
+	echo "###   Installing kruize for docker..."
+	echo
 	docker_prereq
-	docker_first
 	docker_setup
 	docker_deploy
+}
+
+function docker_uninstall() {
+	echo -n "###   Uninstalling kruize for docker..."
+	docker stop kruize grafana prometheus cadvisor 2>/dev/null
+	rm -f ${DOCKER_TMP_JSON} ${DOCKER_JSON}
+	echo "done"
 }
 
 ################################  ^ Docker ^ ##################################
@@ -194,6 +250,7 @@ function icp_setup() {
 	sleep 1
 
 	sed "s/{{ K8S_TYPE }}/ICP/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}|" ${DEPLOY_MANIFEST}
 	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 }
@@ -208,12 +265,21 @@ function icp_deploy() {
 }
 
 # Deploy kruize to IBM Cloud Private
-function icp() {
+function icp_install() {
+	echo
+	echo "###   Installing kruize for ICP"
+	echo
 	icp_prereq
 	icp_first
 	icp_setup
 	icp_deploy
 }
+
+function icp_uninstall() {
+	# Add ICP cleanup code
+	echo 
+}
+
 ##################################  ^ ICP ^ ###################################
 
 ###############################  v OpenShift v ################################
@@ -262,6 +328,7 @@ function openshift_setup() {
 	sleep 1
 
 	sed "s/{{ K8S_TYPE }}/OpenShift/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}|" ${DEPLOY_MANIFEST}
 	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 }
@@ -277,7 +344,7 @@ function openshift_deploy() {
 	oc get pods | grep kruize
 }
 
-function openshift() {
+function openshift_install() {
 	echo
 	echo "OpenShift support coming soon!"
 	exit -1;
@@ -288,10 +355,15 @@ function openshift() {
 	openshift_deploy
 }
 
+function openshift_uninstall() {
+	# Add OpenShift cleanup code
+	echo 
+}
+
 ###############################  ^ OpenShift ^ ################################
 
 # Iterate through the commandline options
-while getopts c:k:u:p:n: gopts
+while getopts c:k:n:p:stu: gopts
 do
 	case ${gopts} in
 	c)
@@ -301,14 +373,20 @@ do
 	k)
 		kurl="${OPTARG}"
 		;;
-	u)
-		user="${OPTARG}"
+	n)
+		icp_ns="${OPTARG}"
 		;;
 	p)
 		password="${OPTARG}"
 		;;
-	n)
-		icp_ns="${OPTARG}"
+	s)
+		setup=1
+		;;
+	t)
+		setup=0
+		;;
+	u)
+		user="${OPTARG}"
 		;;
 	[?])
 		usage
@@ -316,4 +394,8 @@ do
 done
 
 # Call the proper setup function based on the cluster_type
-${cluster_type}
+if [ ${setup} == 1 ]; then
+	${cluster_type}_install
+else
+	${cluster_type}_uninstall
+fi

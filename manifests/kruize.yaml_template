@@ -16,7 +16,7 @@ spec:
       serviceAccountName: kruize-sa
       containers:
       - name: kruize
-        image: dinogun/kruize:0.6.2
+        image: dinogun/kruize:{{ KRUIZE_VERSION }}
         imagePullPolicy: Always
         env:
         - name: CLUSTER_TYPE
