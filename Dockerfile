@@ -15,16 +15,18 @@
 #
 FROM adoptopenjdk/maven-openjdk11-openj9:latest as mvnbuild-openj9
 
-RUN rm -rf /var/lib/apt/lists/* && apt-get clean && apt-get update \
-    && apt-get install -y --no-install-recommends git \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git vim \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/src
+WORKDIR /opt/app
 
 ARG KRUIZE_VERSION
 
-COPY src /opt/src/src
-COPY pom.xml /opt/src/
+COPY src /opt/app/src
+COPY pom.xml /opt/app/
+
+RUN mvn install dependency:copy-dependencies
 
 RUN mvn clean package
 
@@ -40,6 +42,6 @@ RUN useradd -u 1001 -r -g root -s /usr/sbin/nologin kruize \
 
 USER 1001
 
-COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/src/target/kruize-monitoring-${KRUIZE_VERSION}-jar-with-dependencies.jar /opt/app/kruize-monitoring-with-dependencies.jar
+COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/target/kruize-monitoring-${KRUIZE_VERSION}-jar-with-dependencies.jar /opt/app/kruize-monitoring-with-dependencies.jar
 
 CMD ["java", "-jar", "/opt/app/kruize-monitoring-with-dependencies.jar"]
