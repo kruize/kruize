@@ -37,6 +37,6 @@ done
 sed -i "/<artifactId>kruize-monitoring<\/artifactId>/{n;s/<version>.*<\/version>/<version>${KRUIZE_VERSION}<\/version>/}" pom.xml
 
 # Build the docker image with the given version string
-docker build --build-arg KRUIZE_VERSION=${KRUIZE_VERSION} -t kruize:${KRUIZE_VERSION} .
+docker build --pull --no-cache --build-arg KRUIZE_VERSION=${KRUIZE_VERSION} -t kruize:${KRUIZE_VERSION} .
 
 docker images | grep -e "TAG" -e "kruize"
