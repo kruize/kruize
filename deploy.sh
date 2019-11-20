@@ -39,8 +39,7 @@ setup=1
 # Determine namespace into which kruize will be deployed
 # ICP       = kube-system namespace
 # openshift = openshift-monitoring namespace
-icp_ns="kube-system"
-openshift_ns="openshift-monitoring"
+kruize_ns="kube-system"
 
 function usage() {
 	echo
@@ -67,6 +66,29 @@ function check_cluster_type() {
 		echo "Error: unsupported cluster type: ${cluster_type}"
 		exit -1
 	esac
+}
+
+function check_running() {
+	while true;
+	do
+		watch -g -n 4 "kubectl -n ${kruize_ns} get pods | grep kruize"
+		pod_stat=$(kubectl -n ${kruize_ns} get pods | grep kruize | awk '{ print $3 }' | grep -v 'Terminating')
+		case "${pod_stat}" in
+			"ContainerCreating"|"Terminating")
+				;;
+			"Running")
+				echo "Info: kruize deploy succeeded: ${pod_stat}"
+				break;
+				;;
+			*)
+				echo "Error: kruize deploy failed: ${pod_stat}"
+				break;
+				;;
+		esac
+	done
+
+	kubectl -n ${kruize_ns} get pods | grep kruize
+	echo
 }
 
 ################################  v Docker v ##################################
@@ -133,7 +155,8 @@ function get_container_info() {
 
 #
 function app_monitor_loop() {
-	echo "#####     Starting App Monitor loop     #####"
+	echo "########################     Starting App Monitor loop    #########################"
+	echo "Kruize recommendations available on the grafana dashboard at: http://localhost:3000"
 	echo "Info: Press CTRL-C to exit"
 	while true
 	do
@@ -224,22 +247,23 @@ function icp_prereq() {
 
 # Create a SA and RBAC for deploying kruize onto ICP
 function icp_first() {
+	kruize_ns="kube-system"
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
 	if [ ! -z ${kurl} ]; then
-		cloudctl login -u ${user} -p ${password} -n ${icp_ns} -a ${kurl}
+		cloudctl login -u ${user} -p ${password} -n ${kruize_ns} -a ${kurl}
 	else
 		cloudctl login
 	fi
 	check_err "Error: cloudctl login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(kubectl get sa -n ${icp_ns} | grep ${SA_NAME})
+	sa_exists=$(kubectl get sa -n ${kruize_ns} | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
-	sed "s/{{ KRUIZE_NAMESPACE }}/${icp_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
+	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	kubectl apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
@@ -257,7 +281,7 @@ function icp_setup() {
 	sleep 1
 
 	sed "s/{{ K8S_TYPE }}/ICP/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
-	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}|" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
 	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 }
@@ -265,10 +289,9 @@ function icp_setup() {
 # For ICP, you can deploy using kubectl
 function icp_deploy() {
 	echo "Info: Deploying kruize yaml to ICP cluster"
-	kubectl apply -f ${DEPLOY_MANIFEST}
-	sleep 1
-	watch -g -n 8 "kubectl get pods | grep kruize"
-	kubectl get pods | grep kruize
+	kubectl -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	sleep 2
+	check_running
 }
 
 # Deploy kruize to IBM Cloud Private
@@ -303,6 +326,7 @@ function openshift_prereq() {
 
 # Create a service account for kruize to be deployed into and setup the proper RBAC for it
 function openshift_first() {
+	kruize_ns="openshift-monitoring"
 	# Login to the cluster
 	echo "Info: Logging in to OpenShift cluster..."
 	if [ ! -z ${kurl} ]; then
@@ -313,12 +337,12 @@ function openshift_first() {
 	check_err "Error: oc login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(oc get sa -n ${openshift_ns} | grep ${SA_NAME})
+	sa_exists=$(oc get sa -n ${kruize_ns} | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
-	sed "s/{{ KRUIZE_NAMESPACE }}/${openshift_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
+	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	oc apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
@@ -344,11 +368,10 @@ function openshift_setup() {
 function openshift_deploy() {
 	echo "Info: Deploying kruize yaml to OpenShift cluster"
 	# Deploy into the "openshift-monitoring" namespace/project
-	oc project openshift-monitoring
-	oc apply -f ${DEPLOY_MANIFEST}
-	sleep 1
-	watch -g -n 8 "oc get pods | grep kruize"
-	oc get pods | grep kruize
+	oc project ${kruize_ns}
+	oc -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	sleep 2
+	check_running
 }
 
 function openshift_start() {
@@ -381,7 +404,7 @@ do
 		kurl="${OPTARG}"
 		;;
 	n)
-		icp_ns="${OPTARG}"
+		kruize_ns="${OPTARG}"
 		;;
 	p)
 		password="${OPTARG}"
