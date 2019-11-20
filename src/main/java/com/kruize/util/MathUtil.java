@@ -14,14 +14,14 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.analysis;
+package com.kruize.util;
 
 import com.kruize.metrics.MetricCollector;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
 
-public class Statistics
+public class MathUtil
 {
     @SuppressWarnings("SameParameterValue")
     public static double getPercentile(DescriptiveStatistics descriptiveStatistics, double percentile)

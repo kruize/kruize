@@ -18,6 +18,7 @@ package com.kruize.analysis;
 
 import com.kruize.metrics.AbstractMetrics;
 import com.kruize.metrics.MetricCollector;
+import com.kruize.util.MathUtil;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.math.RoundingMode;
@@ -71,7 +72,7 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             System.out.print(value + "\t");
         }
 
-        double percentileValue = Statistics.getPercentile(referenceValues, PERCENTILE);
+        double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
         System.out.println(PERCENTILE + "th percentile is " + percentileValue);
 
         for (MetricCollector metric : metrics) {
@@ -87,7 +88,7 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             }
         }
 
-        double cpuRequests = Statistics.getMode(percentileList, INDEX);
+        double cpuRequests = MathUtil.getMode(percentileList, INDEX);
         instance.setCurrentCpuRequests(cpuRequests);
     }
 
@@ -112,7 +113,7 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             System.out.print(value + "\t");
         }
 
-        double percentileValue = Statistics.getPercentile(referenceValues, PERCENTILE);
+        double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
         System.out.println(PERCENTILE + "th percentile is " + percentileValue);
 
         for (MetricCollector metric : metrics) {
@@ -124,7 +125,7 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             }
         }
 
-        double memRequests = Statistics.getMode(percentileList, targetIndex);
+        double memRequests = MathUtil.getMode(percentileList, targetIndex);
         instance.setCurrentRssRequests(memRequests);
     }
 

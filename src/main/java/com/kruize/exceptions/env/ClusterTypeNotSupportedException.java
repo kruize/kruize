@@ -16,6 +16,4 @@
 
 package com.kruize.exceptions.env;
 
-public class ClusterTypeNotSupportedException extends Exception
-{
-}
+public class ClusterTypeNotSupportedException extends Exception { }

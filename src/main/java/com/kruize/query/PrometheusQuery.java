@@ -23,6 +23,8 @@ import com.kruize.query.kubernetes.KubernetesPrometheusQuery;
 public abstract class PrometheusQuery implements Query
 {
     private static PrometheusQuery prometheusQuery = null;
+    protected String podLabel;
+    protected String containerLabel;
 
     static {
         getInstance();
@@ -68,5 +70,25 @@ public abstract class PrometheusQuery implements Query
     public String getPreviousMemLimRec(String applicationName)
     {
         return "(kruize_exp_memory_limits{application_name=\"" + applicationName + "\"}[2h])";
+    }
+
+    public String getPodLabel()
+    {
+        return podLabel;
+    }
+
+    public void setPodLabel(String podLabel)
+    {
+        this.podLabel = podLabel;
+    }
+
+    public String getContainerLabel()
+    {
+        return containerLabel;
+    }
+
+    public void setContainerLabel(String containerLabel)
+    {
+        this.containerLabel = containerLabel;
     }
 }

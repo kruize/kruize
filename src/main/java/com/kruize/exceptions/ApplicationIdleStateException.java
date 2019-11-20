@@ -16,6 +16,4 @@
 
 package com.kruize.exceptions;
 
-public class ApplicationIdleStateException extends Exception
-{
-}
+public class ApplicationIdleStateException extends Exception { }

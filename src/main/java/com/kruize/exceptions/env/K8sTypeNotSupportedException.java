@@ -16,6 +16,4 @@
 
 package com.kruize.exceptions.env;
 
-public class K8sTypeNotSupportedException extends Exception
-{
-}
+public class K8sTypeNotSupportedException extends Exception { }

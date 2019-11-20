@@ -59,7 +59,7 @@ public class DockerEnvImpl extends EnvTypeImpl
     public void getAllApps()
     {
         JsonArray containerList = null;
-        /**
+        /*
          * kruize-docker.json contains the details of the containers.
          * For each container, the details are expressed in the form of key-value pairs
          * where the keys are name, cpu_limit and mem_limit.
@@ -96,6 +96,7 @@ public class DockerEnvImpl extends EnvTypeImpl
 
     }
 
+    @SuppressWarnings("unchecked")
     private void insertContainerMetrics(JsonElement container)
     {
         ContainerMetrics containerMetrics = getContainerMetrics(container);

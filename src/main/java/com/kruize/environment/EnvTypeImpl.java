@@ -56,7 +56,7 @@ public abstract class EnvTypeImpl implements EnvType
         return envType;
     }
 
-    public static String parseApplicationNameFromInstanceName(String podName)
+    protected static String parseApplicationNameFromInstanceName(String podName)
     {
         Pattern pattern = Pattern.compile("-[a-zA-Z]*?\\d+");
         Matcher matcher = pattern.matcher(podName);
