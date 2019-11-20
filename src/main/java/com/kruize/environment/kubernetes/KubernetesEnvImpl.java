@@ -47,7 +47,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     {
         try {
 
-            if (DeploymentInfo.getMonitoringAgentEndpoint() == null) {
+            if (DeploymentInfo.getMonitoringAgentEndpoint() == null
+                    || DeploymentInfo.getMonitoringAgentEndpoint().equals(""))
+            {
                 if (DeploymentInfo.getMonitoringAgentService() != null) {
                     getMonitoringEndpointFromService();
                 } else {
