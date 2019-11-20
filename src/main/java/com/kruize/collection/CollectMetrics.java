@@ -29,7 +29,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.kruize.util.HttpUtil;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -42,6 +43,8 @@ public class CollectMetrics implements Runnable
 
     @SuppressWarnings("unchecked")
     private AbstractApplicationRecommendations<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CollectMetrics.class);
+
 
     static
     {
@@ -174,11 +177,10 @@ public class CollectMetrics implements Runnable
                         metrics.metricCollector.add(new MetricCollector(rssList.get(i), cpuList.get(i), 0));
                     }
                 }
-            } catch (NullPointerException | MalformedURLException e) {
-                System.out.println("Could not get previous data. Please check your prometheus version");
-            } catch (IndexOutOfBoundsException e) {
-                System.out.println("Could not get previous data.");
+            } catch (NullPointerException | MalformedURLException | IndexOutOfBoundsException e) {
+                LOGGER.info("No previous data available for {}", application);
             }
+
         }
     }
 
@@ -212,13 +214,17 @@ public class CollectMetrics implements Runnable
             double previousRssRequests = 0;
             try {
                 previousCpuLimit =
-                        getPreviousKruizeData(prometheusURL + query.getPreviousCpuLimRec(applicationName));
+                        getPreviousKruizeData(prometheusURL +
+                                query.getPreviousCpuLimRec(applicationName), applicationName);
                 previousRssLimit =
-                        getPreviousKruizeData(prometheusURL + query.getPreviousMemLimRec(applicationName));
+                        getPreviousKruizeData(prometheusURL +
+                                query.getPreviousMemLimRec(applicationName), applicationName);
                 previousCpuRequests =
-                        getPreviousKruizeData(prometheusURL + query.getPreviousCpuReqRec(applicationName));
+                        getPreviousKruizeData(prometheusURL +
+                                query.getPreviousCpuReqRec(applicationName), applicationName);
                 previousRssRequests =
-                        getPreviousKruizeData(prometheusURL + query.getPreviousMemReqRec(applicationName));
+                        getPreviousKruizeData(prometheusURL +
+                                query.getPreviousMemReqRec(applicationName), applicationName);
             } catch (IndexOutOfBoundsException ignored) { }
 
             metrics.setCurrentCpuLimit(previousCpuLimit);
@@ -233,9 +239,9 @@ public class CollectMetrics implements Runnable
         }
     }
 
-    private double getPreviousKruizeData(String recommendationURL)
+    private double getPreviousKruizeData(String recommendationURL, String applicationName)
     {
-        System.out.println(recommendationURL);
+        LOGGER.debug("Recommendation URL: {}", recommendationURL);
         try {
             JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
 
@@ -246,7 +252,7 @@ public class CollectMetrics implements Runnable
                     .get(1)
                     .getAsDouble();
         } catch (IndexOutOfBoundsException | MalformedURLException e) {
-            System.out.println("Could not get previous recommendations");
+            LOGGER.info("No previous recommendations available for {}", applicationName);
             return -1;
         }
     }
@@ -283,10 +289,10 @@ public class CollectMetrics implements Runnable
             double MIN_CPU = 0.02;
             try {
                 cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
-                System.out.println("CPU: " + cpu);
+                LOGGER.debug("CPU: " + cpu);
 
                 rss = getValueForQuery(new URL(monitoringAgentEndPoint + rssQuery));
-                System.out.println("RSS: " + rss);
+                LOGGER.debug("RSS: " + rss);
 
                 //TODO Get network data from monitoring agent
                 double network = 0;

@@ -21,4 +21,5 @@ public interface Defaults
     String getK8sType();
     String getAuthType();
     String getMonitoringAgent();
+    String getDebugLevel();
 }

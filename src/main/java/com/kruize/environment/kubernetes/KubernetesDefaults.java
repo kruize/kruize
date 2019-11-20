@@ -31,4 +31,10 @@ public class KubernetesDefaults extends AbstractDefaults
     {
         return null;
     }
+
+    @Override
+    public String getDebugLevel()
+    {
+        return "INFO";
+    }
 }

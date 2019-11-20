@@ -18,11 +18,15 @@ package com.kruize.util;
 
 import com.kruize.metrics.MetricCollector;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
 public class MathUtil
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpUtil.class);
+
     @SuppressWarnings("SameParameterValue")
     public static double getPercentile(DescriptiveStatistics descriptiveStatistics, double percentile)
     {
@@ -45,7 +49,13 @@ public class MathUtil
                 modeValue = metricCollector.get(i).getFromIndex(targetIndex);
             }
         }
-        System.out.println("Mode is: " + modeValue);
+        LOGGER.debug("Mode is: {}", modeValue);
         return modeValue;
+    }
+
+    public static double bytesToMB(double bytes)
+    {
+        double ONE_MB = (1024 * 1024);
+        return bytes / ONE_MB;
     }
 }

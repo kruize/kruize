@@ -23,6 +23,8 @@ import io.prometheus.client.exporter.MetricsServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Kruize
 {
@@ -93,23 +95,41 @@ public class Kruize
             .register();
 
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Kruize.class);
+
     public static void main(String[] args) throws Exception
     {
         Initialize.setup_deployment_info();
-        System.out.println("End of initialization phase");
-
-        Server server = new Server(PORT);
-
-        ServletContextHandler context = new ServletContextHandler();
-        context.setContextPath("/");
-        server.setHandler(context);
-        context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+        LOGGER.info("End of initialization phase");
 
         CollectMetrics collectMetrics = new CollectMetrics();
         Thread metricThread = new Thread(collectMetrics);
         metricThread.setDaemon(true);
         metricThread.start();
 
+        startServer();
+    }
+
+    private static void startServer() throws Exception
+    {
+        disableServerLogging();
+
+        Server server = new Server(PORT);
+
+        ServletContextHandler context = new ServletContextHandler();
+        context.setContextPath("/");
+        server.setHandler(context);
+
+        context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+
         server.start();
+    }
+
+    private static void disableServerLogging()
+    {
+        /* The jetty server creates a lot of server log messages that are unnecessary.
+         * This disables jetty logging. */
+        System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
+        System.setProperty("org.eclipse.jetty.LEVEL", "OFF");
     }
 }

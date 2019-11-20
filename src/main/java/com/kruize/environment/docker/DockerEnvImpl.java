@@ -16,14 +16,16 @@
 
 package com.kruize.environment.docker;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.kruize.analysis.docker.DockerAnalysisImpl;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.metrics.ContainerMetrics;
 import com.kruize.query.PrometheusQuery;
 import com.kruize.recommendations.application.DockerApplicationRecommendations;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -31,6 +33,8 @@ import java.util.ArrayList;
 
 public class DockerEnvImpl extends EnvTypeImpl
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerEnvImpl.class);
+
     @Override
     public void setupMonitoringAgent()
     {
@@ -90,7 +94,7 @@ public class DockerEnvImpl extends EnvTypeImpl
                     insertContainerMetrics(container);
             }
         } else {
-            System.out.println("Looks like you do not have containers to monitor.");
+            LOGGER.error("No containers to monitor.");
             System.exit(1);
         }
 

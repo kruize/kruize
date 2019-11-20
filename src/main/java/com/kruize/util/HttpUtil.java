@@ -17,6 +17,8 @@
 package com.kruize.util;
 
 import com.kruize.environment.DeploymentInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.BufferedReader;
@@ -30,6 +32,7 @@ import java.security.cert.X509Certificate;
 
 public class HttpUtil
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpUtil.class);
 
     public static String getDataFromURL(URL url)
     {
@@ -51,13 +54,12 @@ public class HttpUtil
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 result = getDataFromConnection(connection);
             } else {
-                System.out.println(connection.getResponseCode());
                 if (connection.getResponseCode() == 403) {
-                    System.out.println("Please refresh your auth token");
+                    LOGGER.error("Please refresh your auth token");
                     System.exit(1);
                 }
-                System.out.println("Response Failure!");
-                System.out.println(url.toString());
+                LOGGER.debug("{} Response Failure for {}", connection.getResponseCode(),
+                        url.toString());
             }
         } catch (IOException e) {
             e.printStackTrace();

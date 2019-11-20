@@ -21,9 +21,9 @@ import java.util.ArrayList;
 public abstract class AbstractMetrics implements Metrics
 {
     String name;
-    String applicationName;
-    String namespace;
     String status;
+    String namespace;
+    String applicationName;
 
     private double originalMemoryLimit = 0;
     private double originalMemoryRequests = 0;
