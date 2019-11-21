@@ -71,25 +71,27 @@ function check_cluster_type() {
 }
 
 function check_running() {
+	check_pod=$1
 	while true;
 	do
-		watch -g -n 4 "kubectl -n ${kruize_ns} get pods | grep kruize"
-		pod_stat=$(kubectl -n ${kruize_ns} get pods | grep kruize | awk '{ print $3 }' | grep -v 'Terminating')
+		#watch -g -n 4 "${kubectl_cmd} get pods | grep ${check_pod}"
+		pod_stat=$(${kubectl_cmd} get pods | grep ${check_pod} | awk '{ print $3 }' | grep -v 'Terminating')
 		case "${pod_stat}" in
 			"ContainerCreating"|"Terminating")
 				;;
 			"Running")
-				echo "Info: kruize deploy succeeded: ${pod_stat}"
+				echo "Info: ${check_pod} deploy succeeded: ${pod_stat}"
 				break;
 				;;
 			*)
-				echo "Error: kruize deploy failed: ${pod_stat}"
+				echo "Error: ${check_pod} deploy failed: ${pod_stat}"
 				break;
 				;;
 		esac
+		sleep 2
 	done
 
-	kubectl -n ${kruize_ns} get pods | grep kruize
+	${kubectl_cmd} get pods | grep ${check_pod}
 	echo
 }
 
@@ -250,6 +252,7 @@ function icp_prereq() {
 # Create a SA and RBAC for deploying kruize onto ICP
 function icp_first() {
 	kruize_ns="kube-system"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
 	if [ ! -z ${kurl} ]; then
@@ -260,13 +263,13 @@ function icp_first() {
 	check_err "Error: cloudctl login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(kubectl get sa -n ${kruize_ns} | grep ${SA_NAME})
+	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
-	kubectl apply -f ${SA_MANIFEST}
+	${kubectl_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
 
@@ -293,9 +296,9 @@ function icp_setup() {
 # For ICP, you can deploy using kubectl
 function icp_deploy() {
 	echo "Info: Deploying kruize yaml to ICP cluster"
-	kubectl -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	${kubectl_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
-	check_running
+	check_running kruize
 }
 
 # Deploy kruize to IBM Cloud Private
@@ -331,6 +334,8 @@ function openshift_prereq() {
 # Create a service account for kruize to be deployed into and setup the proper RBAC for it
 function openshift_first() {
 	kruize_ns="openshift-monitoring"
+	oc_cmd="oc -n ${kruize_ns}"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to OpenShift cluster..."
 	if [ ! -z ${kurl} ]; then
@@ -341,13 +346,13 @@ function openshift_first() {
 	check_err "Error: oc login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(oc get sa -n ${kruize_ns} | grep ${SA_NAME})
+	sa_exists=$(${oc_cmd} get sa | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
-	oc apply -f ${SA_MANIFEST}
+	${oc_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
 
@@ -375,9 +380,9 @@ function openshift_deploy() {
 	echo "Info: Deploying kruize yaml to OpenShift cluster"
 	# Deploy into the "openshift-monitoring" namespace/project
 	oc project ${kruize_ns}
-	oc -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	${oc_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
-	check_running
+	check_running kruize
 }
 
 function openshift_start() {
@@ -405,6 +410,9 @@ function minikube_prereq() {
 	echo "Info: Checking pre requisites for minikube..."
 	kubectl_tool=$(which kubectl)
 	check_err "Error: Please install the kubectl tool"
+
+	kruize_ns="monitoring"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 
 	echo "Info: kruize needs cadvisor/prometheus/grafana to be installed in minikube"
 	echo -n "Download and install these software to minikube(y/n)? "
@@ -437,22 +445,24 @@ function minikube_prereq() {
 		check_err "Error: Unable to install prometheus"
 		popd >/dev/null
 	popd >/dev/null
+
+	check_running prometheus-k8s-0
+	sleep 2
 }
 
 function minikube_first() {
-	kruize_ns="monitoring"
 
 	# Check if the service account already exists
-	sa_exists=$(kubectl get sa -n ${kruize_ns} | grep ${SA_NAME})
+	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo
 	echo "Info: One time setup - Create a service account to deploy kruize"
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
-	kubectl apply -f ${SA_MANIFEST}
+	${kubectl_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
-	kubectl apply -f ${MINIKUBE_MANIFEST}
+	${kubectl_cmd} apply -f ${MINIKUBE_MANIFEST}
 	check_err "Error: Failed to create service monitor for Prometheus"
 }
 
@@ -477,9 +487,9 @@ function minikube_setup() {
 function minikube_deploy() {
 	echo
 	echo "Info: Deploying kruize yaml to minikube cluster"
-	kubectl -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	${kubectl_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
-	check_running
+	check_running kruize
 }
 
 function minikube_start() {
