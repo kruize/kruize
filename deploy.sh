@@ -72,6 +72,8 @@ function check_cluster_type() {
 
 function check_running() {
 	check_pod=$1
+
+	echo "Info: Waiting for ${check_pod} to come up..."
 	while true;
 	do
 		#watch -g -n 4 "${kubectl_cmd} get pods | grep ${check_pod}"
@@ -81,10 +83,12 @@ function check_running() {
 				;;
 			"Running")
 				echo "Info: ${check_pod} deploy succeeded: ${pod_stat}"
+				err=0
 				break;
 				;;
 			*)
 				echo "Error: ${check_pod} deploy failed: ${pod_stat}"
+				err=-1
 				break;
 				;;
 		esac
@@ -490,6 +494,13 @@ function minikube_deploy() {
 	${kubectl_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
 	check_running kruize
+	if [ "${err}" == "0" ]; then
+		grafana_pod=$(${kubectl_cmd} get pods | grep grafana | awk '{ print $1 }')
+		echo "Info: Access grafana dashboard to see kruize recommendations at http://localhost:3000"
+		echo "Info: Run the following command first to access grafana port"
+		echo "      $ kubectl port-forward -n monitoring ${grafana_pod} 3000:3000"
+		echo
+	fi
 }
 
 function minikube_start() {
