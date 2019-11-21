@@ -29,6 +29,8 @@ spec:
           value: "{{ BEARER_AUTH_TOKEN }}"
         - name: MONITORING_AGENT
           value: "prometheus"
+        - name: MONITORING_SERVICE
+          value: "{{ MONITORING_SERVICE }}"
         - name: MONITORING_AGENT_ENDPOINT
           value: "{{ MONITORING_AGENT_ENDPOINT }}"
         ports:

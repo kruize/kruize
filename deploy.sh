@@ -33,6 +33,8 @@ PROMETHEUS_DOCKER_IMAGE="prom/prometheus:latest"
 GRAFANA_DOCKER_IMAGE="grafana/grafana:latest"
 KRUIZE_DOCKER_IMAGE="dinogun/kruize":${KRUIZE_VERSION}
 
+MINIKUBE_MANIFEST="manifests/minikube/kruize-service-monitor.yaml"
+
 cluster_type="icp"
 setup=1
 
@@ -43,7 +45,7 @@ kruize_ns="kube-system"
 
 function usage() {
 	echo
-	echo "Usage: $0 [-k url] [-c [docker|icp|openshift]] [-s|t] [-u user] [-p password] [-n namespace]" 
+	echo "Usage: $0 [-k url] [-c [docker|icp|minikube|openshift]] [-s|t] [-u user] [-p password] [-n namespace]"
 	echo "       -s = start(default), -t = terminate"
 	exit -1
 }
@@ -60,7 +62,7 @@ check_err() {
 # Check if the cluster_type is one of icp or openshift
 function check_cluster_type() {
 	case "${cluster_type}" in
-	docker|icp|openshift)
+	docker|icp|minikube|openshift)
 		;;
 	*)
 		echo "Error: unsupported cluster type: ${cluster_type}"
@@ -69,25 +71,31 @@ function check_cluster_type() {
 }
 
 function check_running() {
+	check_pod=$1
+
+	echo "Info: Waiting for ${check_pod} to come up..."
 	while true;
 	do
-		watch -g -n 4 "kubectl -n ${kruize_ns} get pods | grep kruize"
-		pod_stat=$(kubectl -n ${kruize_ns} get pods | grep kruize | awk '{ print $3 }' | grep -v 'Terminating')
+		#watch -g -n 4 "${kubectl_cmd} get pods | grep ${check_pod}"
+		pod_stat=$(${kubectl_cmd} get pods | grep ${check_pod} | awk '{ print $3 }' | grep -v 'Terminating')
 		case "${pod_stat}" in
 			"ContainerCreating"|"Terminating")
 				;;
 			"Running")
-				echo "Info: kruize deploy succeeded: ${pod_stat}"
+				echo "Info: ${check_pod} deploy succeeded: ${pod_stat}"
+				err=0
 				break;
 				;;
 			*)
-				echo "Error: kruize deploy failed: ${pod_stat}"
+				echo "Error: ${check_pod} deploy failed: ${pod_stat}"
+				err=-1
 				break;
 				;;
 		esac
+		sleep 2
 	done
 
-	kubectl -n ${kruize_ns} get pods | grep kruize
+	${kubectl_cmd} get pods | grep ${check_pod}
 	echo
 }
 
@@ -248,6 +256,7 @@ function icp_prereq() {
 # Create a SA and RBAC for deploying kruize onto ICP
 function icp_first() {
 	kruize_ns="kube-system"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
 	if [ ! -z ${kurl} ]; then
@@ -258,13 +267,13 @@ function icp_first() {
 	check_err "Error: cloudctl login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(kubectl get sa -n ${kruize_ns} | grep ${SA_NAME})
+	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
-	kubectl apply -f ${SA_MANIFEST}
+	${kubectl_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
 
@@ -272,6 +281,7 @@ function icp_first() {
 function icp_setup() {
 	# Get the bearer token
 	br_token=$(cloudctl tokens | grep "Bearer" | cut -d" " -f4-5)
+	pservice=""
 	# Get the cloud endpoint url
 	kurl=$(cloudctl api | grep "Endpoint" | awk '{ print $3 }')
 	# Prometheus should be accessible at ${kurl}/prometheus
@@ -282,16 +292,17 @@ function icp_setup() {
 
 	sed "s/{{ K8S_TYPE }}/ICP/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
 	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
-	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
+	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 }
 
 # For ICP, you can deploy using kubectl
 function icp_deploy() {
 	echo "Info: Deploying kruize yaml to ICP cluster"
-	kubectl -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	${kubectl_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
-	check_running
+	check_running kruize
 }
 
 # Deploy kruize to IBM Cloud Private
@@ -327,6 +338,8 @@ function openshift_prereq() {
 # Create a service account for kruize to be deployed into and setup the proper RBAC for it
 function openshift_first() {
 	kruize_ns="openshift-monitoring"
+	oc_cmd="oc -n ${kruize_ns}"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to OpenShift cluster..."
 	if [ ! -z ${kurl} ]; then
@@ -337,13 +350,13 @@ function openshift_first() {
 	check_err "Error: oc login failed."
 
 	# Check if the service account already exists
-	sa_exists=$(oc get sa -n ${kruize_ns} | grep ${SA_NAME})
+	sa_exists=$(${oc_cmd} get sa | grep ${SA_NAME})
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
-	oc apply -f ${SA_MANIFEST}
+	${oc_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 }
 
@@ -352,6 +365,7 @@ function openshift_setup() {
 	# Get the bearer token
 	br_token=$(oc whoami --show-token)
 	br_token="Bearer ${br_token}"
+	pservice=""
 	prom_path=$(oc get route --all-namespaces=true | grep prometheus-k8s | awk '{ print $3 }')
 	purl="https://${prom_path}"
 	echo
@@ -359,9 +373,10 @@ function openshift_setup() {
 	sleep 1
 
 	sed "s/{{ K8S_TYPE }}/OpenShift/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
-	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}|" ${DEPLOY_MANIFEST}
-	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
+	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 }
 
 # Deploy to the openshift-monitoring namespace for OpenShift
@@ -369,9 +384,9 @@ function openshift_deploy() {
 	echo "Info: Deploying kruize yaml to OpenShift cluster"
 	# Deploy into the "openshift-monitoring" namespace/project
 	oc project ${kruize_ns}
-	oc -n ${kruize_ns} apply -f ${DEPLOY_MANIFEST}
+	${oc_cmd} apply -f ${DEPLOY_MANIFEST}
 	sleep 2
-	check_running
+	check_running kruize
 }
 
 function openshift_start() {
@@ -391,6 +406,119 @@ function openshift_terminate() {
 }
 
 ###############################  ^ OpenShift ^ ################################
+
+###############################  v MiniKube v #################################
+
+function minikube_prereq() {
+	echo
+	echo "Info: Checking pre requisites for minikube..."
+	kubectl_tool=$(which kubectl)
+	check_err "Error: Please install the kubectl tool"
+
+	kruize_ns="monitoring"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
+
+	echo "Info: kruize needs cadvisor/prometheus/grafana to be installed in minikube"
+	echo -n "Download and install these software to minikube(y/n)? "
+	read inst
+	linst=$(echo ${inst} | tr A-Z a-z)
+	if [ ${linst} == "n" ]; then
+		echo "Info: kruize not installed"
+		exit 0
+	fi
+
+	mkdir minikube_downloads 2>/dev/null
+	pushd minikube_downloads >/dev/null
+		echo "Info: Downloading cadvisor git"
+		git clone https://github.com/google/cadvisor.git 2>/dev/null
+		pushd cadvisor/deploy/kubernetes/base >/dev/null
+		echo
+		echo "Info: Installing cadvisor"
+		kubectl kustomize . | kubectl apply -f-
+		check_err "Error: Unable to install cadvisor"
+		popd >/dev/null
+		echo
+		echo "Info: Downloading prometheus git"
+		git clone https://github.com/coreos/kube-prometheus.git 2>/dev/null
+		pushd kube-prometheus/manifests >/dev/null
+		echo
+		echo "Info: Installing prometheus"
+		kubectl apply -f setup
+		check_err "Error: Unable to setup prometheus"
+		kubectl apply -f .
+		check_err "Error: Unable to install prometheus"
+		popd >/dev/null
+	popd >/dev/null
+
+	check_running prometheus-k8s-0
+	sleep 2
+}
+
+function minikube_first() {
+
+	# Check if the service account already exists
+	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
+	if [ "${sa_exists}" != "" ]; then
+		return;
+	fi
+	echo
+	echo "Info: One time setup - Create a service account to deploy kruize"
+	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
+	${kubectl_cmd} apply -f ${SA_MANIFEST}
+	check_err "Error: Failed to create service account and RBAC"
+	${kubectl_cmd} apply -f ${MINIKUBE_MANIFEST}
+	check_err "Error: Failed to create service monitor for Prometheus"
+}
+
+# Update yaml with the current ICP instance specific details
+function minikube_setup() {
+	pservice="prometheus-k8s"
+	purl=""
+	br_token=""
+
+	sed "s|extensions/v1beta1|apps/v1|" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
+	sed -i "s/replicas: 1/replicas: 1\n  selector:\n    matchLabels:\n      app: kruize/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ K8S_TYPE }}/Minikube/" ${DEPLOY_TEMPLATE} ${DEPLOY_MANIFEST}
+	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
+	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
+	sed -i "/nodeSelector/d" ${DEPLOY_MANIFEST}
+	sed -i "/node-role/d" ${DEPLOY_MANIFEST}
+}
+
+# For ICP, you can deploy using kubectl
+function minikube_deploy() {
+	echo
+	echo "Info: Deploying kruize yaml to minikube cluster"
+	${kubectl_cmd} apply -f ${DEPLOY_MANIFEST}
+	sleep 2
+	check_running kruize
+	if [ "${err}" == "0" ]; then
+		grafana_pod=$(${kubectl_cmd} get pods | grep grafana | awk '{ print $1 }')
+		echo "Info: Access grafana dashboard to see kruize recommendations at http://localhost:3000"
+		echo "Info: Run the following command first to access grafana port"
+		echo "      $ kubectl port-forward -n monitoring ${grafana_pod} 3000:3000"
+		echo
+	fi
+}
+
+function minikube_start() {
+	echo
+	echo "###   Installing kruize for minikube"
+	echo
+	minikube_prereq
+	minikube_first
+	minikube_setup
+	minikube_deploy
+}
+
+function minikube_terminate() {
+	# Add minikube cleanup code
+	echo
+}
+
+###############################  ^ MiniKube ^ #################################
 
 # Iterate through the commandline options
 while getopts c:k:n:p:stu: gopts
