@@ -280,21 +280,18 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
     private void setMonitoringLabels()
     {
+        PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
+
         try {
             URL labelURL = new URL(DeploymentInfo.getMonitoringAgentEndpoint() + "/api/v1/labels");
             String result = HttpUtil.getDataFromURL(labelURL);
-            PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
-
+            
             if (result.contains("\"pod\"")) {
                 prometheusQuery.setPodLabel("pod");
                 prometheusQuery.setContainerLabel("container");
-            } else {
-                prometheusQuery.setPodLabel("pod_name");
-                prometheusQuery.setContainerLabel("container_name");
             }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
         }
+        /* Use the default labels */
+        catch (MalformedURLException | NullPointerException ignored) { }
     }
 }
