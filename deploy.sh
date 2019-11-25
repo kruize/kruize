@@ -42,6 +42,7 @@ setup=1
 # ICP       = kube-system namespace
 # openshift = openshift-monitoring namespace
 kruize_ns="kube-system"
+user="admin"
 
 function usage() {
 	echo
@@ -76,10 +77,12 @@ function check_running() {
 	echo "Info: Waiting for ${check_pod} to come up..."
 	while true;
 	do
-		#watch -g -n 4 "${kubectl_cmd} get pods | grep ${check_pod}"
+		sleep 2
+		${kubectl_cmd} get pods | grep ${check_pod}
 		pod_stat=$(${kubectl_cmd} get pods | grep ${check_pod} | awk '{ print $3 }' | grep -v 'Terminating')
 		case "${pod_stat}" in
-			"ContainerCreating"|"Terminating")
+			"ContainerCreating"|"Terminating"|"Pending")
+				sleep 2
 				;;
 			"Running")
 				echo "Info: ${check_pod} deploy succeeded: ${pod_stat}"
@@ -92,7 +95,6 @@ function check_running() {
 				break;
 				;;
 		esac
-		sleep 2
 	done
 
 	${kubectl_cmd} get pods | grep ${check_pod}
@@ -194,15 +196,15 @@ function docker_prereq() {
 #
 function docker_setup() {
 	echo "Starting cadvisor container"
-	docker run -d --rm --name=cadvisor   -p 8000:8080 --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro  ${CADVISOR_DOCKER_IMAGE}
+	docker run -d --rm --name=cadvisor   -p 8000:8080   --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro  ${CADVISOR_DOCKER_IMAGE}
 	check_err "Error: cadvisor did not start up"
 
 	echo "Starting prometheus container"
-	docker run -d --rm --name=prometheus -p 9090:9090 --net=host -v ${PWD}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml ${PROMETHEUS_DOCKER_IMAGE}
+	docker run -d --rm --name=prometheus -p 9090:9090   --net=host -v ${PWD}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml ${PROMETHEUS_DOCKER_IMAGE}
 	check_err "Error: prometheus did not start up"
 
 	echo "Starting grafana container"
-	docker run -d --rm --name=grafana    -p 3000:3000 --net=host -v ${PWD}/${GRAFANA_MANIFESTS}:/etc/grafana/provisioning/ ${GRAFANA_DOCKER_IMAGE}
+	docker run -d --rm --name=grafana    -p 3000:3000   --net=host -v ${PWD}/${GRAFANA_MANIFESTS}:/etc/grafana/provisioning/ ${GRAFANA_DOCKER_IMAGE}
 	check_err "Error: grafana did not start up"
 }
 
@@ -211,9 +213,9 @@ function docker_deploy() {
 	echo 
 	create_dummy_json_file
 	echo "Info: Waiting for prometheus/grafana/cadvisor to be up and running"
-	sleep 5
+	sleep 2
 	echo "Starting kruize container"
-	docker run -d --rm --name=kruize --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:9090" --env MONITORING_AGENT="Prometheus" -v ${PWD}/kruize-docker.json:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
+	docker run -d --rm --name=kruize     -p 31313:31313 --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:9090" --env MONITORING_AGENT="Prometheus" -v ${PWD}/kruize-docker.json:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
 	check_err "Error: kruize did not start up"
 	echo "Waiting for kruize container to come up"
 	sleep 10
@@ -248,7 +250,7 @@ function icp_prereq() {
 	echo -n "Info: Checking pre requisites for ICP..."
 	kubectl_tool=$(which kubectl)
 	check_err "Error: Please install the kubectl tool"
-	cloudctl_tool=$(which cloudctl)        
+	cloudctl_tool=$(which cloudctl)
 	check_err "Error: Please install the cloudctl tool"
 	echo "done"
 }
@@ -259,8 +261,10 @@ function icp_first() {
 	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
-	if [ ! -z ${kurl} ]; then
+	if [ ! -z ${password} ]; then
 		cloudctl login -u ${user} -p ${password} -n ${kruize_ns} -a ${kurl}
+	elif [ ! -z ${kurl} ]; then
+		cloudctl login -a ${kurl}
 	else
 		cloudctl login
 	fi
@@ -330,7 +334,7 @@ function openshift_prereq() {
 	# Check if oc tool is installed
 	echo
 	echo -n "Info: Checking pre requisites for OpenShift..."
-	oc_tool=$(which oc)        
+	oc_tool=$(which oc)
 	check_err "Error: Please install the oc tool"
 	echo "done"
 }
@@ -402,7 +406,7 @@ function openshift_start() {
 
 function openshift_terminate() {
 	# Add OpenShift cleanup code
-	echo 
+	echo
 }
 
 ###############################  ^ OpenShift ^ ################################
@@ -450,7 +454,21 @@ function minikube_prereq() {
 		popd >/dev/null
 	popd >/dev/null
 
-	check_running prometheus-k8s-0
+	echo -n "Info: Waiting for all Prometheus Pods to get spawned..."
+	while true;
+	do
+		# Wait for prometheus docker images to get downloaded and spawn the main pod
+		pod_started=$(${kubectl_cmd} get pods | grep "prometheus-k8s-1")
+		if [ "${pod_started}" == "" ]; then
+			# prometheus-k8s-1 not yet spawned
+			echo -n "."
+			sleep 5
+		else
+			echo "done"
+			break;
+		fi
+	done
+	check_running prometheus-k8s-1
 	sleep 2
 }
 
