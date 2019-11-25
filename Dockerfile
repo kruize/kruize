@@ -21,12 +21,12 @@ RUN apt-get update \
 
 WORKDIR /opt/app
 
-ARG KRUIZE_VERSION
-
 COPY src /opt/app/src
 COPY pom.xml /opt/app/
 
 RUN mvn install dependency:copy-dependencies
+
+ARG KRUIZE_VERSION
 
 RUN mvn clean package
 
@@ -47,7 +47,7 @@ RUN adduser -u 1001 -S -G root -s /usr/sbin/nologin kruize \
 USER 1001
 
 COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/jre /opt/app/jre
-COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/target/kruize-monitoring-${KRUIZE_VERSION}-jar-with-dependencies.jar /opt/app/kruize-monitoring-with-dependencies.jar
+COPY --chown=1001:0 --from=mvnbuild-openj9 /opt/app/target/kruize-monitoring-0.0.1-NA-jar-with-dependencies.jar /opt/app/kruize-monitoring-with-dependencies.jar
 
 ENV JAVA_HOME=/opt/app/jre \
     PATH="/opt/app/jre/bin:$PATH"
