@@ -6,7 +6,7 @@
 
     <groupId>kruize</groupId>
     <artifactId>kruize-monitoring</artifactId>
-    <version>0.6.3</version>
+    <version>0.0.1-NA</version>
 
     <dependencies>
         <dependency>
