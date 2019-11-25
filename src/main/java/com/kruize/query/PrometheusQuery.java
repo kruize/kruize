@@ -23,8 +23,8 @@ import com.kruize.query.kubernetes.KubernetesPrometheusQuery;
 public abstract class PrometheusQuery implements Query
 {
     private static PrometheusQuery prometheusQuery = null;
-    protected String podLabel;
-    protected String containerLabel;
+    protected String podLabel = "pod_name";
+    protected String containerLabel = "container_name";
 
     static {
         getInstance();
