@@ -30,12 +30,10 @@ public interface Metrics
     void setOriginalCpuLimit(double originalCpuLimit);
 
     String getName();
-    String getApplicationName();
     String getStatus();
     String getNamespace();
 
     void setName(String name);
-    void setApplicationName(String applicationName);
     void setStatus(String status);
     void setNamespace(String namespace);
 

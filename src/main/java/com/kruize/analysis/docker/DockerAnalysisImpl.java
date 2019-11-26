@@ -36,5 +36,4 @@ public class DockerAnalysisImpl extends AnalysisImpl<ContainerMetrics>
 
         return dockerAnalysis;
     }
-
 }

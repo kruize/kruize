@@ -18,22 +18,120 @@ package com.kruize.metrics;
 
 import com.kruize.recommendations.instance.PodRecommendations;
 import com.kruize.recommendations.instance.Recommendations;
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1ResourceRequirements;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PodMetrics extends AbstractMetrics
 {
-    private String podTemplateHash;
+    private String applicationName;
 
     private Recommendations y2dRecommendations = new PodRecommendations();
     private Recommendations currentRecommendations = new PodRecommendations();
 
-    public String getPodTemplateHash()
+    private PodMetrics() { }
+
+    public PodMetrics(V1Pod pod)
     {
-        return podTemplateHash;
+        PodMetrics podMetrics = new PodMetrics();
+        podMetrics.setName(pod.getMetadata().getName());
+        podMetrics.setNamespace(pod.getMetadata().getNamespace());
+        podMetrics.setStatus(pod.getStatus().getPhase());
+
+        String applicationName = getApplicationName(pod.getMetadata().getName(),
+                getPodTemplateHash(pod));
+
+        podMetrics.setApplicationName(applicationName);
+
+        setOriginalRequestsAndLimits(pod, podMetrics);
     }
 
-    public void setPodTemplateHash(String podTemplateHash)
+    public String getApplicationName()
     {
-        this.podTemplateHash = podTemplateHash;
+        return applicationName;
+    }
+
+    public void setApplicationName(String applicationName)
+    {
+        this.applicationName = applicationName;
+    }
+
+    private static void setOriginalRequestsAndLimits(V1Pod pod, PodMetrics podMetrics)
+    {
+        V1ResourceRequirements resources = pod.getSpec().getContainers().get(0).getResources();
+
+        Map podRequests = resources.getRequests();
+        Map podLimits = resources.getLimits();
+
+        if (podRequests != null) {
+            if (podRequests.containsKey("memory")) {
+                Quantity memoryRequests = (Quantity) podRequests.get("memory");
+                System.out.println(memoryRequests.getNumber().doubleValue());
+                podMetrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
+            }
+
+            if (podRequests.containsKey("cpu")) {
+                Quantity cpuRequests = (Quantity) podRequests.get("cpu");
+                podMetrics.setOriginalCpuRequests(cpuRequests.getNumber().doubleValue());
+            }
+        }
+
+        if (podLimits != null) {
+            if (podLimits.containsKey("memory")) {
+                Quantity memoryLimit = (Quantity) podLimits.get("memory");
+                podMetrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
+            }
+
+            if (podLimits.containsKey("cpu")) {
+                Quantity cpuLimit = (Quantity) podLimits.get("cpu");
+                podMetrics.setOriginalCpuLimit(cpuLimit.getNumber().doubleValue());
+            }
+        }
+    }
+
+    public static String getApplicationName(V1Pod pod)
+    {
+        return getApplicationName(pod.getMetadata().getName(),
+                getPodTemplateHash(pod));
+    }
+    public static String getApplicationName(String podName, String hash)
+    {
+        if (hash != null) {
+            int index = podName.indexOf(hash);
+            if (index > 0)
+                return podName.substring(0, index - 1);
+        }
+        return getApplicationNameFromInstanceName(podName);
+    }
+
+    private static String getApplicationNameFromInstanceName(String podName)
+    {
+        Pattern pattern = Pattern.compile("-[a-zA-Z]*?\\d+");
+        Matcher matcher = pattern.matcher(podName);
+
+        if (matcher.find()) {
+            int index = matcher.start();
+            return podName.substring(0, index);
+        }
+        return podName;
+    }
+
+    public static String getPodTemplateHash(V1Pod pod)
+    {
+        try
+        {
+            String podHashLabel = "pod-template-hash";
+
+            return pod.getMetadata()
+                    .getLabels().get(podHashLabel);
+        }
+        catch (NullPointerException e) {
+            return null;
+        }
     }
 
     public double getCpuRequests()

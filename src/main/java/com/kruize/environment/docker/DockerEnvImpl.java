@@ -40,7 +40,7 @@ public class DockerEnvImpl extends EnvTypeImpl
     @Override
     public void setupApplicationRecommendations()
     {
-        this.applicationRecommendations = DockerApplicationRecommendations.getInstance();
+
     }
 
     @Override
@@ -100,7 +100,6 @@ public class DockerEnvImpl extends EnvTypeImpl
     private void insertContainerMetrics(JsonElement container)
     {
         ContainerMetrics containerMetrics = getContainerMetrics(container);
-        String containerName = containerMetrics.getApplicationName();
 
         if (applicationRecommendations.applicationMap.containsKey(containerName)) {
             applicationRecommendations.addMetricToApplication(containerName, containerMetrics);
@@ -118,7 +117,6 @@ public class DockerEnvImpl extends EnvTypeImpl
         containerMetrics.setName(containerName);
         containerMetrics.setNamespace("local");
         containerMetrics.setStatus("Running");
-        containerMetrics.setApplicationName(containerName);
 
         if (container.getAsJsonObject().has("mem_limit")) {
             containerMetrics.setOriginalMemoryLimit(container.getAsJsonObject().get("mem_limit").getAsDouble());

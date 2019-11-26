@@ -25,11 +25,11 @@ public abstract class AbstractApplicationRecommendations<T extends AbstractMetri
 {
     public HashMap< String, ArrayList<T>> applicationMap = new HashMap<>();
 
-    public void addMetricToApplication(String applicationName, T metrics)
+    public void addMetricToApplication(String applicationName, String instanceName)
     {
         /* Checking if the pod has already been added before */
         for (T metric : applicationMap.get(applicationName)) {
-            if (metric.getName().equals(metrics.getName())) {
+            if (metric.getName().equals(instanceName)) {
                 return;
             }
         }

@@ -21,7 +21,6 @@ import java.util.ArrayList;
 public abstract class AbstractMetrics implements Metrics
 {
     String name;
-    String applicationName;
     String namespace;
     String status;
 
@@ -65,16 +64,6 @@ public abstract class AbstractMetrics implements Metrics
     public void setStatus(String status)
     {
         this.status = status;
-    }
-
-    public String getApplicationName()
-    {
-        return applicationName;
-    }
-
-    public void setApplicationName(String applicationName)
-    {
-        this.applicationName = applicationName;
     }
 
     public double getOriginalMemoryRequests()
