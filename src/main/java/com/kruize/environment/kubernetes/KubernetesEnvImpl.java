@@ -244,10 +244,11 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     private static String parseApplicationName(String podName, String hash)
     {
         if (hash != null) {
-            return podName.substring(0, podName.indexOf(hash) - 1);
-        } else {
-            return parseApplicationNameFromInstanceName(podName);
+            int index = podName.indexOf(hash);
+            if (index > 0)
+                return podName.substring(0, index - 1);
         }
+        return parseApplicationNameFromInstanceName(podName);
     }
 
     private void getMonitoringEndpointFromService() throws IOException, ApiException
@@ -285,7 +286,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         try {
             URL labelURL = new URL(DeploymentInfo.getMonitoringAgentEndpoint() + "/api/v1/labels");
             String result = HttpUtil.getDataFromURL(labelURL);
-            
+
             if (result.contains("\"pod\"")) {
                 prometheusQuery.setPodLabel("pod");
                 prometheusQuery.setContainerLabel("container");
