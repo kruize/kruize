@@ -16,13 +16,13 @@
 
 package com.kruize.metrics;
 
-import com.kruize.recommendations.instance.ContainerRecommendations;
 import com.kruize.recommendations.instance.Recommendations;
+import com.kruize.recommendations.instance.RecommendationsImpl;
 
 public class ContainerMetrics extends AbstractMetrics
 {
-    private Recommendations y2dRecommendations = new ContainerRecommendations();
-    private Recommendations currentRecommendations = new ContainerRecommendations();
+    private Recommendations y2dRecommendations = new RecommendationsImpl();
+    private Recommendations currentRecommendations = new RecommendationsImpl();
 
     @Override
     public double getCpuRequests()

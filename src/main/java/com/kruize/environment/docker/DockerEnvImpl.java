@@ -19,13 +19,13 @@ package com.kruize.environment.docker;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.kruize.analysis.docker.DockerAnalysisImpl;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.metrics.ContainerMetrics;
 import com.kruize.query.PrometheusQuery;
-import com.kruize.recommendations.application.DockerApplicationRecommendations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.kruize.analysis.AnalysisImpl;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -44,13 +44,13 @@ public class DockerEnvImpl extends EnvTypeImpl
     @Override
     public void setupApplicationRecommendations()
     {
-        this.applicationRecommendations = DockerApplicationRecommendations.getInstance();
+        this.applicationRecommendations = new ApplicationRecommendationsImpl<ContainerMetrics>();
     }
 
     @Override
     public void setupAnalysis()
     {
-        this.analysis = DockerAnalysisImpl.getInstance();
+        this.analysis = new AnalysisImpl<ContainerMetrics>();
     }
 
     @Override

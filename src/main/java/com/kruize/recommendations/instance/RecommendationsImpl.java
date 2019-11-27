@@ -16,13 +16,13 @@
 
 package com.kruize.recommendations.instance;
 
-public class ContainerRecommendations extends AbstractRecommendations
+public class RecommendationsImpl implements Recommendations
 {
     private double cpuLimit;
-    private double cpuRequest = 0;
+    private double cpuRequest;
 
     private double rssLimit;
-    private double rssRequest = 0;
+    private double rssRequest;
 
     @Override
     public double getCpuLimit()

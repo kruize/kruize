@@ -16,7 +16,7 @@
 
 package com.kruize.environment.kubernetes;
 
-import com.kruize.analysis.kubernetes.KubernetesAnalysisImpl;
+import com.kruize.analysis.AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.environment.SupportedTypes;
@@ -24,7 +24,7 @@ import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.PodMetrics;
 import com.kruize.query.PrometheusQuery;
-import com.kruize.recommendations.application.KubernetesApplicationRecommendations;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
 import io.kubernetes.client.ApiClient;
@@ -113,13 +113,13 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     @Override
     public void setupApplicationRecommendations()
     {
-        this.applicationRecommendations = KubernetesApplicationRecommendations.getInstance();
+        this.applicationRecommendations = new ApplicationRecommendationsImpl<PodMetrics>();
     }
 
     @Override
     public void setupAnalysis()
     {
-        this.analysis = KubernetesAnalysisImpl.getInstance();
+        this.analysis = new AnalysisImpl<PodMetrics>();
     }
 
     @Override

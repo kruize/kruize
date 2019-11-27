@@ -24,13 +24,13 @@ import com.kruize.metrics.AbstractMetrics;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.query.Query;
-import com.kruize.recommendations.application.AbstractApplicationRecommendations;
+import com.kruize.util.HttpUtil;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,10 +41,8 @@ public class CollectMetrics implements Runnable
     private EnvTypeImpl envType = EnvTypeImpl.getInstance();
     private Query query = envType.query;
 
-    @SuppressWarnings("unchecked")
-    private AbstractApplicationRecommendations<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
+    private ApplicationRecommendationsImpl<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectMetrics.class);
-
 
     static
     {

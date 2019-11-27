@@ -16,15 +16,15 @@
 
 package com.kruize.metrics;
 
-import com.kruize.recommendations.instance.PodRecommendations;
+import com.kruize.recommendations.instance.RecommendationsImpl;
 import com.kruize.recommendations.instance.Recommendations;
 
 public class PodMetrics extends AbstractMetrics
 {
     private String podTemplateHash;
 
-    private Recommendations y2dRecommendations = new PodRecommendations();
-    private Recommendations currentRecommendations = new PodRecommendations();
+    private Recommendations y2dRecommendations = new RecommendationsImpl();
+    private Recommendations currentRecommendations = new RecommendationsImpl();
 
     public String getPodTemplateHash()
     {

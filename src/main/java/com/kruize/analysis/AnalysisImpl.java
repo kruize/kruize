@@ -28,7 +28,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysis<T>
+public class AnalysisImpl<T extends AbstractMetrics> implements Analysis<T>
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisImpl.class);
 
