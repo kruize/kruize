@@ -30,7 +30,6 @@ import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.Config;
 
@@ -38,7 +37,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Map;
 
 public class KubernetesEnvImpl extends EnvTypeImpl
 {
@@ -161,7 +159,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
                     if (containsLabel || isAppsodyApplication) {
-                        insertPodMetrics(pod);
+                        addPodForMonitoring(pod);
                     }
                 } catch (NullPointerException ignored) { }
             }
@@ -172,81 +170,19 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     }
 
     @SuppressWarnings("unchecked")
-    private void insertPodMetrics(V1Pod pod)
+    private void addPodForMonitoring(V1Pod pod)
     {
-        PodMetrics podMetrics = getPodMetrics(pod);
-        String applicationName = podMetrics.getApplicationName();
+        String podName = pod.getMetadata().getName();
+        String applicationName = PodMetrics.parseApplicationName(podName,
+                PodMetrics.getPodTemplateHash(pod));
 
         if (applicationRecommendations.applicationMap.containsKey(applicationName)) {
             applicationRecommendations.addMetricToApplication(applicationName, podMetrics);
         } else {
+            PodMetrics podMetrics = new PodMetrics(pod);
             ArrayList<PodMetrics> podMetricsArrayList = new ArrayList<>();
             podMetricsArrayList.add(podMetrics);
             applicationRecommendations.applicationMap.put(applicationName, podMetricsArrayList);
-        }
-    }
-
-    private static PodMetrics getPodMetrics(V1Pod pod)
-    {
-        PodMetrics podMetrics = new PodMetrics();
-        podMetrics.setName(pod.getMetadata().getName());
-        podMetrics.setNamespace(pod.getMetadata().getNamespace());
-        podMetrics.setStatus(pod.getStatus().getPhase());
-
-        try {
-            String podHashLabel = "pod-template-hash";
-            String podTemplateHash = pod.getMetadata()
-                    .getLabels().get(podHashLabel);
-
-            podMetrics.setPodTemplateHash(podTemplateHash);
-        } catch (NullPointerException e) {
-            podMetrics.setPodTemplateHash(null);
-        }
-
-        String applicationName = parseApplicationName(pod.getMetadata().getName(),
-                podMetrics.getPodTemplateHash());
-
-        podMetrics.setApplicationName(applicationName);
-
-        V1ResourceRequirements resources = pod.getSpec().getContainers().get(0).getResources();
-
-        Map podRequests = resources.getRequests();
-        Map podLimits = resources.getLimits();
-
-        if (podRequests != null) {
-            if (podRequests.containsKey("memory")) {
-                Quantity memoryRequests = (Quantity) podRequests.get("memory");
-                System.out.println(memoryRequests.getNumber().doubleValue());
-                podMetrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
-            }
-
-            if (podRequests.containsKey("cpu")) {
-                Quantity cpuRequests = (Quantity) podRequests.get("cpu");
-                podMetrics.setOriginalCpuRequests(cpuRequests.getNumber().doubleValue());
-            }
-        }
-
-        if (podLimits != null) {
-            if (podLimits.containsKey("memory")) {
-                Quantity memoryLimit = (Quantity) podLimits.get("memory");
-                podMetrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
-            }
-
-            if (podLimits.containsKey("cpu")) {
-                Quantity cpuLimit = (Quantity) podLimits.get("cpu");
-                podMetrics.setOriginalCpuLimit(cpuLimit.getNumber().doubleValue());
-            }
-        }
-
-        return podMetrics;
-    }
-
-    private static String parseApplicationName(String podName, String hash)
-    {
-        if (hash != null) {
-            return podName.substring(0, podName.indexOf(hash) - 1);
-        } else {
-            return parseApplicationNameFromInstanceName(podName);
         }
     }
 
