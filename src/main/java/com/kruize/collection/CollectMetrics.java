@@ -16,18 +16,18 @@
 
 package com.kruize.collection;
 
-import com.kruize.environment.DeploymentInfo;
-import com.kruize.environment.EnvTypeImpl;
-import com.kruize.exceptions.ApplicationIdleStateException;
-import com.kruize.main.Kruize;
-import com.kruize.metrics.AbstractMetrics;
-import com.kruize.metrics.MetricCollector;
-import com.kruize.metrics.Metrics;
-import com.kruize.query.Query;
-import com.kruize.recommendations.application.AbstractApplicationRecommendations;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.environment.EnvTypeImpl;
+import com.kruize.main.Kruize;
+import com.kruize.metrics.AbstractMetrics;
+import com.kruize.metrics.CurrentMetrics;
+import com.kruize.metrics.MetricCollector;
+import com.kruize.metrics.Metrics;
+import com.kruize.monitoring.query.Query;
+import com.kruize.recommendations.application.AbstractApplicationRecommendations;
 import com.kruize.util.HttpUtil;
 
 import java.net.MalformedURLException;
@@ -182,7 +182,7 @@ public class CollectMetrics implements Runnable
         }
     }
 
-    private JsonArray getAsJsonArray(URL url, String values) throws IndexOutOfBoundsException
+    public static JsonArray getAsJsonArray(URL url, String values) throws IndexOutOfBoundsException
     {
         String response = HttpUtil.getDataFromURL(url);
 
@@ -251,63 +251,4 @@ public class CollectMetrics implements Runnable
         }
     }
 
-    private class CurrentMetrics
-    {
-        private String monitoringAgentEndPoint;
-        private AbstractMetrics metrics;
-        private String rssQuery;
-        private String cpuQuery;
-        private double rss;
-        private double cpu;
-
-        CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
-        {
-            this.monitoringAgentEndPoint = monitoringAgentEndPoint;
-            this.metrics = metrics;
-            this.rssQuery = rssQuery;
-            this.cpuQuery = cpuQuery;
-        }
-
-        double getRss()
-        {
-            return rss;
-        }
-
-        double getCpu()
-        {
-            return cpu;
-        }
-
-        CurrentMetrics invoke() throws MalformedURLException
-        {
-            double MIN_CPU = 0.02;
-            try {
-                cpu = getValueForQuery(new URL(monitoringAgentEndPoint + cpuQuery));
-                System.out.println("CPU: " + cpu);
-
-                rss = getValueForQuery(new URL(monitoringAgentEndPoint + rssQuery));
-                System.out.println("RSS: " + rss);
-
-                //TODO Get network data from monitoring agent
-                double network = 0;
-
-                if (cpu < MIN_CPU)
-                    throw new ApplicationIdleStateException();
-
-                metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
-                return this;
-
-            } catch (IndexOutOfBoundsException | ApplicationIdleStateException e) {
-                return this;
-            }
-
-        }
-
-        private double getValueForQuery(URL url) throws IndexOutOfBoundsException
-        {
-            return getAsJsonArray(url, "value")
-                    .get(1)
-                    .getAsDouble();
-        }
-    }
 }

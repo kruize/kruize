@@ -14,11 +14,11 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query;
+package com.kruize.monitoring.query;
 
 import com.kruize.environment.DeploymentInfo;
-import com.kruize.query.docker.DockerPrometheusQuery;
-import com.kruize.query.kubernetes.KubernetesPrometheusQuery;
+import com.kruize.monitoring.query.docker.DockerPrometheusQuery;
+import com.kruize.monitoring.query.kubernetes.KubernetesPrometheusQuery;
 
 public abstract class PrometheusQuery implements Query
 {

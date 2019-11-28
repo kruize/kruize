@@ -14,7 +14,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query;
+package com.kruize.monitoring.query;
 
 public interface Query
 {
