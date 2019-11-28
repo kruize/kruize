@@ -16,16 +16,16 @@
 
 package com.kruize.analysis;
 
-import com.kruize.metrics.Metrics;
+import com.kruize.metrics.MetricsImpl;
 
-public interface Analysis<T extends Metrics>
+public interface Analysis
 {
     double cpuBuffer = 1.15;
     double memBuffer = 1.2;
 
-    void calculateCpuLimit(T metrics);
-    void calculateMemLimit(T metrics);
-    void calculateCpuRequests(T metrics);
-    void calculateMemRequests(T metrics, int referenceIndex, int targetIndex);
-    void finalizeY2DRecommendations(T metrics);
+    void calculateCpuLimit(MetricsImpl metrics);
+    void calculateMemLimit(MetricsImpl metrics);
+    void calculateCpuRequests(MetricsImpl metrics);
+    void calculateMemRequests(MetricsImpl metrics, int referenceIndex, int targetIndex);
+    void finalizeY2DRecommendations(MetricsImpl metrics);
 }

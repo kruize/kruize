@@ -19,10 +19,110 @@ package com.kruize.metrics;
 import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.instance.RecommendationsImpl;
 
-public class ContainerMetrics extends AbstractMetrics
+import java.util.ArrayList;
+
+public class MetricsImpl implements Metrics
 {
+    private String name;
+    private String status;
+    private String namespace;
+    private String applicationName;
+
+    private double originalMemoryLimit = -1;
+    private double originalMemoryRequests = -1;
+
+    private double originalCpuLimit = -1;
+    private double originalCpuRequests = -1;
+
     private Recommendations y2dRecommendations = new RecommendationsImpl();
     private Recommendations currentRecommendations = new RecommendationsImpl();
+
+    public ArrayList<MetricCollector> metricCollector = new ArrayList<>();
+
+    @Override
+    public String getName() { return name; }
+
+    @Override
+    public void setName(String name)
+    {
+        if (name != null)
+            this.name = name;
+    }
+
+    public String getNamespace()
+    {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace)
+    {
+        if (namespace != null)
+            this.namespace = namespace;
+    }
+
+    @Override
+    public String getStatus()
+    {
+        return status;
+    }
+
+    @Override
+    public void setStatus(String status)
+    {
+        if (status != null)
+            this.status = status;
+    }
+
+    public String getApplicationName()
+    {
+        return applicationName;
+    }
+
+    public void setApplicationName(String applicationName)
+    {
+        if (applicationName != null)
+            this.applicationName = applicationName;
+    }
+
+    public double getOriginalMemoryRequests()
+    {
+        return originalMemoryRequests;
+    }
+
+    public void setOriginalMemoryRequests(double originalMemoryRequests)
+    {
+        this.originalMemoryRequests = originalMemoryRequests;
+    }
+
+    public double getOriginalMemoryLimit()
+    {
+        return originalMemoryLimit;
+    }
+
+    public void setOriginalMemoryLimit(double originalMemoryLimit)
+    {
+        this.originalMemoryLimit = originalMemoryLimit;
+    }
+
+    public double getOriginalCpuRequests()
+    {
+        return originalCpuRequests;
+    }
+
+    public void setOriginalCpuRequests(double originalCpuRequests)
+    {
+        this.originalCpuRequests = originalCpuRequests;
+    }
+
+    public double getOriginalCpuLimit()
+    {
+        return originalCpuLimit;
+    }
+
+    public void setOriginalCpuLimit(double originalCpuLimit)
+    {
+        this.originalCpuLimit = originalCpuLimit;
+    }
 
     @Override
     public double getCpuRequests()
@@ -116,4 +216,11 @@ public class ContainerMetrics extends AbstractMetrics
 
     @Override
     public double getCurrentRssLimit() { return currentRecommendations.getRssLimit(); }
+
+    @Override
+    public boolean getCurrentStatus()
+    {
+        return (this.getStatus().equals("Running")
+                || this.getStatus().equals("Succeeded")) ;
+    }
 }

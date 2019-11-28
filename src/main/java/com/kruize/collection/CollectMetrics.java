@@ -20,7 +20,7 @@ import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
 import com.kruize.main.Kruize;
-import com.kruize.metrics.AbstractMetrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.query.Query;
@@ -41,20 +41,19 @@ public class CollectMetrics implements Runnable
     private EnvTypeImpl envType = EnvTypeImpl.getInstance();
     private Query query = envType.query;
 
-    private ApplicationRecommendationsImpl<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectMetrics.class);
+    private ApplicationRecommendationsImpl applicationRecommendations = envType.applicationRecommendations;
 
     static
     {
         HttpUtil.disableSSLVertification();
     }
 
-    @SuppressWarnings("unchecked")
     private void getMetrics(String application)
     {
         String monitoringAgentEndPoint = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
 
-        for (AbstractMetrics metrics : (ArrayList<AbstractMetrics>) envType.applicationRecommendations.applicationMap.get(application)) {
+        for (MetricsImpl metrics : envType.applicationRecommendations.applicationMap.get(application)) {
             /* TODO add better checks to see if instance is still running */
             if (metrics.getCurrentStatus()) {
                 String instanceName = metrics.getName();
@@ -115,8 +114,7 @@ public class CollectMetrics implements Runnable
         Kruize.originalMemoryLimits.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
     }
 
-    @SuppressWarnings("unchecked")
-    private void analyseMetrics(Metrics metrics)
+    private void analyseMetrics(MetricsImpl metrics)
     {
         envType.analysis.calculateCpuRequests(metrics);
         envType.analysis.calculateCpuLimit(metrics);
@@ -150,7 +148,7 @@ public class CollectMetrics implements Runnable
 
     private void getPreviousData(String application)
     {
-        for (AbstractMetrics metrics : applicationRecommendations.applicationMap.get(application)) {
+        for (MetricsImpl metrics : applicationRecommendations.applicationMap.get(application)) {
             ArrayList<Double> rssList = new ArrayList<>();
             ArrayList<Double> cpuList = new ArrayList<>();
 
@@ -258,13 +256,13 @@ public class CollectMetrics implements Runnable
     private class CurrentMetrics
     {
         private String monitoringAgentEndPoint;
-        private AbstractMetrics metrics;
+        private MetricsImpl metrics;
         private String rssQuery;
         private String cpuQuery;
         private double rss;
         private double cpu;
 
-        CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
+        CurrentMetrics(String monitoringAgentEndPoint, MetricsImpl metrics, String rssQuery, String cpuQuery)
         {
             this.monitoringAgentEndPoint = monitoringAgentEndPoint;
             this.metrics = metrics;

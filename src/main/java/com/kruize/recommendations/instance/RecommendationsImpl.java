@@ -18,11 +18,11 @@ package com.kruize.recommendations.instance;
 
 public class RecommendationsImpl implements Recommendations
 {
-    private double cpuLimit;
-    private double cpuRequest;
+    private double cpuLimit = -1;
+    private double cpuRequest = -1;
 
-    private double rssLimit;
-    private double rssRequest;
+    private double rssLimit = -1;
+    private double rssRequest = -1;
 
     @Override
     public double getCpuLimit()

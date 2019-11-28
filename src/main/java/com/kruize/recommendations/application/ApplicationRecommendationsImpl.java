@@ -17,24 +17,38 @@
 package com.kruize.recommendations.application;
 
 import com.kruize.exceptions.NoSuchApplicationException;
-import com.kruize.metrics.AbstractMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import com.kruize.metrics.MetricsImpl;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ApplicationRecommendationsImpl<T extends AbstractMetrics> implements ApplicationRecommendations
+public class ApplicationRecommendationsImpl implements ApplicationRecommendations
 {
-    public HashMap< String, ArrayList<T>> applicationMap = new HashMap<>();
+    private ApplicationRecommendationsImpl() { }
+
+    private static ApplicationRecommendationsImpl applicationRecommendations = null;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationRecommendations.class);
+    public HashMap< String, ArrayList<MetricsImpl>> applicationMap = new HashMap<>();
 
+    static {
+        getInstance();
+    }
 
-    public void addMetricToApplication(String applicationName, T metrics)
+    public static ApplicationRecommendationsImpl getInstance() {
+        if (applicationRecommendations == null)
+            applicationRecommendations = new ApplicationRecommendationsImpl();
+
+        return applicationRecommendations;
+    }
+
+    public void addMetricToApplication(String applicationName, MetricsImpl metrics)
     {
         /* Checking if the pod has already been added before */
-        for (T metric : applicationMap.get(applicationName)) {
+        for (MetricsImpl metric : applicationMap.get(applicationName)) {
             if (metric.getName().equals(metrics.getName())) {
+                metric.setStatus(metrics.getStatus());
                 return;
             }
         }
@@ -43,13 +57,14 @@ public class ApplicationRecommendationsImpl<T extends AbstractMetrics> implement
 
     }
 
+    @Override
     public double getRssLimits(String applicationName) throws NoSuchApplicationException
     {
         if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for (T metrics : applicationMap.get(applicationName)) {
+            for (MetricsImpl metrics : applicationMap.get(applicationName)) {
                 int numberOfValues = metrics.metricCollector.size();
                 weightedCpuRequests += metrics.getRssLimits() * numberOfValues;
 
@@ -61,13 +76,14 @@ public class ApplicationRecommendationsImpl<T extends AbstractMetrics> implement
         }
     }
 
+    @Override
     public double getCpuLimit(String applicationName) throws NoSuchApplicationException
     {
         if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for (T metrics : applicationMap.get(applicationName)) {
+            for (MetricsImpl metrics : applicationMap.get(applicationName)) {
                 int numberOfValues = metrics.metricCollector.size();
                 weightedCpuRequests += metrics.getCpuLimit() * numberOfValues;
 
@@ -79,13 +95,33 @@ public class ApplicationRecommendationsImpl<T extends AbstractMetrics> implement
         }
     }
 
+    @Override
+    public double getRssRequests(String applicationName) throws NoSuchApplicationException
+    {
+        if (applicationMap.containsKey(applicationName)) {
+            double weightedCpuRequests = 0;
+            double totalValues = 0;
+
+            for (MetricsImpl metrics : applicationMap.get(applicationName)) {
+                int numberOfValues = metrics.metricCollector.size();
+                weightedCpuRequests += metrics.getRssRequests() * numberOfValues;
+
+                totalValues += numberOfValues;
+            }
+            return weightedCpuRequests / totalValues;
+        } else {
+            throw new NoSuchApplicationException();
+        }
+    }
+
+    @Override
     public double getCpuRequests(String applicationName) throws NoSuchApplicationException
     {
         if (applicationMap.containsKey(applicationName)) {
             double weightedCpuRequests = 0;
             double totalValues = 0;
 
-            for (T metrics : applicationMap.get(applicationName)) {
+            for (MetricsImpl metrics : applicationMap.get(applicationName)) {
                 int numberOfValues = metrics.metricCollector.size();
                 weightedCpuRequests += metrics.getCpuRequests() * numberOfValues;
 
@@ -98,23 +134,4 @@ public class ApplicationRecommendationsImpl<T extends AbstractMetrics> implement
             throw new NoSuchApplicationException();
         }
     }
-
-    public double getRssRequests(String applicationName) throws NoSuchApplicationException
-    {
-        if (applicationMap.containsKey(applicationName)) {
-            double weightedCpuRequests = 0;
-            double totalValues = 0;
-
-            for (T metrics : applicationMap.get(applicationName)) {
-                int numberOfValues = metrics.metricCollector.size();
-                weightedCpuRequests += metrics.getRssRequests() * numberOfValues;
-
-                totalValues += numberOfValues;
-            }
-            return weightedCpuRequests / totalValues;
-        } else {
-            throw new NoSuchApplicationException();
-        }
-    }
-
 }

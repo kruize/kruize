@@ -20,7 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.kruize.environment.EnvTypeImpl;
-import com.kruize.metrics.ContainerMetrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.PrometheusQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,13 +44,13 @@ public class DockerEnvImpl extends EnvTypeImpl
     @Override
     public void setupApplicationRecommendations()
     {
-        this.applicationRecommendations = new ApplicationRecommendationsImpl<ContainerMetrics>();
+        this.applicationRecommendations = ApplicationRecommendationsImpl.getInstance();
     }
 
     @Override
     public void setupAnalysis()
     {
-        this.analysis = new AnalysisImpl<ContainerMetrics>();
+        this.analysis = AnalysisImpl.getInstance();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class DockerEnvImpl extends EnvTypeImpl
         if (containerList != null && containerList.size() > 0) {
             for (JsonElement container : containerList) {
                 if (container != null && container.getAsJsonObject().size() > 0)
-                    insertContainerMetrics(container);
+                    insertMetrics(container);
             }
         } else {
             LOGGER.error("No containers to monitor.");
@@ -101,23 +101,23 @@ public class DockerEnvImpl extends EnvTypeImpl
     }
 
     @SuppressWarnings("unchecked")
-    private void insertContainerMetrics(JsonElement container)
+    private void insertMetrics(JsonElement container)
     {
-        ContainerMetrics containerMetrics = getContainerMetrics(container);
+        MetricsImpl containerMetrics = getMetrics(container);
         String containerName = containerMetrics.getApplicationName();
 
         if (applicationRecommendations.applicationMap.containsKey(containerName)) {
             applicationRecommendations.addMetricToApplication(containerName, containerMetrics);
         } else {
-            ArrayList<ContainerMetrics> containerMetricsArrayList = new ArrayList<>();
+            ArrayList<MetricsImpl> containerMetricsArrayList = new ArrayList<>();
             containerMetricsArrayList.add(containerMetrics);
             applicationRecommendations.applicationMap.put(containerName, containerMetricsArrayList);
         }
     }
 
-    private static ContainerMetrics getContainerMetrics(JsonElement container) throws NullPointerException
+    private static MetricsImpl getMetrics(JsonElement container) throws NullPointerException
     {
-        ContainerMetrics containerMetrics = new ContainerMetrics();
+        MetricsImpl containerMetrics = new MetricsImpl();
         String containerName = container.getAsJsonObject().get("name").getAsString();
         containerMetrics.setName(containerName);
         containerMetrics.setNamespace("local");

@@ -19,7 +19,7 @@ package com.kruize.environment;
 import com.kruize.analysis.Analysis;
 import com.kruize.environment.docker.DockerEnvImpl;
 import com.kruize.environment.kubernetes.KubernetesEnvImpl;
-import com.kruize.metrics.AbstractMetrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.Query;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 public abstract class EnvTypeImpl implements EnvType
 {
-    public AbstractMetrics metrics;
+    public MetricsImpl metrics;
     public Analysis analysis;
     public Query query;
     public ApplicationRecommendationsImpl applicationRecommendations;
