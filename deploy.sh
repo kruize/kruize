@@ -274,6 +274,7 @@ function icp_first() {
 
 	# Check if the service account already exists
 	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
+	check_err "Error: cloudctl login failed."
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
@@ -546,7 +547,7 @@ function minikube_terminate() {
 ###############################  ^ MiniKube ^ #################################
 
 # Iterate through the commandline options
-while getopts a:c:k:n:p:stu: gopts
+while getopts ac:k:n:p:stu: gopts
 do
 	case ${gopts} in
 	a)
