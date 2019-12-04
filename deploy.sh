@@ -182,17 +182,28 @@ function docker_prereq() {
 	echo
 	echo "Info: Checking pre requisites for Docker..."
 
-	docker pull ${CADVISOR_DOCKER_IMAGE}
+	docker pull ${CADVISOR_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull prometheus docker image: ${CADVISOR_DOCKER_IMAGE}"
 
-	docker pull ${PROMETHEUS_DOCKER_IMAGE}
+	docker pull ${PROMETHEUS_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull prometheus docker image: ${PROMETHEUS_DOCKER_IMAGE}"
 
-	docker pull ${GRAFANA_DOCKER_IMAGE}
+	docker pull ${GRAFANA_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull grafana docker image: ${GRAFANA_DOCKER_IMAGE}"
 
-	docker pull ${KRUIZE_DOCKER_IMAGE}
-	check_err "Error: Unable to pull kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
+	docker pull ${KRUIZE_DOCKER_IMAGE} 2>/dev/null
+	if [ $? != 0 ]; then
+		# Check if the image is available locally. Eg testing a image built locally
+		DOCKER_REPO=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $1 }')
+		DOCKER_TAG=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $2 }')
+		if [ -z "${DOCKER_TAG}" ]; then
+			DOCKER_TAG="latest"
+		fi
+		IMAGE_AVAIL=$(docker images | grep "${DOCKER_REPO}" | grep "${DOCKER_TAG})"
+		if [ -z "${IMAGE_AVAIL}" ]; then
+			echo "Error: Unable to locate kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
+		fi
+	fi
 }
 
 #
@@ -547,7 +558,7 @@ function minikube_terminate() {
 ###############################  ^ MiniKube ^ #################################
 
 # Iterate through the commandline options
-while getopts ac:k:n:p:stu: gopts
+while getopts ac:i:k:n:p:stu: gopts
 do
 	case ${gopts} in
 	a)
