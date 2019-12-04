@@ -23,7 +23,7 @@ import com.kruize.environment.SupportedTypes;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.PodMetrics;
-import com.kruize.query.PrometheusQuery;
+import com.kruize.monitoring.query.PrometheusQuery;
 import com.kruize.recommendations.application.KubernetesApplicationRecommendations;
 import com.kruize.util.HttpUtil;
 import io.kubernetes.client.ApiClient;

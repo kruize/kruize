@@ -20,7 +20,7 @@ import com.kruize.analysis.Analysis;
 import com.kruize.environment.docker.DockerEnvImpl;
 import com.kruize.environment.kubernetes.KubernetesEnvImpl;
 import com.kruize.metrics.AbstractMetrics;
-import com.kruize.query.Query;
+import com.kruize.monitoring.query.Query;
 import com.kruize.recommendations.application.AbstractApplicationRecommendations;
 
 import java.util.regex.Matcher;

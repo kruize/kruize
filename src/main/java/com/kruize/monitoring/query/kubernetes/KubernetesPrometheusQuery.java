@@ -14,9 +14,9 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.kubernetes;
+package com.kruize.monitoring.query.kubernetes;
 
-import com.kruize.query.PrometheusQuery;
+import com.kruize.monitoring.query.PrometheusQuery;
 
 public class KubernetesPrometheusQuery extends PrometheusQuery {
 

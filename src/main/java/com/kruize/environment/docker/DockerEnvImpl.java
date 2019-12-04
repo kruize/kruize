@@ -19,7 +19,7 @@ package com.kruize.environment.docker;
 import com.kruize.analysis.docker.DockerAnalysisImpl;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.metrics.ContainerMetrics;
-import com.kruize.query.PrometheusQuery;
+import com.kruize.monitoring.query.PrometheusQuery;
 import com.kruize.recommendations.application.DockerApplicationRecommendations;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
