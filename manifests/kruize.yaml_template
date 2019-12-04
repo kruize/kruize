@@ -38,6 +38,10 @@ spec:
           containerPort: 31313
       nodeSelector:
         node-role.kubernetes.io/master: 'true'
+      tolerations:
+      - key: "dedicated"
+        operator: "Exists"
+        effect: "NoSchedule"
 ---
 kind: Service
 apiVersion: v1
