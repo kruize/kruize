@@ -34,7 +34,7 @@ GRAFANA_DOCKER_IMAGE="grafana/grafana:latest"
 KRUIZE_DOCKER_REPO="dinogun/kruize"
 KRUIZE_DOCKER_IMAGE=${KRUIZE_DOCKER_REPO}:${KRUIZE_VERSION}
 
-MINIKUBE_MANIFEST="manifests/minikube/kruize-service-monitor.yaml"
+SERVICE_MONITOR_MANIFEST="manifests/servicemonitor/kruize-service-monitor.yaml"
 
 cluster_type="icp"
 setup=1
@@ -360,7 +360,9 @@ function openshift_first() {
 	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to OpenShift cluster..."
-	if [ ! -z ${kurl} ]; then
+	if [ ${non_interactive} == 1 ]; then
+		oc login ${kurl} -u ${user} -p ${password} -n ${kruize_ns} 
+	elif [ ! -z ${kurl} ]; then
 		oc login ${kurl}
 	else
 		oc login
@@ -376,6 +378,8 @@ function openshift_first() {
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	${oc_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
+	${oc_cmd} apply -f ${SERVICE_MONITOR_MANIFEST}
+	check_err "Error: Failed to create service monitor for Prometheus"
 }
 
 # Update yaml with the current OpenShift instance specific details
@@ -409,8 +413,21 @@ function openshift_deploy() {
 
 function openshift_start() {
 	echo
-	echo "OpenShift support coming soon!"
-	exit -1;
+	echo "###   Installing kruize for OpenShift"
+	echo
+	echo "WARNING: This will create a Kruize ServiceMonitor object in the openshift-monitoring namespace"
+	echo "WARNING: This is currently not recommended for production"
+	echo
+
+	if [ ${non_interactive} == 0 ]; then
+		echo -n "Create ServiceMonitor object and continue installation?(y/n)? "
+		read inst
+		linst=$(echo ${inst} | tr A-Z a-z)
+		if [ ${linst} == "n" ]; then
+			echo "Info: kruize not installed"
+			exit 0
+		fi
+	fi
 
 	openshift_prereq
 	openshift_first
@@ -503,7 +520,7 @@ function minikube_first() {
 	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	${kubectl_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
-	${kubectl_cmd} apply -f ${MINIKUBE_MANIFEST}
+	${kubectl_cmd} apply -f ${SERVICE_MONITOR_MANIFEST}
 	check_err "Error: Failed to create service monitor for Prometheus"
 }
 
@@ -520,8 +537,6 @@ function minikube_setup() {
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
 	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
-	sed -i "/nodeSelector/d" ${DEPLOY_MANIFEST}
-	sed -i "/node-role/d" ${DEPLOY_MANIFEST}
 }
 
 # You can deploy using kubectl
