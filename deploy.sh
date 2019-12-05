@@ -199,7 +199,7 @@ function docker_prereq() {
 		if [ -z "${DOCKER_TAG}" ]; then
 			DOCKER_TAG="latest"
 		fi
-		IMAGE_AVAIL=$(docker images | grep "${DOCKER_REPO}" | grep "${DOCKER_TAG})"
+		IMAGE_AVAIL=$(docker images | grep "${DOCKER_REPO}" | grep "${DOCKER_TAG}")
 		if [ -z "${IMAGE_AVAIL}" ]; then
 			echo "Error: Unable to locate kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
 		fi
