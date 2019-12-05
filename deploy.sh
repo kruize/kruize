@@ -31,12 +31,14 @@ GRAFANA_MANIFESTS="manifests/docker/grafana/"
 CADVISOR_DOCKER_IMAGE="google/cadvisor:latest"
 PROMETHEUS_DOCKER_IMAGE="prom/prometheus:latest"
 GRAFANA_DOCKER_IMAGE="grafana/grafana:latest"
-KRUIZE_DOCKER_IMAGE="dinogun/kruize":${KRUIZE_VERSION}
+KRUIZE_DOCKER_REPO="dinogun/kruize"
+KRUIZE_DOCKER_IMAGE=${KRUIZE_DOCKER_REPO}:${KRUIZE_VERSION}
 
 MINIKUBE_MANIFEST="manifests/minikube/kruize-service-monitor.yaml"
 
 cluster_type="icp"
 setup=1
+non_interactive=0
 
 # Determine namespace into which kruize will be deployed
 # ICP       = kube-system namespace
@@ -46,7 +48,7 @@ user="admin"
 
 function usage() {
 	echo
-	echo "Usage: $0 [-k url] [-c [docker|icp|minikube|openshift]] [-s|t] [-u user] [-p password] [-n namespace]"
+	echo "Usage: $0 [-a] [-k url] [-c [docker|icp|minikube|openshift]] [-i docker-image] [-s|t] [-u user] [-p password] [-n namespace]"
 	echo "       -s = start(default), -t = terminate"
 	exit -1
 }
@@ -180,17 +182,28 @@ function docker_prereq() {
 	echo
 	echo "Info: Checking pre requisites for Docker..."
 
-	docker pull ${CADVISOR_DOCKER_IMAGE}
+	docker pull ${CADVISOR_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull prometheus docker image: ${CADVISOR_DOCKER_IMAGE}"
 
-	docker pull ${PROMETHEUS_DOCKER_IMAGE}
+	docker pull ${PROMETHEUS_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull prometheus docker image: ${PROMETHEUS_DOCKER_IMAGE}"
 
-	docker pull ${GRAFANA_DOCKER_IMAGE}
+	docker pull ${GRAFANA_DOCKER_IMAGE} 2>/dev/null
 	check_err "Error: Unable to pull grafana docker image: ${GRAFANA_DOCKER_IMAGE}"
 
-	docker pull ${KRUIZE_DOCKER_IMAGE}
-	check_err "Error: Unable to pull kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
+	docker pull ${KRUIZE_DOCKER_IMAGE} 2>/dev/null
+	if [ $? != 0 ]; then
+		# Check if the image is available locally. Eg testing a image built locally
+		DOCKER_REPO=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $1 }')
+		DOCKER_TAG=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $2 }')
+		if [ -z "${DOCKER_TAG}" ]; then
+			DOCKER_TAG="latest"
+		fi
+		IMAGE_AVAIL=$(docker images | grep "${DOCKER_REPO}" | grep "${DOCKER_TAG}")
+		if [ -z "${IMAGE_AVAIL}" ]; then
+			echo "Error: Unable to locate kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
+		fi
+	fi
 }
 
 #
@@ -261,7 +274,7 @@ function icp_first() {
 	kubectl_cmd="kubectl -n ${kruize_ns}"
 	# Login to the cluster
 	echo "Info: Logging in to ICP cluster..."
-	if [ ! -z ${password} ]; then
+	if [ ${non_interactive} == 1 ]; then
 		cloudctl login -u ${user} -p ${password} -n ${kruize_ns} -a ${kurl}
 	elif [ ! -z ${kurl} ]; then
 		cloudctl login -a ${kurl}
@@ -272,6 +285,7 @@ function icp_first() {
 
 	# Check if the service account already exists
 	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
+	check_err "Error: cloudctl login failed."
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
@@ -418,17 +432,22 @@ function minikube_prereq() {
 	echo "Info: Checking pre requisites for minikube..."
 	kubectl_tool=$(which kubectl)
 	check_err "Error: Please install the kubectl tool"
+	# Check to see if kubectl supports kustomize
+	kubectl kustomize --help >/dev/null 2>/dev/null
+	check_err "Error: Please install a newer version of kubectl tool that supports the kustomize option (>=v1.12)"
 
 	kruize_ns="monitoring"
 	kubectl_cmd="kubectl -n ${kruize_ns}"
 
-	echo "Info: kruize needs cadvisor/prometheus/grafana to be installed in minikube"
-	echo -n "Download and install these software to minikube(y/n)? "
-	read inst
-	linst=$(echo ${inst} | tr A-Z a-z)
-	if [ ${linst} == "n" ]; then
-		echo "Info: kruize not installed"
-		exit 0
+	if [ ${non_interactive} == 0 ]; then
+		echo "Info: kruize needs cadvisor/prometheus/grafana to be installed in minikube"
+		echo -n "Download and install these software to minikube(y/n)? "
+		read inst
+		linst=$(echo ${inst} | tr A-Z a-z)
+		if [ ${linst} == "n" ]; then
+			echo "Info: kruize not installed"
+			exit 0
+		fi
 	fi
 
 	mkdir minikube_downloads 2>/dev/null
@@ -505,7 +524,7 @@ function minikube_setup() {
 	sed -i "/node-role/d" ${DEPLOY_MANIFEST}
 }
 
-# For ICP, you can deploy using kubectl
+# You can deploy using kubectl
 function minikube_deploy() {
 	echo
 	echo "Info: Deploying kruize yaml to minikube cluster"
@@ -539,12 +558,18 @@ function minikube_terminate() {
 ###############################  ^ MiniKube ^ #################################
 
 # Iterate through the commandline options
-while getopts c:k:n:p:stu: gopts
+while getopts ac:i:k:n:p:stu: gopts
 do
 	case ${gopts} in
+	a)
+		non_interactive=1
+		;;
 	c)
 		cluster_type="${OPTARG}"
 		check_cluster_type
+		;;
+	i)
+		KRUIZE_DOCKER_IMAGE="${OPTARG}"		
 		;;
 	k)
 		kurl="${OPTARG}"
