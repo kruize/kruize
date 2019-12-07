@@ -4,98 +4,31 @@
 
 ## Motivation
 
-Are you an IT Admin and worry about
+Docker and Kubernetes have become more than buzzwords and are now the defacto building block for any cloud. We are now seeing a major transformation in the industry as every product/solution/offering is being containerized as well as being made kubernetes ready (Hello YAML!). This is throwing up a new set of challenges that are unique to this changing environment.
 
-1. How do I right size my containers ?
-2. How do I plan the K8s capacity that I need ?
-3. How do I optimize my containers for best startup / resource usage / throughput ?
-4. For any Runtime ?
-5. In the age of Microservices ? (Think 100s of commits per day)
+One such issue is right sizing and optimizing containers. When applications are not sized appropriately in a k8s cluster, they either waste resources (oversized) or worse get terminated (undersized), either way could result in loss of revenue. Add to this the new microsevices model means making hundreds of code changes in a day. This means that a "let us size it once and for all" model will no longer work. Now imagine doing it across a number of language runtimes each with its own requirements to understand the real scale of the problem !
 
-Look no further, Kruize is here to help !
+Kruize monitors application containers for resource usage. It has a analysis engine which predicts the right size for the containers that are being monitored and offers recommendations on the right CPU and Memory `request` and `limit` values. The recommendations can be viewed in a dashboard on a per application basis. This helps IT admins to review and apply the recommendations knowing that their applications and even the cluster is optimally sized !
 
-Kruize needs to be deployed to your Kubernetes cluster in the same namespace as Prometheus. Kruize monitors application containers running in your Kubernetes cluster using metrics provided by Prometheus and offers recommendations on the right CPU and Memory `request` and `limit` values for your application container. The recommendations can be viewed in a Grafana dashboard on a per application basis. This helps IT admins to review and apply the recommendations knowing that their applications and even the cluster is optimally sized !
+## Supported Configurations
 
-## Deploying Kruize
+It supports two primary ways of deployment
 
-To deploy kruize to your kubernetes cluster, you need the run the `deploy.sh` script. Make sure you deploy `kruize` to the same namespace as `prometheus`.
+1. Docker (Developer Mode)
 
-```
-$ ./deploy.sh
+Developing a microservice on your laptop and want to quickly size the application container using a test load ? Run the Kruize container locally and point it to your application container. Kruize monitors the app container using Prometheus and provides recommendations as a Grafana dashboard (Prometheus and Grafana containers are automatically donwloaded when you run kruize).
 
-Info: Checking pre requisites for ICP...done
-Info: Logging in to ICP cluster...
-API endpoint: https://192.168.122.156:8443
+2. Kubernetes
 
-Username> admin
+Kruize can be deployed to a supported Kubernetes cluster. We currently support Minikube, IBM Cloud Private (ICP) and OpenShift. Kruize uses Prometheus as the metrics provider and provides recommendations through a Grafana dashboard. Prometheus and Grafana come pre-packaged with both ICP and OpenShift. 
 
-Password> 
-Authenticating...
-OK
+Even though Kruize currently supports Prometheus as the metrics provider, it can easily be extended to scrape metrics from any other metrics provider such as new relic, splunk etc.
 
-Targeted account mycluster Account (id-mycluster-account)
 
-Select a namespace:
-1. cert-manager
-2. default
-3. istio-system
-4. kube-public
-5. kube-system
-6. platform
-7. services
-Enter a number> 5
-Targeted namespace kube-system
+## Installation
 
-Configuring kubectl ...
-Property "clusters.mycluster" unset.
-Property "users.mycluster-user" unset.
-Property "contexts.mycluster-context" unset.
-Cluster "mycluster" set.
-User "mycluster-user" set.
-Context "mycluster-context" created.
-Switched to context "mycluster-context".
-OK
+See the [Install README](/docs/README.md) for more details on the installation.
 
-Configuring helm: /home/dino/.helm
-OK
-
-Info: Setting Prometheus URL as https://192.168.122.156:8443/prometheus
-Info: Deploying kruize yaml to ICP cluster
-deployment.extensions/kruize configured
-service/kruize unchanged
-kruize-866d48ddd-5qw2v                                         1/1       Running             0          10s
-```
-
-kruize is now ready to monitor applications in your cluster ! Note however that kruize only monitors applications with the label `app.kubernetes.io/name: "myapp"` currently.
-```
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: myapp
-        name: myapp
-        app.kubernetes.io/name: "myapp"    <--- Add this label to your app yaml
-```
-
-## Install the Grafana dashboard
-
-Import the Grafana dashboard into your kubernetes cluster.
-
-Copy the contents of the `/grafana/kruize_dashboard.json` and paste into the import screen shown below. You can also use `upload .json file` and point it to `/grafana/kruize_dashboard.json`.
-
-![Import dashboard into Grafana](/docs/grafana-import.png)
-
-Once imported, the grafana dashboard should look something like this.
-
-![Kruize Grafana Dashboard](/docs/grafana-dash.png)
-
-## Building Kruize
-
-```
-$ ./build.sh
-```
-Tag it appropriately and push it to a docker registry that is accessible to the kubernetes cluster. Don't forget to update the manifest yaml's to point to your newly built image !
 
 ## Contributing
 
