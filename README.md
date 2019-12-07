@@ -8,11 +8,13 @@ Docker and Kubernetes have become more than buzzwords and are now the defacto bu
 
 One such issue is right sizing and optimizing containers. When applications are not sized appropriately in a k8s cluster, they either waste resources (oversized) or worse get terminated (undersized), either way could result in loss of revenue. Add to this the new microsevices model means making hundreds of code changes in a day. This means that a "let us size it once and for all" model will no longer work. Now imagine doing it across a number of language runtimes each with its own requirements to understand the real scale of the problem !
 
+![DevOps Dilemma](/docs/devops-dilemma.png)
+
 Kruize monitors application containers for resource usage. It has a analysis engine which predicts the right size for the containers that are being monitored and offers recommendations on the right CPU and Memory `request` and `limit` values. The recommendations can be viewed in a dashboard on a per application basis. This helps IT admins to review and apply the recommendations knowing that their applications and even the cluster is optimally sized !
 
 ## Supported Configurations
 
-It supports two primary ways of deployment
+It supports two primary methods of deployment
 
 1. Docker (Developer Mode)
 

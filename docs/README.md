@@ -1,4 +1,17 @@
-﻿# Installation
+﻿
+# Kruize - Installation and Build
+
+- [Installation](#installation)
+  - [Docker](#docker)
+  - [Kubernetes](#kubernetes)
+    - [Minikube](#minikube)
+    - [OpenShift](#openshift)
+    - [IBM Cloud Private (ICP)](#ibm-cloud-private-(icp))
+  - [Add Application Label](#add-application-label)
+  - [Install the Grafana dashboard](#install-the-grafana-dashboard)
+- [Build](#build)
+
+# Installation
 
 ## Docker
 
@@ -109,7 +122,7 @@ Info: Run the following command first to access grafana port
 
 After the installation completes successfully, run the `port-forward` command as shown. This is needed to access the grafana service. Now click on the [http://localhost:3000](http://localhost:3000) to access grafana. Login as `admin/admin`, navigate to `Create` from the left bar, then click on `Import`. Click on `Upload .json file` and point it to the [dashboard](/grafana/kruize_kubernetes_dashboard.json) file that is part of this repo. Once installed, select `Kruize Dashboard`. Select the application name from the `Deployment` drop down and you are all set !
 
-Note: Kruize only monitors application with a specific label. See section "Add Application Label" below for more info.
+Note: Kruize only monitors application with a specific label. See [Add Application Label](#add-application-label) below for more info.
 
 
 ### OpenShift
@@ -120,9 +133,9 @@ $ ./deploy.sh -c openshift
 
 ```
 
-Now you need to install the Kruize Dashboard, see the "Install the Grafana dashboard" section for more details.
+Now you need to install the Kruize Dashboard, see the [Install the Grafana dashboard](#install-the-grafana-dashboard) section for more details.
 
-Note: Kruize only monitors application with a specific label. See section "Add Application Label" below for more info.
+Note: Kruize only monitors application with a specific label. See [Add Application Label](#add-application-label) below for more info.
 
 
 ### IBM Cloud Private (ICP)
@@ -174,9 +187,9 @@ service/kruize unchanged
 kruize-866d48ddd-5qw2v                                         1/1       Running             0          10s
 ```
 
-From the ICP main menu navigate to Grafana (Eg Menu -> Platform -> Monitoring). Now you need to install the Kruize Dashboard, see the "Install the Grafana dashboard" section for more details.
+From the ICP main menu navigate to Grafana (Eg Menu -> Platform -> Monitoring). Now you need to install the Kruize Dashboard, see [Install the Grafana dashboard](#install-the-grafana-dashboard) for more details.
 
-Note: Kruize only monitors application with a specific label. See section "Add Application Label" below for more info.
+Note: Kruize only monitors application with a specific label. See [Add Application Label](#add-application-label) below for more info.
 
 
 ### Add Application Label
