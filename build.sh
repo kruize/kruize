@@ -34,8 +34,12 @@ function check_err() {
 
 # Remove any previous images of kruize
 function cleanup() {
+	echo -n "Cleanup any previous kruize images..."
+	docker stop kruize >/dev/null 2>/dev/null
+	sleep 5
 	docker rmi $(docker images | grep kruize | awk '{ print $3 }') >/dev/null 2>/dev/null
 	docker rmi $(docker images | grep kruize | awk '{ printf "%s:%s\n", $1, $2 }') >/dev/null 2>/dev/null
+	echo "done"
 }
 
 # Iterate through the commandline options
