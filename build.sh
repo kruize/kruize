@@ -24,12 +24,18 @@ function usage() {
 }
 
 # Check error code from last command, exit on error
-check_err() {
+function check_err() {
 	err=$?
 	if [ ${err} -ne 0 ]; then
 		echo "$*"
 		exit -1
 	fi
+}
+
+# Remove any previous images of kruize
+function cleanup() {
+	docker rmi $(docker images | grep kruize | awk '{ print $3 }') >/dev/null 2>/dev/null
+	docker rmi $(docker images | grep kruize | awk '{ printf "%s:%s\n", $1, $2 }') >/dev/null 2>/dev/null
 }
 
 # Iterate through the commandline options
@@ -48,6 +54,7 @@ do
 done
 
 git pull
+cleanup
 
 DOCKER_REPO=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $1 }')
 DOCKER_TAG=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $2 }')
