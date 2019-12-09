@@ -20,8 +20,8 @@ import com.kruize.metrics.Metrics;
 
 public interface Analysis<T extends Metrics>
 {
-    double cpuBUFFER = 1.15;
-    double memBUFFER = 1.2;
+    double cpuBuffer = 1.15;
+    double memBuffer = 1.2;
 
     void calculateCpuLimit(T metrics);
     void calculateMemLimit(T metrics);

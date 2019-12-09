@@ -16,8 +16,8 @@
 
 package com.kruize.environment.kubernetes;
 
-import com.kruize.environment.DeploymentInfo;
 import com.kruize.analysis.kubernetes.KubernetesAnalysisImpl;
+import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.environment.SupportedTypes;
 import com.kruize.exceptions.MonitoringAgentMissingException;
@@ -26,6 +26,7 @@ import com.kruize.metrics.PodMetrics;
 import com.kruize.query.PrometheusQuery;
 import com.kruize.recommendations.application.KubernetesApplicationRecommendations;
 import com.kruize.util.HttpUtil;
+import com.kruize.util.MathUtil;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Configuration;
@@ -33,6 +34,8 @@ import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.models.*;
 import io.kubernetes.client.util.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -42,6 +45,8 @@ import java.util.Map;
 
 public class KubernetesEnvImpl extends EnvTypeImpl
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(KubernetesEnvImpl.class);
+
     @Override
     public void setupMonitoringAgent()
     {
@@ -166,7 +171,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 } catch (NullPointerException ignored) { }
             }
         } else {
-            System.out.println("Looks like you do not have RBAC permissions to list pods.");
+            LOGGER.debug("Insufficient RBAC permissions (list, get, watch) for pods and services.");
             System.exit(1);
         }
     }
@@ -216,25 +221,36 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podRequests != null) {
             if (podRequests.containsKey("memory")) {
                 Quantity memoryRequests = (Quantity) podRequests.get("memory");
-                System.out.println(memoryRequests.getNumber().doubleValue());
-                podMetrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
+                double memoryRequestsValue = memoryRequests.getNumber().doubleValue();
+                LOGGER.debug("Original memory requests for {}: {} MB", applicationName,
+                        MathUtil.bytesToMB(memoryRequestsValue));
+                podMetrics.setOriginalMemoryRequests(memoryRequestsValue);
             }
 
             if (podRequests.containsKey("cpu")) {
                 Quantity cpuRequests = (Quantity) podRequests.get("cpu");
-                podMetrics.setOriginalCpuRequests(cpuRequests.getNumber().doubleValue());
+                double cpuRequestsValue = cpuRequests.getNumber().doubleValue();
+                LOGGER.debug("Original CPU requests for {}: {}", applicationName,
+                        cpuRequestsValue);
+                podMetrics.setOriginalCpuRequests(cpuRequestsValue);
             }
         }
 
         if (podLimits != null) {
             if (podLimits.containsKey("memory")) {
                 Quantity memoryLimit = (Quantity) podLimits.get("memory");
-                podMetrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
+                double memoryLimitValue = memoryLimit.getNumber().doubleValue();
+                LOGGER.debug("Original memory limit for {}: {} MB", applicationName,
+                        MathUtil.bytesToMB(memoryLimitValue));
+                podMetrics.setOriginalMemoryLimit(memoryLimitValue);
             }
 
             if (podLimits.containsKey("cpu")) {
                 Quantity cpuLimit = (Quantity) podLimits.get("cpu");
-                podMetrics.setOriginalCpuLimit(cpuLimit.getNumber().doubleValue());
+                double cpuLimitValue = cpuLimit.getNumber().doubleValue();
+                LOGGER.debug("Original CPU limit for {}: {}", applicationName,
+                        cpuLimitValue);
+                podMetrics.setOriginalCpuLimit(cpuLimitValue);
             }
         }
 
@@ -293,6 +309,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             }
         }
         /* Use the default labels */
-        catch (MalformedURLException | NullPointerException ignored) { }
+        catch (MalformedURLException | NullPointerException ignored) {
+            LOGGER.info("Using default labels");
+        }
     }
 }

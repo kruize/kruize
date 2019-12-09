@@ -17,6 +17,8 @@
 package com.kruize.recommendations.application;
 
 import com.kruize.metrics.AbstractMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +26,8 @@ import java.util.HashMap;
 public abstract class AbstractApplicationRecommendations<T extends AbstractMetrics> implements ApplicationRecommendations
 {
     public HashMap< String, ArrayList<T>> applicationMap = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationRecommendations.class);
+
 
     public void addMetricToApplication(String applicationName, T metrics)
     {
@@ -34,5 +38,6 @@ public abstract class AbstractApplicationRecommendations<T extends AbstractMetri
             }
         }
         applicationMap.get(applicationName).add(metrics);
+        LOGGER.debug("Pod {} of application {} added for monitoring", metrics.getName(), applicationName);
     }
 }

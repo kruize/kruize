@@ -20,13 +20,18 @@ import com.kruize.metrics.AbstractMetrics;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.util.MathUtil;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysis<T>
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisImpl.class);
+
     public void calculateCpuLimit(T instance)
     {
         double maxCpu = 0;
@@ -35,6 +40,8 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
 
         if (metrics.size() == 0) {
             instance.setCurrentCpuLimit(-1);
+            LOGGER.info("{} is in idle state. Recommendations will be generated" +
+                    " after it becomes active.", instance.getApplicationName());
             return;
         }
 
@@ -44,10 +51,11 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
                 maxCpu = cpu;
         }
 
-        double cpuLimit = maxCpu * cpuBUFFER;
+        double cpuLimit = maxCpu * cpuBuffer;
         DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
+        LOGGER.debug("CPU Limit for {} is {}", instance.getName(), cpuLimit);
         instance.setCurrentCpuLimit(cpuLimit);
     }
 
@@ -69,26 +77,30 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         for (MetricCollector metric : metrics) {
             double value = metric.getFromIndex(INDEX);
             referenceValues.addValue(value);
-            System.out.print(value + "\t");
         }
 
         double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
-        System.out.println(PERCENTILE + "th percentile is " + percentileValue);
+
+        LOGGER.debug("CPU values: {}", Arrays.toString(referenceValues.getValues()));
+        LOGGER.debug("{}th percentile is {}", PERCENTILE, percentileValue);
 
         for (MetricCollector metric : metrics) {
-            if (metric.getFromIndex(INDEX) >= percentileValue) {
+            if (metric.getFromIndex(INDEX) >= percentileValue)
+            {
                 MetricCollector temp = MetricCollector.Copy(metric);
+
                 DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
                 singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
+
                 double targetValue = temp.getFromIndex(INDEX);
                 temp.setForIndex((Double.parseDouble(singleDecimalPlace.format(targetValue))), INDEX);
 
                 percentileList.add(temp);
-                System.out.println(temp.toString());
             }
         }
 
         double cpuRequests = MathUtil.getMode(percentileList, INDEX);
+        LOGGER.debug("Current CPU Requests for {} is {}", instance.getName(), cpuRequests);
         instance.setCurrentCpuRequests(cpuRequests);
     }
 
@@ -110,22 +122,25 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         for (MetricCollector metric : metrics) {
             double value = metric.getFromIndex(referenceIndex);
             referenceValues.addValue(value);
-            System.out.print(value + "\t");
         }
 
         double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
-        System.out.println(PERCENTILE + "th percentile is " + percentileValue);
+        LOGGER.debug("{}th percentile is {}", PERCENTILE, percentileValue);
 
         for (MetricCollector metric : metrics) {
-            if (metric.getFromIndex(referenceIndex) >= percentileValue) {
+            if (metric.getFromIndex(referenceIndex) >= percentileValue)
+            {
                 MetricCollector temp = MetricCollector.Copy(metric);
                 temp.setForIndex(roundToNearestMultiple(temp.getFromIndex(targetIndex), ROUND_TO_MUL_OF), targetIndex);
                 percentileList.add(temp);
-                System.out.println(temp.toString());
             }
         }
 
+        LOGGER.debug("RSS values (CPU >= 80th percentile) : {}", Arrays.toString(percentileList.toArray()));
+
         double memRequests = MathUtil.getMode(percentileList, targetIndex);
+        LOGGER.debug("Current Memory Requests for {} is {}", instance.getName(), memRequests);
+
         instance.setCurrentRssRequests(memRequests);
     }
 
@@ -150,12 +165,13 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         }
 
         spike = getLargestSpike(rssValues);
-        System.out.println("Spike for " + MetricCollector.CPU_INDEX + " is " + spike + "\n\n");
+        LOGGER.debug("Spike for {} is {}" , MetricCollector.CPU_INDEX, spike);
 
         double memRequests = instance.getRssRequests();
 
         // If spike is very low
-        double memLimit = Math.max(memRequests + spike, maxMem * memBUFFER);
+        double memLimit = Math.max(memRequests + spike, maxMem * memBuffer);
+        LOGGER.debug("Current Memory Limit for {} is {}", instance.getName(), memLimit);
         instance.setCurrentRssLimit(memLimit);
     }
 
@@ -184,6 +200,14 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         instance.setRssRequests(Math.max(instance.getRssRequests(), currentRssRequests));
         instance.setCpuLimit(Math.max(instance.getCpuLimit(), currentCpuLimit));
         instance.setCpuRequests(Math.max(instance.getCpuRequests(), currentCpuRequests));
+
+        LOGGER.info("{}: CPU Limit = {}", instance.getName(), instance.getCpuLimit());
+        LOGGER.info("{}: CPU Requests = {}", instance.getName(), instance.getCpuRequests());
+        LOGGER.info("{}: Memory Limit = {} MB", instance.getName(),
+                MathUtil.bytesToMB(instance.getRssLimits()));
+        LOGGER.info("{}: Memory Requests = {} MB\n", instance.getName(),
+                MathUtil.bytesToMB(instance.getRssRequests()));
+
     }
 
     // function to round the number to multiple of number specified

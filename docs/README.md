@@ -1,3 +1,5 @@
+
+
 ﻿
 # Kruize - Installation and Build
 
@@ -9,13 +11,14 @@
     - [IBM Cloud Private (ICP)](#ibm-cloud-private-(icp))
   - [Add Application Label](#add-application-label)
   - [Install the Grafana dashboard](#install-the-grafana-dashboard)
+  - [Configure logging level](#configure-logging-level)
 - [Build](#build)
 
 # Installation
 
 ## Docker
 
-Developing a microservice on your laptop and want to quickly size the application container using a test load ? Run the Kruize container locally and point it to your application container. Kruize monitors the app container using Prometheus and provides recommendations as a Grafana dashboard (Prometheus and Grafana containers are automatically donwloaded when you run kruize).
+Developing a microservice on your laptop and want to quickly size the application container using a test load ? Run the Kruize container locally and point it to your application container. Kruize monitors the app container using Prometheus and provides recommendations as a Grafana dashboard (Prometheus and Grafana containers are automatically downloaded when you run kruize).
 
 ```
 $ ./deploy.sh -c docker
@@ -218,6 +221,31 @@ Once imported, the grafana dashboard should look something like this.
 
 Once installed, select `Kruize Dashboard`. Select the application name from the `Deployment` drop down and you are all set !
 
+### Configure logging level
+
+Kruize uses slf4j and the log4j-slf4j binding for its logging. The log levels used are:
+
+| Logging Level | Description                                                                                                                         |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `ERROR`       | Error events that stop application from running correctly.                                                                          |
+| `WARN`        | Designates potentially harmful situations. Includes `ERROR` logs.                                                                   |
+| `INFO`        | Informational messages that highlight the progress of the application. Includes `ERROR` and `WARN` logs. The default logging level. |
+| `DEBUG`       | Designates fine-grained informational events that are most useful to debug an application. Includes logs from `INFO` level.         |
+| `ALL`         | Turn on all logging.                                                                                                                |
+
+By default, the log level is set to `INFO`. To change the logging level, set the ENV `LOGGING_LEVEL` in `manifests/kruize.yaml_template` to any of the above levels. 
+
+
+```
+        - name: MONITORING_AGENT
+          value: "prometheus"
+        - name: MONITORING_SERVICE
+          value: "{{ MONITORING_SERVICE }}"
+        - name: LOGGING_LEVEL
+          value: "INFO"          <--- Change this to any of the above levels
+```
+
+While submitting issues, we recommend users to attach the logs with log level set to `DEBUG`.
 
 ## Building Kruize
 
@@ -225,3 +253,4 @@ Once installed, select `Kruize Dashboard`. Select the application name from the 
 $ ./build.sh
 ```
 Tag it appropriately and push it to a docker registry that is accessible to the kubernetes cluster. Don't forget to update the manifest yaml's to point to your newly built image !
+

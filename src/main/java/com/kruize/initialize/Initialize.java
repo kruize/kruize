@@ -23,9 +23,16 @@ import com.kruize.environment.SupportedTypes;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.exceptions.env.ClusterTypeNotSupportedException;
 import com.kruize.exceptions.env.K8sTypeNotSupportedException;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Initialize
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Initialize.class);
+
     public static void setup_deployment_info() throws Exception
     {
         String cluster_type = System.getenv("CLUSTER_TYPE").toUpperCase();
@@ -37,16 +44,19 @@ public class Initialize
         String k8S_type = getEnv("K8S_TYPE", defaults.getK8sType());
         String auth_type = getEnv("AUTH_TYPE", defaults.getAuthType());
         String monitoring_agent = getEnv("MONITORING_AGENT", defaults.getMonitoringAgent());
+        String logging_level = getEnv("LOGGING_LEVEL", defaults.getDebugLevel());
 
         if (SupportedTypes.CLUSTER_TYPES_SUPPORTED.contains(cluster_type)) {
             DeploymentInfo.setClusterType(cluster_type);
         } else {
+            LOGGER.error("Cluster type {} is not supported", cluster_type);
             throw new ClusterTypeNotSupportedException();
         }
 
         if (SupportedTypes.K8S_TYPES_SUPPORTED.contains(k8S_type)) {
             DeploymentInfo.setKubernetesType(k8S_type);
         } else {
+            LOGGER.error("k8s type {} is not suppported", k8S_type);
             throw new K8sTypeNotSupportedException();
         }
 
@@ -57,8 +67,11 @@ public class Initialize
         if (SupportedTypes.MONITORING_AGENTS_SUPPORTED.contains(monitoring_agent)) {
             DeploymentInfo.setMonitoringAgent(monitoring_agent);
         } else {
+            LOGGER.error("Monitoring agent {}  is not supported", monitoring_agent);
             throw new MonitoringAgentNotSupportedException();
         }
+
+        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.toLevel(logging_level));
 
         String auth_token = System.getenv("AUTH_TOKEN");
         DeploymentInfo.setAuthToken((auth_token == null) ? "" : auth_token);
@@ -68,7 +81,7 @@ public class Initialize
         if (monitoring_agent_service != null)
             DeploymentInfo.setMonitoringAgentService(monitoring_agent_service.toUpperCase());
 
-        printDeploymentInfo();
+        logDeploymentInfo();
     }
 
     private static String getEnv(String env, String defaults)
@@ -78,14 +91,12 @@ public class Initialize
                 : defaults;
     }
 
-    private static void printDeploymentInfo()
+    private static void logDeploymentInfo()
     {
-        System.out.println(DeploymentInfo.getClusterType());
-        System.out.println(DeploymentInfo.getKubernetesType());
-        System.out.println(DeploymentInfo.getAuthType());
-        System.out.println(DeploymentInfo.getMonitoringAgent());
-        System.out.println(DeploymentInfo.getAuthToken());
-        System.out.println(DeploymentInfo.getMonitoringAgentEndpoint());
-        System.out.println(DeploymentInfo.getMonitoringAgentService());
+        LOGGER.info("Cluster Type: {}", DeploymentInfo.getClusterType());
+        LOGGER.info("Kubernetes Type: {}", DeploymentInfo.getKubernetesType());
+        LOGGER.info("Auth Type: {}", DeploymentInfo.getAuthType());
+        LOGGER.info("Monitoring Agent: {}", DeploymentInfo.getMonitoringAgent());
+        LOGGER.info("Monitoring agent service: {}\n\n", DeploymentInfo.getMonitoringAgentService());
     }
 }
