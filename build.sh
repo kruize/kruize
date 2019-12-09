@@ -16,24 +16,47 @@
 #
 
 KRUIZE_VERSION=$(cat .kruize-version)
+KRUIZE_DOCKER_IMAGE="kruize:${KRUIZE_VERSION}"
 
 function usage() {
-	echo "Usage: $0 [-v version_string]"
+	echo "Usage: $0 [-v version_string] [-t docker_image_name]"
+	exit -1
+}
+
+# Check error code from last command, exit on error
+check_err() {
+	err=$?
+	if [ ${err} -ne 0 ]; then
+		echo "$*"
+		exit -1
+	fi
 }
 
 # Iterate through the commandline options
-while getopts v: gopts
+while getopts t:v: gopts
 do
 	case ${gopts} in
 	v)
 		KRUIZE_VERSION="${OPTARG}"
+		;;
+	t)
+		KRUIZE_DOCKER_IMAGE="${OPTARG}"
 		;;
 	[?])
 		usage
 	esac
 done
 
-# Build the docker image with the given version string
-docker build --pull --no-cache --build-arg KRUIZE_VERSION=${KRUIZE_VERSION} -t kruize:${KRUIZE_VERSION} .
+git pull
 
-docker images | grep -e "TAG" -e "kruize"
+DOCKER_REPO=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $1 }')
+DOCKER_TAG=$(echo ${KRUIZE_DOCKER_IMAGE} | awk -F":" '{ print $2 }')
+if [ -z "${DOCKER_TAG}" ]; then
+	DOCKER_TAG="latest"
+fi
+
+# Build the docker image with the given version string
+docker build --pull --no-cache --build-arg KRUIZE_VERSION=${DOCKER_TAG} -t ${KRUIZE_DOCKER_IMAGE} .
+check_err "Docker build of ${KRUIZE_DOCKER_IMAGE} failed."
+
+docker images | grep -e "TAG" -e "${DOCKER_REPO}" | grep "${DOCKER_TAG}"
