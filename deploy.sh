@@ -115,6 +115,9 @@ do
 		case "${OPTARG}" in
 			timeout=*)
 				timeout=${OPTARG#*=}
+				if [ -z "${timeout}" ]; then
+					usage
+				fi
 				;;
 			*)
 				if [ "${OPTERR}" == 1 ] && [ "${OPTSPEC:0:1}" != ":" ]; then
