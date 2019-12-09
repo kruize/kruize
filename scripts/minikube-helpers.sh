@@ -105,7 +105,7 @@ function minikube_setup() {
 
 	sed "s|extensions/v1beta1|apps/v1|" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
 	sed -i "s/replicas: 1/replicas: 1\n  selector:\n    matchLabels:\n      app: kruize/" ${DEPLOY_MANIFEST}
-	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_DOCKER_IMAGE }}/${KRUIZE_DOCKER_IMAGE}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ K8S_TYPE }}/Minikube/" ${DEPLOY_TEMPLATE} ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}

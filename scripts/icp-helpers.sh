@@ -70,7 +70,7 @@ function icp_setup() {
 	sleep 1
 
 	sed "s/{{ K8S_TYPE }}/ICP/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
-	sed -i "s/{{ KRUIZE_VERSION }}/${KRUIZE_VERSION}/" ${DEPLOY_MANIFEST}
+	sed -i "s/{{ KRUIZE_DOCKER_IMAGE }}/${KRUIZE_DOCKER_IMAGE}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
 	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
 	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
