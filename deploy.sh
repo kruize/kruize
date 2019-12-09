@@ -119,6 +119,7 @@ do
 			*)
 				if [ "${OPTERR}" == 1 ] && [ "${OPTSPEC:0:1}" != ":" ]; then
 					echo "Unknown option --${OPTARG}" >&2
+					usage
 				fi
 				;;
 		esac
