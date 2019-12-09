@@ -44,7 +44,7 @@ public class Initialize
         String k8S_type = getEnv("K8S_TYPE", defaults.getK8sType());
         String auth_type = getEnv("AUTH_TYPE", defaults.getAuthType());
         String monitoring_agent = getEnv("MONITORING_AGENT", defaults.getMonitoringAgent());
-        String debug_level = getEnv("DEBUG_LEVEL", defaults.getDebugLevel());
+        String logging_level = getEnv("LOGGING_LEVEL", defaults.getDebugLevel());
 
         if (SupportedTypes.CLUSTER_TYPES_SUPPORTED.contains(cluster_type)) {
             DeploymentInfo.setClusterType(cluster_type);
@@ -71,7 +71,7 @@ public class Initialize
             throw new MonitoringAgentNotSupportedException();
         }
 
-        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.toLevel(debug_level));
+        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.toLevel(logging_level));
 
         String auth_token = System.getenv("AUTH_TOKEN");
         DeploymentInfo.setAuthToken((auth_token == null) ? "" : auth_token);
