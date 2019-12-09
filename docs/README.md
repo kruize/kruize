@@ -11,7 +11,7 @@
     - [IBM Cloud Private (ICP)](#ibm-cloud-private-(icp))
   - [Add Application Label](#add-application-label)
   - [Install the Grafana dashboard](#install-the-grafana-dashboard)
-  - [Configure logging level](#configure-logging-level)
+  - [Configure Logging Level](#configure-logging-level)
 - [Build](#build)
 
 # Installation
@@ -134,6 +134,35 @@ Note: Kruize only monitors application with a specific label. See [Add Applicati
 ```
 $ ./deploy.sh -c openshift
 
+###   Installing kruize for OpenShift
+
+WARNING: This will create a Kruize ServiceMonitor object in the openshift-monitoring namespace
+WARNING: This is currently not recommended for production
+
+Create ServiceMonitor object and continue installation?(y/n)? y
+
+Info: Checking pre requisites for OpenShift...done
+Info: Logging in to OpenShift cluster...
+Authentication required for https://aaa.bbb.com:6443 (openshift)
+Username: kubeadmin
+Password: 
+Login successful.
+
+You have access to 52 projects, the list has been suppressed. You can list all projects with 'oc projects'
+
+Using project "kube-system".
+
+Info: Setting Prometheus URL as https://prometheus-k8s-openshift-monitoring.apps.kaftans.os.fyre.ibm.com
+Info: Deploying kruize yaml to OpenShift cluster
+Now using project "openshift-monitoring" on server "https://api.kaftans.os.fyre.ibm.com:6443".
+deployment.extensions/kruize configured
+service/kruize unchanged
+Info: Waiting for kruize to come up...
+kruize-5cd5967d97-tz2cb                        0/1     ContainerCreating   0          6s
+kruize-5cd5967d97-tz2cb                        0/1     ContainerCreating   0          13s
+kruize-5cd5967d97-tz2cb                        1/1     Running   0          20s
+Info: kruize deploy succeeded: Running
+kruize-5cd5967d97-tz2cb                        1/1     Running   0          24s
 ```
 
 Now you need to install the Kruize Dashboard, see the [Install the Grafana dashboard](#install-the-grafana-dashboard) section for more details.
@@ -149,7 +178,7 @@ $ ./deploy.sh -c icp
 
 Info: Checking pre requisites for ICP...done
 Info: Logging in to ICP cluster...
-API endpoint: https://192.168.122.156:8443
+API endpoint: https://aaa.bbb.com:8443
 
 Username> admin
 
@@ -183,7 +212,7 @@ OK
 Configuring helm: /home/dino/.helm
 OK
 
-Info: Setting Prometheus URL as https://192.168.122.156:8443/prometheus
+Info: Setting Prometheus URL as https://aaa.bbb.com:8443/prometheus
 Info: Deploying kruize yaml to ICP cluster
 deployment.extensions/kruize configured
 service/kruize unchanged
@@ -221,7 +250,7 @@ Once imported, the grafana dashboard should look something like this.
 
 Once installed, select `Kruize Dashboard`. Select the application name from the `Deployment` drop down and you are all set !
 
-### Configure logging level
+### Configure Logging Level
 
 Kruize uses slf4j and the log4j-slf4j binding for its logging. The log levels used are:
 
