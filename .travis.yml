@@ -1,6 +1,8 @@
 services:
   - docker
 
+language: bash
+
 script:
   - ./build.sh
   - ./deploy.sh -c docker -t
@@ -8,21 +10,21 @@ script:
   - docker logs kruize | grep "CPU Limit"
   - result=$?
   - |
-    if [ $result -ne 0 ]; then 
+    if [ ${result} -ne 0 ]; then 
       echo "Kruize sanity test failed! CPU Limit not found in kruize docker logs!"
       exit 1
     fi
   - docker logs kruize | grep -i "error"
   - result=$?
   - |
-    if [ $result -ne 1 ]; then
+    if [ ${result} -ne 1 ]; then
       echo "Kruize sanity test failed! Error found in kruize docker logs!"
       exit 1
     fi
   - docker logs kruize | grep -i "exception"
   - result=$?
   - |
-    if [ $result -ne 1 ]; then
+    if [ ${result} -ne 1 ]; then
       echo "Kruize sanity test failed! Exception found in kruize docker logs!"
       exit 1
     fi
