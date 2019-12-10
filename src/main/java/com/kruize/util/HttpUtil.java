@@ -40,7 +40,7 @@ public class HttpUtil
         try {
             HttpURLConnection connection;
 
-            if (url.toString().contains("https")) {
+            if (url.getProtocol().equals("https")) {
                 connection = (HttpsURLConnection) url.openConnection();
             } else {
                 connection = (HttpURLConnection) url.openConnection();
