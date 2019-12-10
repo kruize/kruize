@@ -1,5 +1,5 @@
 
-# Kruize - Right Size and Optimize your Containers !
+# Kruize - Right Size and Optimize your Containers ! [![Build Status](https://travis-ci.org/kruize/kruize.svg?branch=master)](https://travis-ci.org/kruize/kruize)
 
 
 ## Motivation
