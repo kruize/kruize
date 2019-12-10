@@ -1,10 +1,6 @@
 services:
   - docker
 
-branches:
-  only:
-  - test
- 
 script:
   - ./build.sh
   - ./deploy.sh -c docker -t
