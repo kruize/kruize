@@ -50,6 +50,19 @@ user="admin"
 # docker: loop timeout is turned off by default
 timeout=-1
 
+function ctrlc_handler () {
+    # Check if cluster type is docker
+    if [[ "$cluster_type" == "docker" ]]; then
+        # Terminate the containers [kruize && grafana && prometheus && cadvisor]
+        docker_terminate
+    fi
+    # Exiting gracefully
+    exit 2
+}
+
+# Handle SIGHUP(1), SIGINT(2), SIGQUIT(3) for cleaning up containers in docker case
+trap "ctrlc_handler" 1 2 3 
+
 function usage() {
 	echo
 	echo "Usage: $0 [-a] [-k url] [-c [docker|icp|minikube|openshift]] [-i docker-image] [-s|t] [-u user] [-p password] [-n namespace] [--timeout=x, x in seconds, for docker only]"
