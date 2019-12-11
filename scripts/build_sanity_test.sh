@@ -24,6 +24,12 @@
 # Deploy the newly build kruize image
 ./deploy.sh -c docker -i kruize:$(cat .kruize-version) --timeout=60
 
+echo "********************************************************************************************"
+echo "Displaying kruize docker log"
+echo "********************************************************************************************"
+docker logs kruize
+echo "********************************************************************************************"
+
 # Check if the recommendations are getting generated
 docker logs kruize | grep "CPU Limit"
 result=$?
