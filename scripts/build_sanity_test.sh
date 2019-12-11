@@ -24,26 +24,35 @@
 # Deploy the newly build kruize image
 ./deploy.sh -c docker -i kruize:$(cat .kruize-version) --timeout=60
 
+# Get logs for current run
+logs=$(docker logs kruize)
+
 # Check if the recommendations are getting generated
-docker logs kruize | grep "CPU Limit"
+echo "$logs" | grep "CPU Limit" > /dev/null
 result=$?
 if [ ${result} -ne 0 ]; then
+	echo "$logs"
+	echo
 	echo "Kruize sanity test failed! CPU Limit not found in kruize docker logs!"
 	exit 1
 fi
 
 # Make sure there are no errors
-docker logs kruize | grep -i "error"
+echo "$logs" | grep -i "error" > /dev/null
 result=$?
 if [ ${result} -ne 1 ]; then
+	echo "$logs"
+	echo
 	echo "Kruize sanity test failed! Error found in kruize docker logs!"
 	exit 1
 fi
 
 # Make sure there are no exceptions
-docker logs kruize | grep -i "exception"
+echo "$logs" | grep -i "exception" > /dev/null
 result=$?
 if [ ${result} -ne 1 ]; then
+	echo "$logs"
+	echo
 	echo "Kruize sanity test failed! Exception found in kruize docker logs!"
 	exit 1
 fi
