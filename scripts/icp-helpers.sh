@@ -46,7 +46,6 @@ function icp_first() {
 
 	# Check if the service account already exists
 	sa_exists=$(${kubectl_cmd} get sa | grep ${SA_NAME})
-	check_err "Error: cloudctl login failed."
 	if [ "${sa_exists}" != "" ]; then
 		return;
 	fi
