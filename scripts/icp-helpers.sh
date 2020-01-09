@@ -100,8 +100,24 @@ function icp_start() {
 }
 
 function icp_terminate() {
-	# Add ICP cleanup code
-	echo 
-}
+	kruize_ns="kube-system"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
 
-##################################  ^ ICP ^ ###################################
+	echo
+	echo "Terminating kruize..."
+
+	echo
+	echo "Removing kruize service account"
+	${kubectl_cmd} delete -f ${SA_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing kruize deployment from ICP cluster"
+	${kubectl_cmd} delete -f ${DEPLOY_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing generated manifest files"
+	rm ${DEPLOY_MANIFEST}
+	rm ${SA_MANIFEST}
+
+	echo "done"
+}
