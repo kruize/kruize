@@ -18,6 +18,12 @@ spec:
       - name: kruize
         image: {{ KRUIZE_DOCKER_IMAGE }}
         imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 31313
+          initialDelaySeconds: 30
+          periodSeconds: 3
         env:
         - name: CLUSTER_TYPE
           value: "kubernetes"

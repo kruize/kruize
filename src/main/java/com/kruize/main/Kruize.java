@@ -121,6 +121,7 @@ public class Kruize
         server.setHandler(context);
 
         context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+        context.addServlet(new ServletHolder(new HealthEndpoint()), "/health");
 
         server.start();
     }

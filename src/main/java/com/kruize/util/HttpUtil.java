@@ -17,6 +17,7 @@
 package com.kruize.util;
 
 import com.kruize.environment.DeploymentInfo;
+import com.kruize.main.HealthEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,7 @@ public class HttpUtil
             } else {
                 if (connection.getResponseCode() == 403) {
                     LOGGER.error("Please refresh your auth token");
-                    System.exit(1);
+                    HealthEndpoint.CURRENT_STATUS = HealthEndpoint.STATUS_DOWN;
                 }
                 LOGGER.debug("{} Response Failure for {}", connection.getResponseCode(),
                         url.toString());
