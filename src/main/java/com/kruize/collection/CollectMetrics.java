@@ -93,17 +93,23 @@ public class CollectMetrics implements Runnable
         double cpuRequests = metrics.getCpuRequests();
         double cpuLimit = metrics.getCpuLimit();
 
-        if (cpuRequests > 0) {
-            Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
-        } else {
-            Kruize.cpuRequests.labels(namespace, application).set(0);
-        }
+        try {
+            if (cpuRequests > 0) {
+                Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
+                metrics.setStatus("running");
+            } else {
+                Kruize.cpuRequests.labels(namespace, application).set(0);
+                metrics.setStatus("idle");
+            }
 
-        if (cpuLimit > 0) {
-            Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
-        } else {
-            Kruize.cpuLimits.labels(namespace, application).set(0);
-        }
+            if (cpuLimit > 0) {
+                Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
+                metrics.setStatus("running");
+            } else {
+                Kruize.cpuLimits.labels(namespace, application).set(0);
+                metrics.setStatus("idle");
+            }
+        } catch (InvalidValueException ignored) { }
 
         Kruize.memoryLimits.labels(namespace, application).set(metrics.getRssLimits());
         Kruize.memoryRequests.labels(namespace, application).set(metrics.getRssRequests());

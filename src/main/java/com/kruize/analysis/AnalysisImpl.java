@@ -83,6 +83,7 @@ public class AnalysisImpl implements Analysis
 
         double cpuLimit = maxCpu * CPU_BUFFER;
         DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+        singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
         LOGGER.debug("CPU Limit for {} is {}", instance.getName(), cpuLimit);

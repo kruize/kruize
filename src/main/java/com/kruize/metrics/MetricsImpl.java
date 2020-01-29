@@ -266,7 +266,7 @@ public class MetricsImpl implements Metrics
     @Override
     public boolean getCurrentStatus()
     {
-        return (this.getStatus().equals("Running")
-                || this.getStatus().equals("Succeeded")) ;
+        return (this.getStatus().equals("running")
+                || this.getStatus().equals("succeeded")) ;
     }
 }

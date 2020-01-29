@@ -203,7 +203,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());
         metrics.setNamespace(pod.getMetadata().getNamespace());
-        metrics.setStatus(pod.getStatus().getPhase());
+        metrics.setStatus(pod.getStatus().getPhase().toString().toLowerCase());
 
         String podTemplateHash;
 
