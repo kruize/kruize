@@ -90,7 +90,7 @@ function minikube_first() {
 	fi
 	echo
 	echo "Info: One time setup - Create a service account to deploy kruize"
-	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
+	sed -e "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	${kubectl_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 	${kubectl_cmd} apply -f ${SERVICE_MONITOR_MANIFEST}
@@ -103,13 +103,13 @@ function minikube_setup() {
 	purl=""
 	br_token=""
 
-	sed "s|extensions/v1beta1|apps/v1|" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
-	sed -i "s/replicas: 1/replicas: 1\n  selector:\n    matchLabels:\n      app: kruize/" ${DEPLOY_MANIFEST}
-	sed -i "s|{{ KRUIZE_DOCKER_IMAGE }}|${KRUIZE_DOCKER_IMAGE}|" ${DEPLOY_MANIFEST}
-	sed -i "s/{{ K8S_TYPE }}/Minikube/" ${DEPLOY_TEMPLATE} ${DEPLOY_MANIFEST}
-	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
-	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
-	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
+	sed -e "s|extensions/v1beta1|apps/v1|" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
+	sed -ie "s/replicas: 1/replicas: 1\n  selector:\n    matchLabels:\n      app: kruize/" ${DEPLOY_MANIFEST}
+	sed -ie "s|{{ KRUIZE_DOCKER_IMAGE }}|${KRUIZE_DOCKER_IMAGE}|" ${DEPLOY_MANIFEST}
+	sed -ie "s/{{ K8S_TYPE }}/Minikube/" ${DEPLOY_TEMPLATE} ${DEPLOY_MANIFEST}
+	sed -ie "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
+	sed -ie "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
+	sed -ie "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 }
 
 # You can deploy using kubectl

@@ -32,8 +32,8 @@ GRAFANA_PORT="3000"
 
 # Read the docker manifest and build a list of containers to be monitored
 function get_all_monitored_containers() {
-	all_monitored_containers=$(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | awk -F '"' '{ print $2 }')
-	all_monitored_containers="${all_monitored_containers} $(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -P "^\s?#" | grep -v '"' | awk -F ':' '{ print $2 }')"
+	all_monitored_containers=$(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -E "^\s?#" | awk -F '"' '{ print $2 }')
+	all_monitored_containers="${all_monitored_containers} $(cat ${DOCKER_MANIFEST} | grep "name" | grep -v -E "^\s?#" | grep -v '"' | awk -F ':' '{ print $2 }')"
 	all_monitored_containers=$(echo ${all_monitored_containers} | sort | uniq)
 
 	echo ${all_monitored_containers}
@@ -51,7 +51,7 @@ function create_json_file() {
 
 function close_json_file() {
 	printf '\n  ]\n}' >> ${DOCKER_TMP_JSON}
-	sed -i "$(sed -n '/name/ =' ${DOCKER_TMP_JSON} | tail -n 1)"' s/,$//' ${DOCKER_TMP_JSON}
+	sed -ie "$(sed -n '/name/ =' ${DOCKER_TMP_JSON} | tail -n 1)"' s/,$//' ${DOCKER_TMP_JSON}
 }
 
 function create_json_entry() {
@@ -71,9 +71,9 @@ function get_container_info() {
 		# Get the container id from docker inspect
 		cont_id=$(docker inspect ${ctnr} | grep '\"Id\":' | awk -F'"' '{ print $4 }')
 		# Get quota and period
-		cont_cpu_quota=$(docker inspect ${ctnr} | grep -P '"CpuQuota":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
-		cont_cpu_period=$(docker inspect ${ctnr} | grep -P '"CpuPeriod":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
-		cont_mem_limit=$(docker inspect ${ctnr} | grep -P '"Memory":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
+		cont_cpu_quota=$(docker inspect ${ctnr} | grep -E '"CpuQuota":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
+		cont_cpu_period=$(docker inspect ${ctnr} | grep -E '"CpuPeriod":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
+		cont_mem_limit=$(docker inspect ${ctnr} | grep -E '"Memory":' | awk '{ print $2 }' | awk -F',' '{ print $1 }')
 
 		# Calculate the cpu_limit using the period and the quota
 		# If the period is not set, assume a default period of 100000
@@ -180,5 +180,3 @@ function docker_terminate() {
 	rm -f ${DOCKER_TMP_JSON} ${DOCKER_JSON}
 	echo "done"
 }
-
-################################  ^ Docker ^ ##################################
