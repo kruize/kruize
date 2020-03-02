@@ -58,4 +58,6 @@ public interface Metrics
     double getCurrentRssRequests();
     double getCurrentCpuLimit();
     double getCurrentRssLimit();
+
+    boolean getCurrentStatus();
 }

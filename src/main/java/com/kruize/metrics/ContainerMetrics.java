@@ -115,8 +115,6 @@ public class ContainerMetrics extends AbstractMetrics
     }
 
     @Override
-    public double getCurrentRssLimit()
-    {
-        return currentRecommendations.getRssLimit();
+    public double getCurrentRssLimit() { return currentRecommendations.getRssLimit();
     }
 }

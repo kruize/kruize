@@ -58,7 +58,7 @@ public class CollectMetrics implements Runnable
 
         for (AbstractMetrics metrics : (ArrayList<AbstractMetrics>) envType.applicationRecommendations.applicationMap.get(application)) {
             /* TODO add better checks to see if instance is still running */
-            if (metrics.getStatus().equals("Running")) {
+            if (metrics.getCurrentStatus()) {
                 String instanceName = metrics.getName();
 
                 String rssQuery = query.getRssQuery(instanceName);
