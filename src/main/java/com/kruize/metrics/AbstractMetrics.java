@@ -116,4 +116,9 @@ public abstract class AbstractMetrics implements Metrics
     {
         this.originalCpuLimit = originalCpuLimit;
     }
+
+    public boolean getCurrentStatus() {
+        return (this.getStatus().equals("Running")
+                || this.getStatus().equals("Succeeded")) ;
+    }
 }

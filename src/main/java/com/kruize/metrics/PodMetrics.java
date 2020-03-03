@@ -111,8 +111,5 @@ public class PodMetrics extends AbstractMetrics
         return currentRecommendations.getCpuLimit();
     }
 
-    public double getCurrentRssLimit()
-    {
-        return currentRecommendations.getRssLimit();
-    }
+    public double getCurrentRssLimit() { return currentRecommendations.getRssLimit(); }
 }

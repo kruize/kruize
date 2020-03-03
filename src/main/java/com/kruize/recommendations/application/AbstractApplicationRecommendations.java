@@ -33,7 +33,9 @@ public abstract class AbstractApplicationRecommendations<T extends AbstractMetri
     {
         /* Checking if the pod has already been added before */
         for (T metric : applicationMap.get(applicationName)) {
+
             if (metric.getName().equals(metrics.getName())) {
+                metric.setStatus(metrics.getStatus());
                 return;
             }
         }
