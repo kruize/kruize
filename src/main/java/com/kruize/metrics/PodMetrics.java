@@ -112,7 +112,4 @@ public class PodMetrics extends AbstractMetrics
     }
 
     public double getCurrentRssLimit() { return currentRecommendations.getRssLimit(); }
-
-
-
 }
