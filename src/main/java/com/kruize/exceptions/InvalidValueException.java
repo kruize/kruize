@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.recommendations.instance;
+package com.kruize.exceptions;
 
-public abstract class AbstractRecommendations implements Recommendations
+public class InvalidValueException extends Exception
 {
-    private double cpuLimit;
-    private double cpuRequest;
-
-    private double rssLimit;
-    private double rssRequest;
+    public InvalidValueException(String message)
+    {
+        super(message);
+    }
 }

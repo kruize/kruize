@@ -16,8 +16,9 @@
 
 package com.kruize.analysis;
 
-import com.kruize.metrics.AbstractMetrics;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricCollector;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.util.MathUtil;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -28,18 +29,47 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysis<T>
+public class AnalysisImpl implements Analysis
 {
+    private static AnalysisImpl analysis = null;
+
+    private static final double ONE_MB = 1024 * 1024;
+    private static final double DEFAULT_SPIKE = 50 * ONE_MB;
+    private static final int CPU_PERCENTILE = 80;
+
+    /* The additional buffer on top of the generated recommendations */
+    private static final double CPU_BUFFER = 1.15;
+    private static final double MEM_BUFFER = 1.2;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalysisImpl.class);
 
-    public void calculateCpuLimit(T instance)
+    static {
+        getInstance();
+    }
+
+    public static AnalysisImpl getInstance()
+    {
+        if (analysis == null)
+            analysis = new AnalysisImpl();
+
+        return analysis;
+    }
+
+    private AnalysisImpl() { }
+
+    @Override
+    public void calculateCpuLimit(MetricsImpl instance)
     {
         double maxCpu = 0;
 
         ArrayList<MetricCollector> metrics = instance.metricCollector;
 
         if (metrics.size() == 0) {
-            instance.setCurrentCpuLimit(-1);
+            try {
+                instance.setCurrentCpuLimit(0);
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
             LOGGER.info("{} is in idle state. Recommendations will be generated" +
                     " after it becomes active.", instance.getApplicationName());
             return;
@@ -51,24 +81,32 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
                 maxCpu = cpu;
         }
 
-        double cpuLimit = maxCpu * cpuBuffer;
+        double cpuLimit = maxCpu * CPU_BUFFER;
         DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
         LOGGER.debug("CPU Limit for {} is {}", instance.getName(), cpuLimit);
-        instance.setCurrentCpuLimit(cpuLimit);
+        try {
+            instance.setCurrentCpuLimit(cpuLimit);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void calculateCpuRequests(T instance)
+    @Override
+    public void calculateCpuRequests(MetricsImpl instance)
     {
-        final int PERCENTILE = 80;
         final int INDEX = MetricCollector.CPU_INDEX;
 
         ArrayList<MetricCollector> metrics = instance.metricCollector;
         ArrayList<MetricCollector> percentileList = new ArrayList<>();
 
         if (metrics.size() == 0) {
-            instance.setCurrentCpuRequests(-1);
+            try {
+                instance.setCurrentCpuRequests(0);
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -79,10 +117,10 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             referenceValues.addValue(value);
         }
 
-        double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
+        double percentileValue = MathUtil.getPercentile(referenceValues, CPU_PERCENTILE);
 
         LOGGER.debug("CPU values: {}", Arrays.toString(referenceValues.getValues()));
-        LOGGER.debug("{}th percentile is {}", PERCENTILE, percentileValue);
+        LOGGER.debug("{}th percentile is {}", CPU_PERCENTILE, percentileValue);
 
         for (MetricCollector metric : metrics) {
             if (metric.getFromIndex(INDEX) >= percentileValue)
@@ -101,19 +139,27 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
 
         double cpuRequests = MathUtil.getMode(percentileList, INDEX);
         LOGGER.debug("Current CPU Requests for {} is {}", instance.getName(), cpuRequests);
-        instance.setCurrentCpuRequests(cpuRequests);
+        try {
+            instance.setCurrentCpuRequests(cpuRequests);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void calculateMemRequests(T instance, int referenceIndex, int targetIndex)
+    @Override
+    public void calculateMemRequests(MetricsImpl instance, int referenceIndex, int targetIndex)
     {
-        final int PERCENTILE = 80;
         final int ROUND_TO_MUL_OF = 5;
 
         ArrayList<MetricCollector> metrics = instance.metricCollector;
         ArrayList<MetricCollector> percentileList = new ArrayList<>();
 
         if (metrics.size() == 0) {
-            instance.setCurrentRssRequests(-1);
+            try {
+                instance.setCurrentRssRequests(0);
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -124,8 +170,8 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
             referenceValues.addValue(value);
         }
 
-        double percentileValue = MathUtil.getPercentile(referenceValues, PERCENTILE);
-        LOGGER.debug("{}th percentile is {}", PERCENTILE, percentileValue);
+        double percentileValue = MathUtil.getPercentile(referenceValues, CPU_PERCENTILE);
+        LOGGER.debug("{}th percentile is {}", CPU_PERCENTILE, percentileValue);
 
         for (MetricCollector metric : metrics) {
             if (metric.getFromIndex(referenceIndex) >= percentileValue)
@@ -141,10 +187,15 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         double memRequests = MathUtil.getMode(percentileList, targetIndex);
         LOGGER.debug("Current Memory Requests for {} is {}", instance.getName(), memRequests);
 
-        instance.setCurrentRssRequests(memRequests);
+        try {
+            instance.setCurrentRssRequests(memRequests);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void calculateMemLimit(T instance)
+    @Override
+    public void calculateMemLimit(MetricsImpl instance)
     {
         double spike;
         double maxMem = 0;
@@ -153,7 +204,11 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         ArrayList<MetricCollector> metrics = instance.metricCollector;
 
         if (metrics.size() == 0) {
-            instance.setCurrentRssLimit(-1);
+            try {
+                instance.setCurrentRssLimit(0);
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -165,20 +220,23 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         }
 
         spike = getLargestSpike(rssValues);
-        LOGGER.debug("Spike for {} is {}" , MetricCollector.CPU_INDEX, spike);
+        LOGGER.debug("Spike is {}" , spike);
 
         double memRequests = instance.getRssRequests();
 
         // If spike is very low
-        double memLimit = Math.max(memRequests + spike, maxMem * memBuffer);
+        double memLimit = Math.max(memRequests + spike, maxMem * MEM_BUFFER);
         LOGGER.debug("Current Memory Limit for {} is {}", instance.getName(), memLimit);
-        instance.setCurrentRssLimit(memLimit);
+        try {
+            instance.setCurrentRssLimit(memLimit);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
     }
 
     private static double getLargestSpike(ArrayList<Double> arrayList)
     {
-        final double ONE_MB = 1024 * 1024;
-        double largestSpike = 50 * ONE_MB;
+        double largestSpike = DEFAULT_SPIKE;
 
         for (int i = 1; i < arrayList.size(); i++) {
             double difference = (arrayList.get(i) - arrayList.get(i - 1));
@@ -189,17 +247,22 @@ public abstract class AnalysisImpl<T extends AbstractMetrics> implements Analysi
         return largestSpike;
     }
 
-    public void finalizeY2DRecommendations(T instance)
+    @Override
+    public void finalizeY2DRecommendations(MetricsImpl instance)
     {
         double currentCpuLimit = instance.getCurrentCpuLimit();
         double currentCpuRequests = instance.getCurrentCpuRequests();
         double currentRssLimit = instance.getCurrentRssLimit();
         double currentRssRequests = instance.getCurrentRssRequests();
 
-        instance.setRssLimit(Math.max(instance.getRssLimits(), currentRssLimit));
-        instance.setRssRequests(Math.max(instance.getRssRequests(), currentRssRequests));
-        instance.setCpuLimit(Math.max(instance.getCpuLimit(), currentCpuLimit));
-        instance.setCpuRequests(Math.max(instance.getCpuRequests(), currentCpuRequests));
+        try {
+            instance.setRssLimit(Math.max(instance.getRssLimits(), currentRssLimit));
+            instance.setRssRequests(Math.max(instance.getRssRequests(), currentRssRequests));
+            instance.setCpuLimit(Math.max(instance.getCpuLimit(), currentCpuLimit));
+            instance.setCpuRequests(Math.max(instance.getCpuRequests(), currentCpuRequests));
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
 
         LOGGER.info("{}: CPU Limit = {}", instance.getName(), instance.getCpuLimit());
         LOGGER.info("{}: CPU Requests = {}", instance.getName(), instance.getCpuRequests());

@@ -16,15 +16,16 @@
 
 package com.kruize.environment.kubernetes;
 
-import com.kruize.analysis.kubernetes.KubernetesAnalysisImpl;
+import com.kruize.analysis.AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.environment.SupportedTypes;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
-import com.kruize.metrics.PodMetrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.PrometheusQuery;
-import com.kruize.recommendations.application.KubernetesApplicationRecommendations;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
 import io.kubernetes.client.ApiClient;
@@ -53,8 +54,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         try {
 
             if (DeploymentInfo.getMonitoringAgentEndpoint() == null
-                    || DeploymentInfo.getMonitoringAgentEndpoint().equals(""))
-            {
+                    || DeploymentInfo.getMonitoringAgentEndpoint().equals("")) {
                 if (DeploymentInfo.getMonitoringAgentService() != null) {
                     getMonitoringEndpointFromService();
                 } else {
@@ -113,13 +113,13 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     @Override
     public void setupApplicationRecommendations()
     {
-        this.applicationRecommendations = KubernetesApplicationRecommendations.getInstance();
+        this.applicationRecommendations = ApplicationRecommendationsImpl.getInstance();
     }
 
     @Override
     public void setupAnalysis()
     {
-        this.analysis = KubernetesAnalysisImpl.getInstance();
+        this.analysis = AnalysisImpl.getInstance();
     }
 
     @Override
@@ -166,9 +166,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
                     if (containsLabel || isAppsodyApplication) {
-                        insertPodMetrics(pod);
+                        insertMetrics(pod);
                     }
-                } catch (NullPointerException ignored) { }
+                } catch (NullPointerException ignored) {
+                }
             }
         } else {
             LOGGER.debug("Insufficient RBAC permissions (list, get, watch) for pods and services.");
@@ -176,42 +177,49 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void insertPodMetrics(V1Pod pod)
+    private void insertMetrics(V1Pod pod)
     {
-        PodMetrics podMetrics = getPodMetrics(pod);
-        String applicationName = podMetrics.getApplicationName();
+        MetricsImpl metricsImpl = null;
+        try {
+            metricsImpl = getPodMetrics(pod);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
+
+        assert metricsImpl != null;
+        String applicationName = metricsImpl.getApplicationName();
 
         if (applicationRecommendations.applicationMap.containsKey(applicationName)) {
-            applicationRecommendations.addMetricToApplication(applicationName, podMetrics);
+            applicationRecommendations.addMetricToApplication(applicationName, metricsImpl);
         } else {
-            ArrayList<PodMetrics> podMetricsArrayList = new ArrayList<>();
-            podMetricsArrayList.add(podMetrics);
+            ArrayList<MetricsImpl> podMetricsArrayList = new ArrayList<>();
+            podMetricsArrayList.add(metricsImpl);
             applicationRecommendations.applicationMap.put(applicationName, podMetricsArrayList);
         }
     }
 
-    private static PodMetrics getPodMetrics(V1Pod pod)
+    private static MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
     {
-        PodMetrics podMetrics = new PodMetrics();
-        podMetrics.setName(pod.getMetadata().getName());
-        podMetrics.setNamespace(pod.getMetadata().getNamespace());
-        podMetrics.setStatus(pod.getStatus().getPhase());
+        MetricsImpl metrics = new MetricsImpl();
+        metrics.setName(pod.getMetadata().getName());
+        metrics.setNamespace(pod.getMetadata().getNamespace());
+        metrics.setStatus(pod.getStatus().getPhase());
+
+        String podTemplateHash;
 
         try {
             String podHashLabel = "pod-template-hash";
-            String podTemplateHash = pod.getMetadata()
+            podTemplateHash = pod.getMetadata()
                     .getLabels().get(podHashLabel);
 
-            podMetrics.setPodTemplateHash(podTemplateHash);
         } catch (NullPointerException e) {
-            podMetrics.setPodTemplateHash(null);
+            podTemplateHash = null;
         }
 
         String applicationName = parseApplicationName(pod.getMetadata().getName(),
-                podMetrics.getPodTemplateHash());
+                podTemplateHash);
 
-        podMetrics.setApplicationName(applicationName);
+        metrics.setApplicationName(applicationName);
 
         V1ResourceRequirements resources = pod.getSpec().getContainers().get(0).getResources();
 
@@ -224,7 +232,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 double memoryRequestsValue = memoryRequests.getNumber().doubleValue();
                 LOGGER.debug("Original memory requests for {}: {} MB", applicationName,
                         MathUtil.bytesToMB(memoryRequestsValue));
-                podMetrics.setOriginalMemoryRequests(memoryRequestsValue);
+
+                metrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
             }
 
             if (podRequests.containsKey("cpu")) {
@@ -232,7 +241,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 double cpuRequestsValue = cpuRequests.getNumber().doubleValue();
                 LOGGER.debug("Original CPU requests for {}: {}", applicationName,
                         cpuRequestsValue);
-                podMetrics.setOriginalCpuRequests(cpuRequestsValue);
+
+                metrics.setOriginalCpuRequests(cpuRequests.getNumber().doubleValue());
             }
         }
 
@@ -242,7 +252,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 double memoryLimitValue = memoryLimit.getNumber().doubleValue();
                 LOGGER.debug("Original memory limit for {}: {} MB", applicationName,
                         MathUtil.bytesToMB(memoryLimitValue));
-                podMetrics.setOriginalMemoryLimit(memoryLimitValue);
+
+                metrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
             }
 
             if (podLimits.containsKey("cpu")) {
@@ -250,11 +261,12 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 double cpuLimitValue = cpuLimit.getNumber().doubleValue();
                 LOGGER.debug("Original CPU limit for {}: {}", applicationName,
                         cpuLimitValue);
-                podMetrics.setOriginalCpuLimit(cpuLimitValue);
+
+                metrics.setOriginalCpuLimit(cpuLimit.getNumber().doubleValue());
             }
         }
 
-        return podMetrics;
+        return metrics;
     }
 
     private static String parseApplicationName(String podName, String hash)

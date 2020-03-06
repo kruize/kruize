@@ -19,18 +19,19 @@ package com.kruize.collection;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.main.Kruize;
-import com.kruize.metrics.AbstractMetrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.query.Query;
-import com.kruize.recommendations.application.AbstractApplicationRecommendations;
+import com.kruize.util.HttpUtil;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,22 +42,19 @@ public class CollectMetrics implements Runnable
     private EnvTypeImpl envType = EnvTypeImpl.getInstance();
     private Query query = envType.query;
 
-    @SuppressWarnings("unchecked")
-    private AbstractApplicationRecommendations<AbstractMetrics> applicationRecommendations = envType.applicationRecommendations;
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectMetrics.class);
-
+    private ApplicationRecommendationsImpl applicationRecommendations = envType.applicationRecommendations;
 
     static
     {
         HttpUtil.disableSSLVertification();
     }
 
-    @SuppressWarnings("unchecked")
     private void getMetrics(String application)
     {
         String monitoringAgentEndPoint = DeploymentInfo.getMonitoringAgentEndpoint() + query.getAPIEndpoint();
 
-        for (AbstractMetrics metrics : (ArrayList<AbstractMetrics>) envType.applicationRecommendations.applicationMap.get(application)) {
+        for (MetricsImpl metrics : envType.applicationRecommendations.applicationMap.get(application)) {
             /* TODO add better checks to see if instance is still running */
             if (metrics.getCurrentStatus()) {
                 String instanceName = metrics.getName();
@@ -98,13 +96,13 @@ public class CollectMetrics implements Runnable
         if (cpuRequests > 0) {
             Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
         } else {
-            Kruize.cpuRequests.labels(namespace, application).set(-1);
+            Kruize.cpuRequests.labels(namespace, application).set(0);
         }
 
         if (cpuLimit > 0) {
             Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
         } else {
-            Kruize.cpuLimits.labels(namespace, application).set(-1);
+            Kruize.cpuLimits.labels(namespace, application).set(0);
         }
 
         Kruize.memoryLimits.labels(namespace, application).set(metrics.getRssLimits());
@@ -117,8 +115,7 @@ public class CollectMetrics implements Runnable
         Kruize.originalMemoryLimits.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
     }
 
-    @SuppressWarnings("unchecked")
-    private void analyseMetrics(Metrics metrics)
+    private void analyseMetrics(MetricsImpl metrics)
     {
         envType.analysis.calculateCpuRequests(metrics);
         envType.analysis.calculateCpuLimit(metrics);
@@ -152,7 +149,7 @@ public class CollectMetrics implements Runnable
 
     private void getPreviousData(String application)
     {
-        for (AbstractMetrics metrics : applicationRecommendations.applicationMap.get(application)) {
+        for (MetricsImpl metrics : applicationRecommendations.applicationMap.get(application)) {
             ArrayList<Double> rssList = new ArrayList<>();
             ArrayList<Double> cpuList = new ArrayList<>();
 
@@ -227,15 +224,19 @@ public class CollectMetrics implements Runnable
                                 query.getPreviousMemReqRec(applicationName), applicationName);
             } catch (IndexOutOfBoundsException ignored) { }
 
-            metrics.setCurrentCpuLimit(previousCpuLimit);
-            metrics.setCurrentRssLimit(previousRssLimit);
-            metrics.setCurrentCpuRequests(previousCpuRequests);
-            metrics.setCurrentRssRequests(previousRssRequests);
+            try {
+                metrics.setCurrentCpuLimit(previousCpuLimit);
+                metrics.setCurrentRssLimit(previousRssLimit);
+                metrics.setCurrentCpuRequests(previousCpuRequests);
+                metrics.setCurrentRssRequests(previousRssRequests);
 
-            metrics.setCpuLimit(Math.max(previousCpuLimit, metrics.getCpuLimit()));
-            metrics.setCpuRequests(Math.max(previousCpuRequests, metrics.getCpuRequests()));
-            metrics.setRssRequests(Math.max(previousRssRequests, metrics.getRssRequests()));
-            metrics.setRssLimit(Math.max(previousRssLimit, metrics.getRssLimits()));
+                metrics.setCpuLimit(Math.max(previousCpuLimit, metrics.getCpuLimit()));
+                metrics.setCpuRequests(Math.max(previousCpuRequests, metrics.getCpuRequests()));
+                metrics.setRssRequests(Math.max(previousRssRequests, metrics.getRssRequests()));
+                metrics.setRssLimit(Math.max(previousRssLimit, metrics.getRssLimits()));
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -253,20 +254,20 @@ public class CollectMetrics implements Runnable
                     .getAsDouble();
         } catch (IndexOutOfBoundsException | MalformedURLException e) {
             LOGGER.info("No previous recommendations available for {}", applicationName);
-            return -1;
+            return 0;
         }
     }
 
     private class CurrentMetrics
     {
         private String monitoringAgentEndPoint;
-        private AbstractMetrics metrics;
+        private MetricsImpl metrics;
         private String rssQuery;
         private String cpuQuery;
         private double rss;
         private double cpu;
 
-        CurrentMetrics(String monitoringAgentEndPoint, AbstractMetrics metrics, String rssQuery, String cpuQuery)
+        CurrentMetrics(String monitoringAgentEndPoint, MetricsImpl metrics, String rssQuery, String cpuQuery)
         {
             this.monitoringAgentEndPoint = monitoringAgentEndPoint;
             this.metrics = metrics;
