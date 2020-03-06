@@ -19,6 +19,7 @@ package com.kruize.collection;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.main.Kruize;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.MetricCollector;
@@ -95,13 +96,13 @@ public class CollectMetrics implements Runnable
         if (cpuRequests > 0) {
             Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
         } else {
-            Kruize.cpuRequests.labels(namespace, application).set(-1);
+            Kruize.cpuRequests.labels(namespace, application).set(0);
         }
 
         if (cpuLimit > 0) {
             Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
         } else {
-            Kruize.cpuLimits.labels(namespace, application).set(-1);
+            Kruize.cpuLimits.labels(namespace, application).set(0);
         }
 
         Kruize.memoryLimits.labels(namespace, application).set(metrics.getRssLimits());
@@ -223,15 +224,19 @@ public class CollectMetrics implements Runnable
                                 query.getPreviousMemReqRec(applicationName), applicationName);
             } catch (IndexOutOfBoundsException ignored) { }
 
-            metrics.setCurrentCpuLimit(previousCpuLimit);
-            metrics.setCurrentRssLimit(previousRssLimit);
-            metrics.setCurrentCpuRequests(previousCpuRequests);
-            metrics.setCurrentRssRequests(previousRssRequests);
+            try {
+                metrics.setCurrentCpuLimit(previousCpuLimit);
+                metrics.setCurrentRssLimit(previousRssLimit);
+                metrics.setCurrentCpuRequests(previousCpuRequests);
+                metrics.setCurrentRssRequests(previousRssRequests);
 
-            metrics.setCpuLimit(Math.max(previousCpuLimit, metrics.getCpuLimit()));
-            metrics.setCpuRequests(Math.max(previousCpuRequests, metrics.getCpuRequests()));
-            metrics.setRssRequests(Math.max(previousRssRequests, metrics.getRssRequests()));
-            metrics.setRssLimit(Math.max(previousRssLimit, metrics.getRssLimits()));
+                metrics.setCpuLimit(Math.max(previousCpuLimit, metrics.getCpuLimit()));
+                metrics.setCpuRequests(Math.max(previousCpuRequests, metrics.getCpuRequests()));
+                metrics.setRssRequests(Math.max(previousRssRequests, metrics.getRssRequests()));
+                metrics.setRssLimit(Math.max(previousRssLimit, metrics.getRssLimits()));
+            } catch (InvalidValueException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -249,7 +254,7 @@ public class CollectMetrics implements Runnable
                     .getAsDouble();
         } catch (IndexOutOfBoundsException | MalformedURLException e) {
             LOGGER.info("No previous recommendations available for {}", applicationName);
-            return -1;
+            return 0;
         }
     }
 

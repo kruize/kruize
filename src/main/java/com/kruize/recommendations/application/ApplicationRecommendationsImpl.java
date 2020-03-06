@@ -16,6 +16,7 @@
 
 package com.kruize.recommendations.application;
 
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.NoSuchApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,11 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         /* Checking if the pod has already been added before */
         for (MetricsImpl metric : applicationMap.get(applicationName)) {
             if (metric.getName().equals(metrics.getName())) {
-                metric.setStatus(metrics.getStatus());
+                try {
+                    metric.setStatus(metrics.getStatus());
+                } catch (InvalidValueException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
         }

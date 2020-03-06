@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corporation and others.
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.analysis;
+package com.kruize.exceptions;
 
-import com.kruize.metrics.MetricsImpl;
-
-public interface Analysis
+public class InvalidValueException extends Exception
 {
-    void calculateCpuLimit(MetricsImpl metrics);
-    void calculateMemLimit(MetricsImpl metrics);
-    void calculateCpuRequests(MetricsImpl metrics);
-    void calculateMemRequests(MetricsImpl metrics, int referenceIndex, int targetIndex);
-    void finalizeY2DRecommendations(MetricsImpl metrics);
+    public InvalidValueException(String message)
+    {
+        super(message);
+    }
 }

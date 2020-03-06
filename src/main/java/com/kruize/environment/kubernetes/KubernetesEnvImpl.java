@@ -20,6 +20,7 @@ import com.kruize.analysis.AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.environment.SupportedTypes;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
@@ -178,7 +179,14 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
     private void insertMetrics(V1Pod pod)
     {
-        MetricsImpl metricsImpl = getPodMetrics(pod);
+        MetricsImpl metricsImpl = null;
+        try {
+            metricsImpl = getPodMetrics(pod);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
+
+        assert metricsImpl != null;
         String applicationName = metricsImpl.getApplicationName();
 
         if (applicationRecommendations.applicationMap.containsKey(applicationName)) {
@@ -190,7 +198,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
-    private static MetricsImpl getPodMetrics(V1Pod pod)
+    private static MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
     {
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());

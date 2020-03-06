@@ -16,6 +16,7 @@
 
 package com.kruize.metrics;
 
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.instance.RecommendationsImpl;
 
@@ -28,11 +29,11 @@ public class MetricsImpl implements Metrics
     private String namespace;
     private String applicationName;
 
-    private double originalMemoryLimit = -1;
-    private double originalMemoryRequests = -1;
+    private double originalMemoryLimit = 0;
+    private double originalMemoryRequests = 0;
 
-    private double originalCpuLimit = -1;
-    private double originalCpuRequests = -1;
+    private double originalCpuLimit = 0;
+    private double originalCpuRequests = 0;
 
     private Recommendations y2dRecommendations = new RecommendationsImpl();
     private Recommendations currentRecommendations = new RecommendationsImpl();
@@ -43,10 +44,12 @@ public class MetricsImpl implements Metrics
     public String getName() { return name; }
 
     @Override
-    public void setName(String name)
+    public void setName(String name) throws InvalidValueException
     {
-        if (name != null)
-            this.name = name;
+        if (name == null)
+            throw new InvalidValueException("Instance name cannot be null");
+
+        this.name = name;
     }
 
     public String getNamespace()
@@ -54,10 +57,12 @@ public class MetricsImpl implements Metrics
         return namespace;
     }
 
-    public void setNamespace(String namespace)
+    public void setNamespace(String namespace) throws InvalidValueException
     {
-        if (namespace != null)
-            this.namespace = namespace;
+        if (namespace == null)
+            throw new InvalidValueException("Application namespace cannot be null");
+
+        this.namespace = namespace;
     }
 
     @Override
@@ -67,10 +72,12 @@ public class MetricsImpl implements Metrics
     }
 
     @Override
-    public void setStatus(String status)
+    public void setStatus(String status) throws InvalidValueException
     {
-        if (status != null)
-            this.status = status;
+        if (status == null)
+            throw new InvalidValueException("Application status cannot be null");
+
+        this.status = status;
     }
 
     public String getApplicationName()
@@ -78,10 +85,12 @@ public class MetricsImpl implements Metrics
         return applicationName;
     }
 
-    public void setApplicationName(String applicationName)
+    public void setApplicationName(String applicationName) throws InvalidValueException
     {
-        if (applicationName != null)
-            this.applicationName = applicationName;
+        if (applicationName == null)
+            throw new InvalidValueException("Application name cannot be null");
+
+        this.applicationName = applicationName;
     }
 
     public double getOriginalMemoryRequests()
@@ -90,7 +99,11 @@ public class MetricsImpl implements Metrics
     }
 
     public void setOriginalMemoryRequests(double originalMemoryRequests)
+            throws InvalidValueException
     {
+        if (originalMemoryRequests < 0)
+            throw new InvalidValueException("Original memory requests cannot be negative");
+
         this.originalMemoryRequests = originalMemoryRequests;
     }
 
@@ -99,8 +112,11 @@ public class MetricsImpl implements Metrics
         return originalMemoryLimit;
     }
 
-    public void setOriginalMemoryLimit(double originalMemoryLimit)
+    public void setOriginalMemoryLimit(double originalMemoryLimit) throws InvalidValueException
     {
+        if (originalMemoryLimit < 0)
+            throw new InvalidValueException("Original memory limit cannot be negative");
+
         this.originalMemoryLimit = originalMemoryLimit;
     }
 
@@ -109,8 +125,11 @@ public class MetricsImpl implements Metrics
         return originalCpuRequests;
     }
 
-    public void setOriginalCpuRequests(double originalCpuRequests)
+    public void setOriginalCpuRequests(double originalCpuRequests) throws InvalidValueException
     {
+        if (originalCpuRequests < 0)
+            throw new InvalidValueException("Original CPU requests cannot be negative");
+
         this.originalCpuRequests = originalCpuRequests;
     }
 
@@ -119,8 +138,11 @@ public class MetricsImpl implements Metrics
         return originalCpuLimit;
     }
 
-    public void setOriginalCpuLimit(double originalCpuLimit)
+    public void setOriginalCpuLimit(double originalCpuLimit) throws InvalidValueException
     {
+        if (originalCpuLimit < 0)
+            throw new InvalidValueException("Original CPU limit cannot be negative");
+
         this.originalCpuLimit = originalCpuLimit;
     }
 
@@ -149,51 +171,75 @@ public class MetricsImpl implements Metrics
     }
 
     @Override
-    public void setCpuRequests(double value)
+    public void setCpuRequests(double cpuRequests) throws InvalidValueException
     {
-        y2dRecommendations.setCpuRequest(value);
+        if (cpuRequests < 0)
+            throw new InvalidValueException("CPU requests cannot be negative");
+
+        y2dRecommendations.setCpuRequest(cpuRequests);
     }
 
     @Override
-    public void setCpuLimit(double value)
+    public void setCpuLimit(double cpuLimit) throws InvalidValueException
     {
-        y2dRecommendations.setCpuLimit(value);
+        if (cpuLimit < 0)
+            throw new InvalidValueException("CPU limit cannot be negative");
+
+        y2dRecommendations.setCpuLimit(cpuLimit);
     }
 
     @Override
-    public void setRssRequests(double value)
+    public void setRssRequests(double rssRequests) throws InvalidValueException
     {
-        y2dRecommendations.setRssRequest(value);
+        if (rssRequests < 0)
+            throw new InvalidValueException("RSS requests cannot be negative");
+
+        y2dRecommendations.setRssRequest(rssRequests);
     }
 
     @Override
-    public void setRssLimit(double value)
+    public void setRssLimit(double rssLimit) throws InvalidValueException
     {
-        y2dRecommendations.setRssLimit(value);
+        if (rssLimit < 0)
+            throw new InvalidValueException("RSS limit cannot be negative");
+
+        y2dRecommendations.setRssLimit(rssLimit);
     }
 
     @Override
-    public void setCurrentCpuRequests(double value)
+    public void setCurrentCpuRequests(double currentCpuRequests) throws InvalidValueException
     {
-        currentRecommendations.setCpuRequest(value);
+        if (currentCpuRequests < 0)
+            throw new InvalidValueException("Current CPU requests cannot be negative");
+
+        currentRecommendations.setCpuRequest(currentCpuRequests);
     }
 
     @Override
-    public void setCurrentRssRequests(double value)
+    public void setCurrentRssRequests(double currentRssRequests) throws InvalidValueException
     {
-        currentRecommendations.setRssRequest(value);
+        if (currentRssRequests < 0)
+            throw new InvalidValueException("Current RSS requests cannot be negative");
+
+        currentRecommendations.setRssRequest(currentRssRequests);
     }
 
     @Override
-    public void setCurrentCpuLimit(double value)
+    public void setCurrentCpuLimit(double currentCpuLimit) throws InvalidValueException
     {
-        currentRecommendations.setCpuLimit(value);
+        if (currentCpuLimit < 0)
+            throw new InvalidValueException("Current CPU limit cannot be negative");
+
+        currentRecommendations.setCpuLimit(currentCpuLimit);
     }
 
     @Override
-    public void setCurrentRssLimit(double value)
+    public void setCurrentRssLimit(double currentRssLimit) throws InvalidValueException
     {
-        currentRecommendations.setRssLimit(value);
+        if (currentRssLimit < 0)
+            throw new InvalidValueException("Current RSS limit cannot be negative");
+
+        currentRecommendations.setRssLimit(currentRssLimit);
     }
 
     @Override

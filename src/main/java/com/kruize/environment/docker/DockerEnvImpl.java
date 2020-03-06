@@ -20,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.kruize.environment.EnvTypeImpl;
+import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.PrometheusQuery;
 import org.slf4j.Logger;
@@ -103,7 +104,14 @@ public class DockerEnvImpl extends EnvTypeImpl
     @SuppressWarnings("unchecked")
     private void insertMetrics(JsonElement container)
     {
-        MetricsImpl containerMetrics = getMetrics(container);
+        MetricsImpl containerMetrics = null;
+        try {
+            containerMetrics = getMetrics(container);
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
+        }
+
+        assert containerMetrics != null;
         String containerName = containerMetrics.getApplicationName();
 
         if (applicationRecommendations.applicationMap.containsKey(containerName)) {
@@ -115,7 +123,7 @@ public class DockerEnvImpl extends EnvTypeImpl
         }
     }
 
-    private static MetricsImpl getMetrics(JsonElement container) throws NullPointerException
+    private static MetricsImpl getMetrics(JsonElement container) throws NullPointerException, InvalidValueException
     {
         MetricsImpl containerMetrics = new MetricsImpl();
         String containerName = container.getAsJsonObject().get("name").getAsString();

@@ -16,6 +16,8 @@
 
 package com.kruize.metrics;
 
+import com.kruize.exceptions.InvalidValueException;
+
 public interface Metrics
 {
     /* Get original application deployment parameters */
@@ -24,35 +26,35 @@ public interface Metrics
     double getOriginalCpuRequests();
     double getOriginalCpuLimit();
 
-    void setOriginalMemoryRequests(double originalMemoryRequests);
-    void setOriginalMemoryLimit(double originalMemoryLimit);
-    void setOriginalCpuRequests(double originalCpuRequests);
-    void setOriginalCpuLimit(double originalCpuLimit);
+    void setOriginalMemoryRequests(double originalMemoryRequests) throws InvalidValueException;
+    void setOriginalMemoryLimit(double originalMemoryLimit) throws InvalidValueException;
+    void setOriginalCpuRequests(double originalCpuRequests) throws InvalidValueException;
+    void setOriginalCpuLimit(double originalCpuLimit) throws InvalidValueException;
 
     String getName();
     String getApplicationName();
     String getStatus();
     String getNamespace();
 
-    void setName(String name);
-    void setApplicationName(String applicationName);
-    void setStatus(String status);
-    void setNamespace(String namespace);
+    void setName(String name) throws InvalidValueException;
+    void setApplicationName(String applicationName) throws InvalidValueException;
+    void setStatus(String status) throws InvalidValueException;
+    void setNamespace(String namespace) throws InvalidValueException;
 
     double getCpuRequests();
     double getCpuLimit();
     double getRssRequests();
     double getRssLimits();
 
-    void setCpuRequests(double value);
-    void setCpuLimit(double value);
-    void setRssRequests(double value);
-    void setRssLimit(double value);
+    void setCpuRequests(double value) throws InvalidValueException;
+    void setCpuLimit(double value) throws InvalidValueException;
+    void setRssRequests(double value) throws InvalidValueException;
+    void setRssLimit(double value) throws InvalidValueException;
 
-    void setCurrentCpuRequests(double value);
-    void setCurrentRssRequests(double value);
-    void setCurrentCpuLimit(double value);
-    void setCurrentRssLimit(double value);
+    void setCurrentCpuRequests(double value) throws InvalidValueException;
+    void setCurrentRssRequests(double value) throws InvalidValueException;
+    void setCurrentCpuLimit(double value) throws InvalidValueException;
+    void setCurrentRssLimit(double value) throws InvalidValueException;
 
     double getCurrentCpuRequests();
     double getCurrentRssRequests();
