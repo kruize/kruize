@@ -16,6 +16,12 @@
 
 package com.kruize.environment;
 
+import com.kruize.exceptions.MonitoringAgentNotSupportedException;
+import com.kruize.exceptions.env.ClusterTypeNotSupportedException;
+import com.kruize.exceptions.env.K8sTypeNotSupportedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DeploymentInfo
 {
     private static String clusterType = "kubernetes";
@@ -26,6 +32,9 @@ public class DeploymentInfo
     private static String monitoringAgentService = "prometheus-k8s";
     private static String monitoringAgentEndpoint = "";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeploymentInfo.class);
+
+
     public static String getMonitoringAgentEndpoint()
     {
         return monitoringAgentEndpoint;
@@ -33,7 +42,12 @@ public class DeploymentInfo
 
     public static void setMonitoringAgentEndpoint(String monitoringAgentEndpoint)
     {
-        DeploymentInfo.monitoringAgentEndpoint = monitoringAgentEndpoint;
+        if (monitoringAgentEndpoint.endsWith("/")) {
+            DeploymentInfo.monitoringAgentEndpoint =
+                    monitoringAgentEndpoint.substring(0, monitoringAgentEndpoint.length() - 1);
+        } else {
+            DeploymentInfo.monitoringAgentEndpoint = monitoringAgentEndpoint;
+        }
     }
 
     public static String getClusterType()
@@ -41,9 +55,17 @@ public class DeploymentInfo
         return clusterType;
     }
 
-    public static void setClusterType(String clusterType)
+    public static void setClusterType(String clusterType) throws ClusterTypeNotSupportedException
     {
-        DeploymentInfo.clusterType = clusterType;
+        if (clusterType != null)
+            clusterType = clusterType.toUpperCase();
+
+        if (SupportedTypes.CLUSTER_TYPES_SUPPORTED.contains(clusterType)) {
+            DeploymentInfo.clusterType = clusterType;
+        } else {
+            LOGGER.error("Cluster type {} is not supported", clusterType);
+            throw new ClusterTypeNotSupportedException();
+        }
     }
 
     public static String getKubernetesType()
@@ -51,9 +73,17 @@ public class DeploymentInfo
         return kubernetesType;
     }
 
-    public static void setKubernetesType(String kubernetesType)
+    public static void setKubernetesType(String kubernetesType) throws K8sTypeNotSupportedException
     {
-        DeploymentInfo.kubernetesType = kubernetesType;
+        if (kubernetesType != null)
+            kubernetesType = kubernetesType.toUpperCase();
+
+        if (SupportedTypes.K8S_TYPES_SUPPORTED.contains(kubernetesType)) {
+            DeploymentInfo.kubernetesType = kubernetesType;
+        } else {
+            LOGGER.error("k8s type {} is not suppported", kubernetesType);
+            throw new K8sTypeNotSupportedException();
+        }
     }
 
     public static String getAuthType()
@@ -63,7 +93,12 @@ public class DeploymentInfo
 
     public static void setAuthType(String authType)
     {
-        DeploymentInfo.authType = authType;
+        if (authType != null)
+            authType = authType.toUpperCase();
+
+        if (SupportedTypes.AUTH_TYPES_SUPPORTED.contains(authType)) {
+            DeploymentInfo.authType = authType;
+        }
     }
 
     public static String getAuthToken()
@@ -73,7 +108,7 @@ public class DeploymentInfo
 
     public static void setAuthToken(String authToken)
     {
-        DeploymentInfo.authToken = authToken;
+        DeploymentInfo.authToken = (authToken == null) ? "" : authToken;
     }
 
     public static String getMonitoringAgent()
@@ -81,9 +116,17 @@ public class DeploymentInfo
         return monitoringAgent;
     }
 
-    public static void setMonitoringAgent(String monitoringAgent)
+    public static void setMonitoringAgent(String monitoringAgent) throws MonitoringAgentNotSupportedException
     {
-        DeploymentInfo.monitoringAgent = monitoringAgent;
+        if (monitoringAgent != null)
+            monitoringAgent = monitoringAgent.toUpperCase();
+
+        if (SupportedTypes.MONITORING_AGENTS_SUPPORTED.contains(monitoringAgent)) {
+            DeploymentInfo.monitoringAgent = monitoringAgent;
+        } else {
+            LOGGER.error("Monitoring agent {}  is not supported", monitoringAgent);
+            throw new MonitoringAgentNotSupportedException();
+        }
     }
 
     public static String getMonitoringAgentService()
@@ -93,6 +136,16 @@ public class DeploymentInfo
 
     public static void setMonitoringAgentService(String monitoringAgentService)
     {
-        DeploymentInfo.monitoringAgentService = monitoringAgentService;
+        if (monitoringAgentService != null)
+            DeploymentInfo.monitoringAgentService = monitoringAgentService.toUpperCase();
+    }
+
+    public static void logDeploymentInfo()
+    {
+        LOGGER.info("Cluster Type: {}", getClusterType());
+        LOGGER.info("Kubernetes Type: {}", getKubernetesType());
+        LOGGER.info("Auth Type: {}", getAuthType());
+        LOGGER.info("Monitoring Agent: {}", getMonitoringAgent());
+        LOGGER.info("Monitoring agent service: {}\n\n", getMonitoringAgentService());
     }
 }

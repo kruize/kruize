@@ -35,6 +35,6 @@ public class DockerDefaults extends AbstractDefaults
     @Override
     public String getDebugLevel()
     {
-        return null;
+        return "INFO";
     }
 }
