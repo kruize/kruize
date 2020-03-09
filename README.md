@@ -14,7 +14,9 @@ Kruize monitors application containers for resource usage. It has a analysis eng
 
 ## Supported Configurations
 
-It supports two primary methods of deployment
+Kruize currently supports Linux and macOS.
+
+Two primary methods of deployment are available:
 
 1. Docker (Developer Mode)
 

@@ -49,7 +49,7 @@ function openshift_first() {
 		return;
 	fi
 	echo "Info: One time setup - Create a service account to deploy kruize"
-	sed "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
+	sed -e "s/{{ KRUIZE_NAMESPACE }}/${kruize_ns}/" ${SA_TEMPLATE} > ${SA_MANIFEST}
 	${oc_cmd} apply -f ${SA_MANIFEST}
 	check_err "Error: Failed to create service account and RBAC"
 	${oc_cmd} apply -f ${SERVICE_MONITOR_MANIFEST}
@@ -68,11 +68,11 @@ function openshift_setup() {
 	echo "Info: Setting Prometheus URL as ${purl}"
 	sleep 1
 
-	sed "s/{{ K8S_TYPE }}/OpenShift/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
-	sed -i "s|{{ KRUIZE_DOCKER_IMAGE }}|${KRUIZE_DOCKER_IMAGE}|" ${DEPLOY_MANIFEST}
-	sed -i "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
-	sed -i "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
-	sed -i "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
+	sed -e "s/{{ K8S_TYPE }}/OpenShift/" ${DEPLOY_TEMPLATE} > ${DEPLOY_MANIFEST}
+	sed -ie "s|{{ KRUIZE_DOCKER_IMAGE }}|${KRUIZE_DOCKER_IMAGE}|" ${DEPLOY_MANIFEST}
+	sed -ie "s/{{ BEARER_AUTH_TOKEN }}/${br_token}/" ${DEPLOY_MANIFEST}
+	sed -ie "s/{{ MONITORING_SERVICE }}/${pservice}/" ${DEPLOY_MANIFEST}
+	sed -ie "s|{{ MONITORING_AGENT_ENDPOINT }}|${purl}|" ${DEPLOY_MANIFEST}
 }
 
 # Deploy to the openshift-monitoring namespace for OpenShift
