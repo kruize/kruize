@@ -142,8 +142,40 @@ function minikube_start() {
 }
 
 function minikube_terminate() {
-	# Add minikube cleanup code
-	echo
-}
+	echo -n "###   Removing kruize for minikube"
 
-###############################  ^ MiniKube ^ #################################
+	kruize_ns="monitoring"
+	kubectl_cmd="kubectl -n ${kruize_ns}"
+
+	echo
+	echo "Removing kruize"
+	${kubectl_cmd} delete -f ${DEPLOY_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing kruize service account"
+	${kubectl_cmd} delete -f ${SA_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing kruize serviceMonitor"
+	${kubectl_cmd} delete -f ${SERVICE_MONITOR_MANIFEST} 2>/dev/null
+
+	pushd minikube_downloads > /dev/null
+		echo
+		echo "Removing cadvisor"
+		pushd cadvisor/deploy/kubernetes/base > /dev/null
+		kubectl kustomize . | kubectl delete -f-
+		popd > /dev/null
+		
+		echo
+		echo "Removing prometheus"
+		pushd kube-prometheus/manifests > /dev/null
+		kubectl delete -f . 2>/dev/null
+		kubectl delete -f setup 2>/dev/null
+		popd > /dev/null
+	popd > /dev/null
+
+	rm ${DEPLOY_MANIFEST}
+	rm ${SA_MANIFEST}
+	
+	rm -rf minikube_downloads
+}
