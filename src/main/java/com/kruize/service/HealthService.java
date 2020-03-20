@@ -35,7 +35,9 @@ public class HealthService extends HttpServlet
 
     public static void setCurrentStatus(int currentStatus)
     {
-        CURRENT_STATUS = currentStatus;
+        if (currentStatus == STATUS_UP
+            || currentStatus == STATUS_DOWN)
+            CURRENT_STATUS = currentStatus;
     }
 
     @Override
