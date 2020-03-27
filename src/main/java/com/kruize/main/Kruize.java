@@ -16,6 +16,9 @@
 
 package com.kruize.main;
 
+import com.kruize.service.HealthService;
+import com.kruize.service.ListApplicationsService;
+import com.kruize.service.RecommendationsService;
 import com.kruize.collection.CollectMetrics;
 import com.kruize.initialize.Initialize;
 import io.prometheus.client.Gauge;
@@ -120,9 +123,17 @@ public class Kruize
         context.setContextPath("/");
         server.setHandler(context);
 
-        context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+        addServlets(context);
 
         server.start();
+    }
+
+    private static void addServlets(ServletContextHandler context)
+    {
+        context.addServlet(new ServletHolder(new MetricsServlet()), "/metrics");
+        context.addServlet(RecommendationsService.class, "/recommendations");
+        context.addServlet(ListApplicationsService.class, "/listApplications");
+        context.addServlet(HealthService.class, "/health");
     }
 
     private static void disableServerLogging()

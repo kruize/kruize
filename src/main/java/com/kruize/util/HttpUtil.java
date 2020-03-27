@@ -54,7 +54,7 @@ public class HttpUtil
             if (connection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 result = getDataFromConnection(connection);
             } else {
-                if (connection.getResponseCode() == 403) {
+                if (connection.getResponseCode() == HttpsURLConnection.HTTP_FORBIDDEN) {
                     LOGGER.error("Please refresh your auth token");
                     System.exit(1);
                 }

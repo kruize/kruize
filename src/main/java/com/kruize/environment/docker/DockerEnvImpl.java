@@ -129,7 +129,7 @@ public class DockerEnvImpl extends EnvTypeImpl
         String containerName = container.getAsJsonObject().get("name").getAsString();
         containerMetrics.setName(containerName);
         containerMetrics.setNamespace("local");
-        containerMetrics.setStatus("Running");
+        containerMetrics.setStatus("running");
         containerMetrics.setApplicationName(containerName);
 
         if (container.getAsJsonObject().has("mem_limit")) {

@@ -19,6 +19,7 @@ package com.kruize.initialize;
 import com.kruize.environment.AbstractDefaults;
 import com.kruize.environment.Defaults;
 import com.kruize.environment.DeploymentInfo;
+import com.kruize.service.HealthService;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -46,6 +47,9 @@ public class Initialize
         DeploymentInfo.setAuthToken(auth_token);
         DeploymentInfo.setMonitoringAgentEndpoint(monitoring_agent_endpoint);
         DeploymentInfo.setMonitoringAgentService(monitoring_agent_service);
+
+        /* Initialization done successfully */
+        HealthService.setCurrentStatus(HealthService.STATUS_UP);
 
         /* Update logging level from the env */
         Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.toLevel(logging_level));
