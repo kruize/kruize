@@ -28,6 +28,8 @@ CADVISOR_PORT="8080"
 PROMETHEUS_PORT="9090"
 GRAFANA_PORT="3000"
 
+NETWORK="kruize-network"
+
 ################################  v Docker v ##################################
 
 # Read the docker manifest and build a list of containers to be monitored
@@ -133,20 +135,29 @@ function docker_prereq() {
 			echo "Error: Unable to locate kruize docker image: ${KRUIZE_DOCKER_IMAGE}"
 		fi
 	fi
+
+  NET_NAME=`docker network ls -f "name=${NETWORK}" --format {{.Name}} | tail -n 1`
+
+  if [[ -z $NET_NAME ]];  then
+    echo "Creating Kruize network: ${NETWORK}"
+    docker network create ${NETWORK}
+  else
+    echo "${NETWORK} already exists"
+  fi
 }
 
 #
 function docker_setup() {
 	echo "Starting cadvisor container"
-	docker run -d --rm --name=cadvisor   -p ${CADVISOR_PORT}:${CADVISOR_PORT}      --net=host   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro  ${CADVISOR_DOCKER_IMAGE}
+	docker run -d --rm --name=cadvisor   -p ${CADVISOR_PORT}:${CADVISOR_PORT}      --net=${NETWORK}   --cpus=1   --volume=/:/rootfs:ro  --volume=/var/run:/var/run:ro   --volume=/sys:/sys:ro   --volume=/var/lib/docker/:/var/lib/docker:ro   --volume=/dev/disk/:/dev/disk:ro  ${CADVISOR_DOCKER_IMAGE}
 	check_err "Error: cadvisor did not start up"
 
 	echo "Starting prometheus container"
-	docker run -d --rm --name=prometheus -p ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}  --net=host -v ${ROOT_DIR}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml ${PROMETHEUS_DOCKER_IMAGE}
+	docker run -d --rm --name=prometheus -p ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}  --net=${NETWORK} -v ${ROOT_DIR}/${PROMETHEUS_MANIFEST}:/etc/prometheus/prometheus.yml ${PROMETHEUS_DOCKER_IMAGE}
 	check_err "Error: prometheus did not start up"
 
 	echo "Starting grafana container"
-	docker run -d --rm --name=grafana    -p ${GRAFANA_PORT}:${GRAFANA_PORT}        --net=host -v ${ROOT_DIR}/${GRAFANA_MANIFESTS}:/etc/grafana/provisioning/ ${GRAFANA_DOCKER_IMAGE}
+	docker run -d --rm --name=grafana    -p ${GRAFANA_PORT}:${GRAFANA_PORT}        --net=${NETWORK} -v ${ROOT_DIR}/${GRAFANA_MANIFESTS}:/etc/grafana/provisioning/ ${GRAFANA_DOCKER_IMAGE}
 	check_err "Error: grafana did not start up"
 }
 
@@ -157,7 +168,7 @@ function docker_deploy() {
 	echo "Info: Waiting for prometheus/grafana/cadvisor to be up and running"
 	sleep 2
 	echo "Starting kruize container"
-	docker run -d --rm --name=kruize     -p ${KRUIZE_PORT}:${KRUIZE_PORT}          --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:${PROMETHEUS_PORT}" --env MONITORING_AGENT="Prometheus" -v ${ROOT_DIR}/${DOCKER_JSON}:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
+	docker run -d --rm --name=kruize -p ${KRUIZE_PORT}:${KRUIZE_PORT} --net=${NETWORK} --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://prometheus:${PROMETHEUS_PORT}" --env MONITORING_AGENT="Prometheus" -v ${ROOT_DIR}/${DOCKER_JSON}:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
 	check_err "Error: kruize did not start up"
 	echo "Waiting for kruize container to come up"
 	sleep 10
