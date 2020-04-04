@@ -21,6 +21,12 @@ KRUIZE_URL="http://localhost"
 KRUIZE_PORT="31313"
 AUTH_TOKEN=""
 
+function usage() {
+	echo
+	echo "Usage: $0 [-u kruize_url] [-p kruize_port] [-a auth_token]"
+	exit -1
+}
+
 #Check if jq exists
 if ! [ -x "$(command -v jq)" ]; then
 	echo "Error: jq is not installed."
@@ -35,8 +41,6 @@ function check_auth_token() {
 	fi
 }
 
-curl_cmd="curl -s -H 'Authorization:Bearer $AUTH_TOKEN' $KRUIZE_URL:$KRUIZE_PORT"		
-
 function get_recommendation_for_application() {
 	${curl_cmd}/recommendations?application_name=$1 | jq -r '.[]'
 }
@@ -44,6 +48,26 @@ function get_recommendation_for_application() {
 function get_list_of_applications {
 	${curl_cmd}/listApplications | jq -c '.[]' 
 }
+
+# Iterate through the commandline options
+while getopts a:p:u: gopts
+do
+	case ${gopts} in
+		u)
+			KRUIZE_URL="${OPTARG}"
+			;; 
+		p)
+			KRUIZE_PORT="${OPTARG}"
+			;;
+		a)
+			AUTH_TOKEN="${OPTARG}"
+			;;
+		[?])
+			usage
+	esac
+done
+
+curl_cmd="curl -s -H 'Authorization:Bearer $AUTH_TOKEN' $KRUIZE_URL:$KRUIZE_PORT"
 
 check_auth_token
 
