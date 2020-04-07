@@ -20,7 +20,7 @@ scrape_configs:
   scheme: http
   static_configs:
   - targets:
-    - localhost:8080
+    - cadvisor:8080
 - job_name: kruize
   honor_timestamps: true
   scrape_interval: 2s
@@ -29,4 +29,4 @@ scrape_configs:
   scheme: http
   static_configs:
   - targets:
-    - localhost:31313
+    - kruize:31313
