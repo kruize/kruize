@@ -19,6 +19,8 @@ package com.kruize.metrics;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.instance.RecommendationsImpl;
+import com.kruize.recommendations.runtimes.java.JavaRecommendations;
+import com.kruize.recommendations.runtimes.java.OpenJ9JavaRecommendations;
 
 import java.util.ArrayList;
 
@@ -40,7 +42,11 @@ public class MetricsImpl implements Metrics
     private Recommendations y2dRecommendations = new RecommendationsImpl();
     private Recommendations currentRecommendations = new RecommendationsImpl();
 
+    private JavaRecommendations javaRecommendations = new OpenJ9JavaRecommendations();
+
     public ArrayList<MetricCollector> metricCollector = new ArrayList<>();
+    public ArrayList<Double> heapList = new ArrayList<>();
+    public ArrayList<Double> nonHeapList = new ArrayList<>();
 
     public MetricsImpl() {}
 
@@ -272,6 +278,17 @@ public class MetricsImpl implements Metrics
     {
         return (this.getStatus().equals("running")
                 || this.getStatus().equals("succeeded")) ;
+    }
+
+
+    public JavaRecommendations getJavaRecommendations()
+    {
+        return javaRecommendations;
+    }
+
+    public void setJavaRecommendations(JavaRecommendations javaRecommendations)
+    {
+        this.javaRecommendations = javaRecommendations;
     }
 
     public String getLabelName()

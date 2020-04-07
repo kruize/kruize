@@ -218,4 +218,44 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
 
         return null;
     }
+
+    public double getHeapRecommendation(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getRuntime() != null)
+            {
+                return metric.getJavaRecommendations().getHeapRecommendation();
+            }
+        }
+
+        return 0;
+    }
+
+    public double getNonHeapRecommendation(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getRuntime() != null)
+            {
+                return metric.getJavaRecommendations().getNonHeapRecommendation();
+            }
+        }
+        return 0;
+    }
+
+    public boolean isRuntimeInfoAvailable(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getRuntime() != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
 }

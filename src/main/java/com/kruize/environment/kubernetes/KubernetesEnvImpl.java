@@ -16,6 +16,10 @@
 
 package com.kruize.environment.kubernetes;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.kruize.analysis.AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
@@ -25,6 +29,7 @@ import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
+import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
@@ -132,6 +137,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     public void getAllApps()
     {
         ArrayList<String> monitoredInstances = new ArrayList<>();
+        getRuntimeInfo();
+
         ApiClient apiClient = null;
         try {
             apiClient = Config.defaultClient();
@@ -202,6 +209,53 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
+    private void getRuntimeInfo()
+    {
+        try {
+            getJavaApps();
+            getNodeApps();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getJavaApps() throws MalformedURLException
+    {
+        JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                + OpenJ9JavaQuery.getAppsQuery));
+
+        for (JsonElement jsonElement : javaApps)
+        {
+            JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+            String kubernetes_name = metric.get("kubernetes_name").getAsString();
+
+            /* Check if already in the list */
+            if (!applicationRecommendations.runtimesMap.get("JAVA").contains(kubernetes_name))
+            {
+                applicationRecommendations.runtimesMap.get("JAVA").add(kubernetes_name);
+            }
+        }
+    }
+
+
+    private void getNodeApps()
+    {
+
+    }
+
+    private JsonArray getJsonArray(URL url)
+    {
+        String response = HttpUtil.getDataFromURL(url);
+
+        return new JsonParser()
+                .parse(response)
+                .getAsJsonObject()
+                .get("data")
+                .getAsJsonObject()
+                .get("result")
+                .getAsJsonArray();
+    }
+
     private void insertMetrics(V1Pod pod)
     {
         MetricsImpl metricsImpl = null;
@@ -223,22 +277,33 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
-    private static MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
+    private MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
     {
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());
         metrics.setNamespace(pod.getMetadata().getNamespace());
-        metrics.setStatus(pod.getStatus().getPhase().toString().toLowerCase());
+        metrics.setStatus(pod.getStatus().getPhase().toLowerCase());
 
         String podTemplateHash;
 
         try {
+            metrics.setLabelName(pod.getMetadata()
+                    .getLabels().get("name"));
+
             String podHashLabel = "pod-template-hash";
             podTemplateHash = pod.getMetadata()
                     .getLabels().get(podHashLabel);
 
         } catch (NullPointerException e) {
             podTemplateHash = null;
+        }
+
+        for (String runtime : applicationRecommendations.runtimesMap.keySet())
+        {
+            if (applicationRecommendations.runtimesMap.get(runtime).contains(metrics.getLabelName()))
+            {
+                metrics.setRuntime(runtime);
+            }
         }
 
         String applicationName = parseApplicationName(pod.getMetadata().getName(),

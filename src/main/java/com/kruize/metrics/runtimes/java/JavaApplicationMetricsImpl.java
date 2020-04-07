@@ -38,6 +38,7 @@ public class JavaApplicationMetricsImpl implements JavaApplicationMetrics
         else
         {
             throw new NoSuchApplicationException();
+
         }
     }
 
@@ -53,6 +54,7 @@ public class JavaApplicationMetricsImpl implements JavaApplicationMetrics
         else
         {
             throw new NoSuchApplicationException();
+
         }
     }
 

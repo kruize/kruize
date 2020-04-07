@@ -24,11 +24,14 @@ import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.kruize.util.MathUtil;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 public class RecommendationsService extends HttpServlet
 {
@@ -153,11 +156,32 @@ public class RecommendationsService extends HttpServlet
 
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
+
+            if (applicationRecommendations.isRuntimeInfoAvailable(application))
+            {
+                JsonObject runtimeRecommendationJson = getRuntimeRecommendations(applicationRecommendations, application);
+                resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
+            }
+
             return resourcesJson;
         }
 
         LOGGER.info("Application {} is no longer running and has no recommendations generated earlier", application);
         LOGGER.info("Not returning any recommendations");
         return null;
+    }
+
+    private JsonObject getRuntimeRecommendations(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
+    {
+        DecimalFormat precisionTwo = new DecimalFormat("#.##");
+        precisionTwo.setRoundingMode(RoundingMode.CEILING);
+
+        String percentage = precisionTwo.format((MathUtil.bytesToMB(applicationRecommendations.getHeapRecommendation(application)) * 100)
+                                                    /  applicationRecommendations.getRssRequests(application));
+
+        JsonObject runtimeRecommendationJson = new JsonObject();
+        runtimeRecommendationJson.addProperty("java", "-XX:InitialRAMPercentage=" + percentage + " -XX:MaxRAMPercentage=" + percentage);
+
+        return runtimeRecommendationJson;
     }
 }

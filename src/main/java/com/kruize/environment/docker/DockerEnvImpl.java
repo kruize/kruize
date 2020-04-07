@@ -159,6 +159,11 @@ public class DockerEnvImpl extends EnvTypeImpl
             containerMetrics.setOriginalMemoryLimit(container.getAsJsonObject().get("cpu_limit").getAsDouble());
         }
 
+        if (containerName.equals("springboot_application"))
+        {
+            containerMetrics.setRuntimeInfoAvailable(true);
+        }
+
         return containerMetrics;
     }
 }

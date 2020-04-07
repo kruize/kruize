@@ -19,15 +19,16 @@ package com.kruize.collection;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.kruize.analysis.runtimes.java.OpenJ9AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
-import com.kruize.exceptions.ApplicationIdleStateException;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.Query;
+import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
@@ -126,6 +127,14 @@ public class CollectMetrics implements Runnable
                             new CurrentMetrics(monitoringAgentEndPoint, metrics, rssQuery, cpuQuery).invoke();
 
                     analyseMetrics(metrics);
+
+                    if (metrics.getRuntime() != null)
+                    {
+                        RuntimeMetrics runtimeMetrics =
+                                new RuntimeMetrics(monitoringAgentEndPoint, metrics, "used").invoke();
+                        OpenJ9AnalysisImpl.analyseHeapRecommendation(metrics);
+                        OpenJ9AnalysisImpl.analyseNonHeapRecommendation(metrics);
+                    }
 
                     setKruizeRecommendations(application, metrics, currentMetrics);
 
@@ -362,13 +371,15 @@ public class CollectMetrics implements Runnable
                 //TODO Get network data from monitoring agent
                 double network = 0;
 
+/*
                 if (cpu < MIN_CPU)
                     throw new ApplicationIdleStateException();
+*/
 
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
                 return this;
 
-            } catch (IndexOutOfBoundsException | ApplicationIdleStateException e) {
+            } catch (IndexOutOfBoundsException e) {
                 return this;
             }
 
@@ -381,4 +392,86 @@ public class CollectMetrics implements Runnable
                     .getAsDouble();
         }
     }
+
+    private class RuntimeMetrics
+    {
+        private String monitoringAgentEndPoint;
+        private MetricsImpl metrics;
+        private String area;
+
+        private double heap;
+        private double nonHeap;
+
+        OpenJ9JavaQuery j9JavaQuery = new OpenJ9JavaQuery();
+
+        RuntimeMetrics(String monitoringAgentEndPoint, MetricsImpl metrics, String area)
+        {
+            this.monitoringAgentEndPoint = monitoringAgentEndPoint;
+            this.metrics = metrics;
+            this.area = area;
+        }
+
+        public double getHeap()
+        {
+            return heap;
+        }
+
+        public double getNonHeap()
+        {
+            return nonHeap;
+        }
+
+        RuntimeMetrics invoke() throws MalformedURLException
+        {
+            String labelName = metrics.getLabelName();
+            try {
+                double tenuredLOA = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.heapQuery.getTenuredLOA(area, labelName)));
+                double tenuredSOA = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.heapQuery.getTenuredSOA(area, labelName)));
+                double nurseryAllocate = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.heapQuery.getNurseryAllocate(area, labelName)));
+                double nurserySurvivor = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.heapQuery.getNurserySurvivor(area, labelName)));
+
+                heap = tenuredLOA + tenuredSOA + nurseryAllocate + nurserySurvivor;
+                LOGGER.info("Heap: " + heap);
+
+                double miscellaneous = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.nonHeapQuery.getMiscellaneous(area, labelName)));
+                double classStorage = getValueForQuery(new URL(monitoringAgentEndPoint + 
+                        j9JavaQuery.nonHeapQuery.getClassStorage(area, labelName)));
+                double jitDataCache = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.nonHeapQuery.getJitDataCache(area, labelName)));
+                double jitCodeCache = getValueForQuery(new URL(monitoringAgentEndPoint +
+                        j9JavaQuery.nonHeapQuery.getJitCodeCache(area, labelName)));
+
+                nonHeap = miscellaneous + classStorage + jitCodeCache + jitDataCache;
+                LOGGER.info("Non Heap: " + nonHeap);
+
+                metrics.heapList.add(heap);
+                metrics.nonHeapList.add(nonHeap);
+
+                return this;
+
+            } catch (IndexOutOfBoundsException e) {
+                return this;
+            }
+
+        }
+
+        private double getValueForQuery(URL url) throws IndexOutOfBoundsException
+        {
+            try {
+                return getAsJsonArray(url, "value")
+                        .get(1)
+                        .getAsDouble();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 0;
+            }
+        }
+    }
+
 }
