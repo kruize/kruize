@@ -28,6 +28,7 @@ import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
 import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
@@ -221,8 +222,20 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
     private void getJavaApps() throws MalformedURLException
     {
+        if (!applicationRecommendations.runtimesMap.containsKey("java"))
+        {
+            applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
+        }
+        getOpenJ9Apps();
+    }
+
+    private void getOpenJ9Apps() throws MalformedURLException
+    {
+        PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
         JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                + OpenJ9JavaQuery.getAppsQuery));
+                + prometheusQuery.getAPIEndpoint() + OpenJ9JavaQuery.getAppsQuery));
+
+        if (javaApps == null) return;
 
         for (JsonElement jsonElement : javaApps)
         {
@@ -230,9 +243,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             String kubernetes_name = metric.get("kubernetes_name").getAsString();
 
             /* Check if already in the list */
-            if (!applicationRecommendations.runtimesMap.get("JAVA").contains(kubernetes_name))
+            if (!applicationRecommendations.runtimesMap.get("java").contains(kubernetes_name))
             {
-                applicationRecommendations.runtimesMap.get("JAVA").add(kubernetes_name);
+                applicationRecommendations.runtimesMap.get("java").add(kubernetes_name);
+                JavaApplicationMetricsImpl.javaVmMap.put(kubernetes_name, "OpenJ9");
             }
         }
     }
@@ -254,6 +268,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 .getAsJsonObject()
                 .get("result")
                 .getAsJsonArray();
+
     }
 
     private void insertMetrics(V1Pod pod)

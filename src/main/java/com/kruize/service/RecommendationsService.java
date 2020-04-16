@@ -21,6 +21,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.NoSuchApplicationException;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,8 +144,7 @@ public class RecommendationsService extends HttpServlet
             but Kruize has earlier generated recommendations.
          */
         if (applicationStatus.equals("running") || applicationStatus.equals("idle")
-                || (applicationRecommendations.getRssRequests(application) != 0))
-        {
+                || (applicationRecommendations.getRssRequests(application) != 0)) {
             JsonObject resourcesJson = new JsonObject();
             JsonObject resourceRequestsJson = new JsonObject();
             resourceRequestsJson.addProperty("memory", applicationRecommendations.getRssRequests(application) + "M");
@@ -157,10 +157,12 @@ public class RecommendationsService extends HttpServlet
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
 
-            if (applicationRecommendations.isRuntimeInfoAvailable(application))
-            {
-                JsonObject runtimeRecommendationJson = getRuntimeRecommendations(applicationRecommendations, application);
-                resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
+            if (applicationRecommendations.getRuntime(application) != null) {
+                try {
+                    JsonObject runtimeRecommendationJson = getRuntimeOptions(applicationRecommendations, application);
+                    resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
+                } catch (NoSuchApplicationException | NullPointerException ignored) {
+                }
             }
 
             return resourcesJson;
@@ -171,17 +173,33 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
-    private JsonObject getRuntimeRecommendations(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
+    private JsonObject getRuntimeOptions(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException, NullPointerException
+    {
+        if (applicationRecommendations.getRuntime(application).equals("java"))
+        {
+            return getJavaOptions(applicationRecommendations, application);
+        }
+        return null;
+    }
+
+    private JsonObject getJavaOptions(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException, NullPointerException
     {
         DecimalFormat precisionTwo = new DecimalFormat("#.##");
         precisionTwo.setRoundingMode(RoundingMode.CEILING);
 
-        String percentage = precisionTwo.format((MathUtil.bytesToMB(applicationRecommendations.getHeapRecommendation(application)) * 100)
-                                                    /  applicationRecommendations.getRssRequests(application));
+        String labelName = applicationRecommendations.applicationMap.get(application)
+                .get(0).getLabelName();
+        double heapRecommendations = JavaApplicationMetricsImpl.javaRecommendationsMap.get(labelName)
+                .getHeapRecommendation();
+
+        String percentage = precisionTwo.format((MathUtil.bytesToMB(heapRecommendations * 100)
+                /  applicationRecommendations.getRssRequests(application)));
 
         JsonObject runtimeRecommendationJson = new JsonObject();
-        runtimeRecommendationJson.addProperty("java", "-XX:InitialRAMPercentage=" + percentage + " -XX:MaxRAMPercentage=" + percentage);
+        runtimeRecommendationJson.addProperty("java",
+                "-XX:InitialRAMPercentage=" + percentage + " -XX:MaxRAMPercentage=" + percentage);
 
         return runtimeRecommendationJson;
+
     }
 }

@@ -33,6 +33,9 @@ import com.kruize.query.prometheus.DockerPrometheusQuery;
 import com.kruize.query.prometheus.KubernetesPrometheusQuery;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
+import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaMetricCollector;
+import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class OpenJ9MetricCollector extends JavaMetricCollector
+public class OpenJ9MetricCollector implements JavaMetricCollector
 {
     private double rss;
 

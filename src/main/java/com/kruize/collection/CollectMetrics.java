@@ -27,8 +27,8 @@ import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.Query;
-import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
@@ -130,10 +130,8 @@ public class CollectMetrics implements Runnable
 
                     if (metrics.getRuntime() != null)
                     {
-                        RuntimeMetrics runtimeMetrics =
-                                new RuntimeMetrics(monitoringAgentEndPoint, metrics, "used").invoke();
-                        OpenJ9AnalysisImpl.analyseHeapRecommendation(metrics);
-                        OpenJ9AnalysisImpl.analyseNonHeapRecommendation(metrics);
+                        CollectRuntimeMetrics.collectRuntimeMetrics(metrics, monitoringAgentEndPoint);
+                        analyseRuntimeMetrics(metrics);
                     }
 
                     setKruizeRecommendations(application, metrics, currentMetrics);
@@ -144,6 +142,7 @@ public class CollectMetrics implements Runnable
             }
         }
     }
+
 
     private void setKruizeRecommendations(String application, Metrics metrics,
                                           CurrentMetrics currentMetrics)
@@ -195,6 +194,18 @@ public class CollectMetrics implements Runnable
         envType.analysis.calculateMemRequests(metrics, MetricCollector.CPU_INDEX, MetricCollector.RSS_INDEX);
         envType.analysis.calculateMemLimit(metrics);
         envType.analysis.finalizeY2DRecommendations(metrics);
+    }
+
+    private void analyseRuntimeMetrics(MetricsImpl metrics)
+    {
+        if (metrics.getRuntime().equals("java"))
+        {
+            if (JavaApplicationMetricsImpl.javaVmMap.get(metrics.getLabelName()).equals("OpenJ9"))
+            {
+                OpenJ9AnalysisImpl.analyseHeapRecommendation();
+                OpenJ9AnalysisImpl.analyseNonHeapRecommendation();
+            }
+        }
     }
 
     @Override
@@ -392,86 +403,4 @@ public class CollectMetrics implements Runnable
                     .getAsDouble();
         }
     }
-
-    private class RuntimeMetrics
-    {
-        private String monitoringAgentEndPoint;
-        private MetricsImpl metrics;
-        private String area;
-
-        private double heap;
-        private double nonHeap;
-
-        OpenJ9JavaQuery j9JavaQuery = new OpenJ9JavaQuery();
-
-        RuntimeMetrics(String monitoringAgentEndPoint, MetricsImpl metrics, String area)
-        {
-            this.monitoringAgentEndPoint = monitoringAgentEndPoint;
-            this.metrics = metrics;
-            this.area = area;
-        }
-
-        public double getHeap()
-        {
-            return heap;
-        }
-
-        public double getNonHeap()
-        {
-            return nonHeap;
-        }
-
-        RuntimeMetrics invoke() throws MalformedURLException
-        {
-            String labelName = metrics.getLabelName();
-            try {
-                double tenuredLOA = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.heapQuery.getTenuredLOA(area, labelName)));
-                double tenuredSOA = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.heapQuery.getTenuredSOA(area, labelName)));
-                double nurseryAllocate = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.heapQuery.getNurseryAllocate(area, labelName)));
-                double nurserySurvivor = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.heapQuery.getNurserySurvivor(area, labelName)));
-
-                heap = tenuredLOA + tenuredSOA + nurseryAllocate + nurserySurvivor;
-                LOGGER.info("Heap: " + heap);
-
-                double miscellaneous = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.nonHeapQuery.getMiscellaneous(area, labelName)));
-                double classStorage = getValueForQuery(new URL(monitoringAgentEndPoint + 
-                        j9JavaQuery.nonHeapQuery.getClassStorage(area, labelName)));
-                double jitDataCache = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.nonHeapQuery.getJitDataCache(area, labelName)));
-                double jitCodeCache = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        j9JavaQuery.nonHeapQuery.getJitCodeCache(area, labelName)));
-
-                nonHeap = miscellaneous + classStorage + jitCodeCache + jitDataCache;
-                LOGGER.info("Non Heap: " + nonHeap);
-
-                metrics.heapList.add(heap);
-                metrics.nonHeapList.add(nonHeap);
-
-                return this;
-
-            } catch (IndexOutOfBoundsException e) {
-                return this;
-            }
-
-        }
-
-        private double getValueForQuery(URL url) throws IndexOutOfBoundsException
-        {
-            try {
-                return getAsJsonArray(url, "value")
-                        .get(1)
-                        .getAsDouble();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return 0;
-            }
-        }
-    }
-
 }

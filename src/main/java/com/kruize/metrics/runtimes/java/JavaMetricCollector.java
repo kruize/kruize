@@ -16,7 +16,7 @@
 
 package com.kruize.metrics.runtimes.java;
 
-public class JavaMetricCollector
+public interface JavaMetricCollector
 {
     double heap = 0;
     double nonHeap = 0;
