@@ -16,8 +16,36 @@
 
 package com.kruize.query.runtimes.java.openj9;
 
-public class HeapQuery
+import com.kruize.exceptions.InvalidValueException;
+import com.kruize.query.runtimes.java.HeapQuery;
+
+public class OpenJ9HeapQuery implements HeapQuery
 {
+    private final String[] partsOfHeap = {"tenured-LOA", "tenured-SOA", "nursery-survivor", "nursery-allocate"};
+
+    @Override
+    public String[] getPartsOfHeap()
+    {
+        return partsOfHeap;
+    }
+
+    @Override
+    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    {
+        switch (partOfHeap) {
+            case "tenured-LOA":
+                return getTenuredLOA(area, application);
+            case "tenured-SOA":
+                return getTenuredSOA(area, application);
+            case "nursery-survivor":
+                return getNurserySurvivor(area, application);
+            case "nursery-allocate":
+                return getNurseryAllocate(area, application);
+            default:
+                throw new InvalidValueException("No " + partOfHeap + " present in heap");
+        }
+    }
+
     public String getTenuredLOA(String area, String name)
     {
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +

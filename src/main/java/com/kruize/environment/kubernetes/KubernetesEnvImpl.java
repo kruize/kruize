@@ -30,6 +30,7 @@ import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
+import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
@@ -232,8 +233,13 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     private void getOpenJ9Apps() throws MalformedURLException
     {
         PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
-        JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                + prometheusQuery.getAPIEndpoint() + OpenJ9JavaQuery.getAppsQuery));
+        JavaQuery openJ9JavaQuery = new OpenJ9JavaQuery();
+
+        JsonArray javaApps = null;
+        try {
+            javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                    + prometheusQuery.getAPIEndpoint() + openJ9JavaQuery.fetchJavaAppsQuery()));
+        } catch (InvalidValueException ignored) { }
 
         if (javaApps == null) return;
 

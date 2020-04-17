@@ -16,12 +16,23 @@
 
 package com.kruize.query.runtimes.java.openj9;
 
-public class OpenJ9JavaQuery
-{
-    public final static String getAppsQuery = "jvm_memory_used_bytes{area=\"heap\",id=\"tenured-SOA\"}";
+import com.kruize.query.runtimes.java.JavaQuery;
 
-    /* TODO Add checks for area */
-    public static HeapQuery heapQuery = new HeapQuery();
-    public static NonHeapQuery nonHeapQuery = new NonHeapQuery();
+public class OpenJ9JavaQuery extends JavaQuery
+{
+    /**
+     * @return String for a generic Java query that will fetch all applications exporting Java metrics
+     */
+    @Override
+    public String fetchJavaAppsQuery()
+    {
+        return "jvm_memory_used_bytes{area=\"heap\",id=\"tenured-SOA\"}";
+    }
+
+    public OpenJ9JavaQuery()
+    {
+        heapQuery = new OpenJ9HeapQuery();
+        nonHeapQuery = new OpenJ9NonHeapQuery();
+    }
 }
 

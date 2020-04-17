@@ -16,8 +16,36 @@
 
 package com.kruize.query.runtimes.java.openj9;
 
-public class NonHeapQuery
+import com.kruize.exceptions.InvalidValueException;
+import com.kruize.query.runtimes.java.NonHeapQuery;
+
+public class OpenJ9NonHeapQuery implements NonHeapQuery
 {
+    private final String[] partsOfNonHeap = {"miscellaneous", "class storage", "JIT code cache", "JIT data cache"};
+
+    @Override
+    public String[] getPartsOfNonHeap()
+    {
+        return partsOfNonHeap;
+    }
+
+    @Override
+    public String getNonHeapQuery(String application, String partOfNonHeap, String area) throws InvalidValueException
+    {
+        switch (partOfNonHeap) {
+            case "miscellaneous":
+                return getMiscellaneous(area, application);
+            case "class storage":
+                return getClassStorage(area, application);
+            case "JIT code cache":
+                return getJitCodeCache(area, application);
+            case "JIT data cache":
+                return getJitDataCache(area, application);
+            default:
+                throw new InvalidValueException("No " + partOfNonHeap + " present in non-heap");
+        }
+    }
+
     public String getMiscellaneous(String area, String name)
     {
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
