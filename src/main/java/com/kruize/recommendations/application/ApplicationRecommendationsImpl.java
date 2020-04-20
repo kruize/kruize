@@ -219,18 +219,5 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         return null;
     }
 
-    public String getRuntime(String applicationName)
-    {
-        for (MetricsImpl metric : applicationMap.get(applicationName))
-        {
-            if (metric.getRuntime() != null)
-            {
-                return metric.getRuntime();
-            }
-        }
-
-        return null;
-    }
-
 
 }

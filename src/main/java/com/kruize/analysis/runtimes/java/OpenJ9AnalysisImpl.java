@@ -20,6 +20,7 @@ import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaMetricCollector;
 import com.kruize.metrics.runtimes.java.openj9.OpenJ9MetricCollector;
+import com.kruize.recommendations.runtimes.java.openj9.OpenJ9JavaRecommendations;
 import com.kruize.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

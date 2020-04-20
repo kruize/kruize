@@ -83,7 +83,7 @@ public class AnalysisImpl implements Analysis
         }
 
         double cpuLimit = maxCpu * CPU_BUFFER;
-        DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+        DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
         singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
@@ -130,7 +130,7 @@ public class AnalysisImpl implements Analysis
             {
                 MetricCollector temp = MetricCollector.Copy(metric);
 
-                DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+                DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
                 singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
                 double targetValue = temp.getFromIndex(INDEX);

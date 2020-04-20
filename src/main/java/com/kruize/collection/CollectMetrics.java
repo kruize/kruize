@@ -213,7 +213,6 @@ public class CollectMetrics implements Runnable
     public void run()
     {
         try {
-
             for (String application : applicationRecommendations.applicationMap.keySet()) {
                 getPreviousData(application);
                 getPreviousKruizeRecs(application, query);
@@ -306,7 +305,10 @@ public class CollectMetrics implements Runnable
                 previousRssRequests =
                         getPreviousKruizeData(prometheusURL +
                                 query.getPreviousMemReqRec(applicationName), applicationName);
-            } catch (IndexOutOfBoundsException ignored) { }
+            } catch (IndexOutOfBoundsException | MalformedURLException e) {
+                LOGGER.info("No previous recommendations available for {}", applicationName);
+                return;
+            }
 
             try {
                 metrics.setCurrentCpuLimit(previousCpuLimit);
@@ -325,21 +327,17 @@ public class CollectMetrics implements Runnable
     }
 
     private double getPreviousKruizeData(String recommendationURL, String applicationName)
+            throws IndexOutOfBoundsException, MalformedURLException
     {
         LOGGER.debug("Recommendation URL: {}", recommendationURL);
-        try {
-            JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
+        JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
 
-            //get last old value
-            return kruizeArray
-                    .get(kruizeArray.size() - 1)
-                    .getAsJsonArray()
-                    .get(1)
-                    .getAsDouble();
-        } catch (IndexOutOfBoundsException | MalformedURLException e) {
-            LOGGER.info("No previous recommendations available for {}", applicationName);
-            return 0;
-        }
+        //get last old value
+        return kruizeArray
+                .get(kruizeArray.size() - 1)
+                .getAsJsonArray()
+                .get(1)
+                .getAsDouble();
     }
 
     private class CurrentMetrics
@@ -391,6 +389,7 @@ public class CollectMetrics implements Runnable
                 return this;
 
             } catch (IndexOutOfBoundsException e) {
+                e.printStackTrace();
                 return this;
             }
 

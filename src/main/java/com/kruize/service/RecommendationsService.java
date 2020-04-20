@@ -161,8 +161,7 @@ public class RecommendationsService extends HttpServlet
                 try {
                     JsonObject runtimeRecommendationJson = getRuntimeOptions(applicationRecommendations, application);
                     resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
-                } catch (NoSuchApplicationException | NullPointerException ignored) {
-                }
+                } catch (NoSuchApplicationException | NullPointerException ignored) { }
             }
 
             return resourcesJson;
@@ -193,13 +192,12 @@ public class RecommendationsService extends HttpServlet
                 .getHeapRecommendation();
 
         String percentage = precisionTwo.format((MathUtil.bytesToMB(heapRecommendations * 100)
-                /  applicationRecommendations.getRssRequests(application)));
+                /  applicationRecommendations.getRssLimits(application)));
 
         JsonObject runtimeRecommendationJson = new JsonObject();
         runtimeRecommendationJson.addProperty("java",
                 "-XX:InitialRAMPercentage=" + percentage + " -XX:MaxRAMPercentage=" + percentage);
 
         return runtimeRecommendationJson;
-
     }
 }

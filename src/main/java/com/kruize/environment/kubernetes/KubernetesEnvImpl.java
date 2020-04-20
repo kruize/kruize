@@ -256,8 +256,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             }
         }
     }
-
-
+    
     private void getNodeApps()
     {
 
