@@ -26,6 +26,8 @@ public class MetricsImpl implements Metrics
 {
     private String name;
     private String status;
+    private String runtime;
+    private String labelName;
     private String namespace;
     private String applicationName;
 
@@ -39,6 +41,8 @@ public class MetricsImpl implements Metrics
     private Recommendations currentRecommendations = new RecommendationsImpl();
 
     public ArrayList<MetricCollector> metricCollector = new ArrayList<>();
+
+    public MetricsImpl() {}
 
     @Override
     public String getName() { return name; }
@@ -268,5 +272,25 @@ public class MetricsImpl implements Metrics
     {
         return (this.getStatus().equals("running")
                 || this.getStatus().equals("succeeded")) ;
+    }
+
+    public String getLabelName()
+    {
+        return labelName;
+    }
+
+    public void setLabelName(String labelName)
+    {
+        this.labelName = labelName;
+    }
+
+    public String getRuntime()
+    {
+        return runtime;
+    }
+
+    public void setRuntime(String runtime)
+    {
+        this.runtime = runtime;
     }
 }
