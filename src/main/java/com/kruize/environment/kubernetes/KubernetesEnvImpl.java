@@ -31,7 +31,7 @@ import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
-import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
@@ -233,13 +233,18 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     private void getOpenJ9Apps() throws MalformedURLException
     {
         PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
-        JavaQuery openJ9JavaQuery = new OpenJ9JavaQuery();
+        JavaQuery openJ9JavaQuery = new OpenJ9PrometheusJavaQuery();
 
+<<<<<<< HEAD
         JsonArray javaApps = null;
         try {
             javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
                     + prometheusQuery.getAPIEndpoint() + openJ9JavaQuery.fetchJavaAppsQuery()));
         } catch (InvalidValueException ignored) { }
+=======
+        JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                + prometheusQuery.getAPIEndpoint() + openJ9JavaQuery.fetchJavaAppsQuery()));
+>>>>>>> Add prometheus abstraction for query
 
         if (javaApps == null) return;
 

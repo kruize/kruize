@@ -28,8 +28,8 @@ import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
-import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
 import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +135,7 @@ public class DockerEnvImpl extends EnvTypeImpl
     private void getOpenJ9Apps() throws MalformedURLException
     {
         PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
-        JavaQuery openJ9JavaQuery = new OpenJ9JavaQuery();
+        JavaQuery openJ9JavaQuery = new OpenJ9PrometheusJavaQuery();
 
         JsonArray javaApps = null;
         try {

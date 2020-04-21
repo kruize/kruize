@@ -1,9 +1,13 @@
 /*******************************************************************************
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Copyright (c) 2019, 2020 IBM Corporation and others.
 =======
  * Copyright (c) 2019, 2019 IBM Corporation and others.
 >>>>>>> Made query changes
+=======
+ * Copyright (c) 2019, 2020 IBM Corporation and others.
+>>>>>>> Add prometheus abstraction for query
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
