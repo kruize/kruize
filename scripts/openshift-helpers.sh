@@ -115,7 +115,30 @@ function openshift_start() {
 
 function openshift_terminate() {
 	# Add OpenShift cleanup code
+	kruize_ns="openshift-monitoring"
+	oc_cmd="oc -n ${kruize_ns}"
+
 	echo
+	echo "Terminating kruize..."
+
+	echo
+	echo "Removing kruize service account"
+	${oc_cmd} delete -f ${SA_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing kruize deployment from ICP cluster"
+	${oc_cmd} delete -f ${DEPLOY_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing kruize serviceMonitor"
+	${oc_cmd} delete -f ${SERVICE_MONITOR_MANIFEST} 2>/dev/null
+
+	echo
+	echo "Removing generated manifest files"
+	rm ${DEPLOY_MANIFEST}
+	rm ${SA_MANIFEST}
+
+	echo "done"
 }
 
 ###############################  ^ OpenShift ^ ################################
