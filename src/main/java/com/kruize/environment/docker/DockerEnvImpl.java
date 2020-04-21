@@ -18,18 +18,26 @@ package com.kruize.environment.docker;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.kruize.analysis.AnalysisImpl;
+import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
+import com.kruize.query.runtimes.java.JavaQuery;
+import com.kruize.query.runtimes.java.openj9.OpenJ9JavaQuery;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.kruize.analysis.AnalysisImpl;
-import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class DockerEnvImpl extends EnvTypeImpl
@@ -63,6 +71,7 @@ public class DockerEnvImpl extends EnvTypeImpl
     @Override
     public void getAllApps()
     {
+        getRuntimeInfo();
         JsonArray containerList = null;
         ArrayList<String> monitoredInstances = new ArrayList<>();
         /*
@@ -104,6 +113,71 @@ public class DockerEnvImpl extends EnvTypeImpl
         updateStatus(monitoredInstances);
     }
 
+    private void getRuntimeInfo()
+    {
+        try {
+            getJavaApps();
+            getNodeApps();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getJavaApps() throws MalformedURLException
+    {
+        if (!applicationRecommendations.runtimesMap.containsKey("java"))
+        {
+            applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
+        }
+        getOpenJ9Apps();
+    }
+
+    private void getOpenJ9Apps() throws MalformedURLException
+    {
+        PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
+        JavaQuery openJ9JavaQuery = new OpenJ9JavaQuery();
+
+        JsonArray javaApps = null;
+        try {
+            javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                    + prometheusQuery.getAPIEndpoint() + openJ9JavaQuery.fetchJavaAppsQuery()));
+        } catch (InvalidValueException ignored) { }
+
+        if (javaApps == null) return;
+
+        for (JsonElement jsonElement : javaApps)
+        {
+            JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+            String job = metric.get("job").getAsString();
+
+            /* Check if already in the list */
+            if (!applicationRecommendations.runtimesMap.get("java").contains(job))
+            {
+                applicationRecommendations.runtimesMap.get("java").add(job);
+                JavaApplicationMetricsImpl.javaVmMap.put(job, "OpenJ9");
+            }
+        }
+    }
+
+    private void getNodeApps()
+    {
+
+    }
+
+    private JsonArray getJsonArray(URL url)
+    {
+        String response = HttpUtil.getDataFromURL(url);
+
+        return new JsonParser()
+                .parse(response)
+                .getAsJsonObject()
+                .get("data")
+                .getAsJsonObject()
+                .get("result")
+                .getAsJsonArray();
+    }
+
+
     @SuppressWarnings("unchecked")
     private void insertMetrics(JsonElement container)
     {
@@ -142,13 +216,14 @@ public class DockerEnvImpl extends EnvTypeImpl
         }
     }
 
-    private static MetricsImpl getMetrics(JsonElement container) throws NullPointerException, InvalidValueException
+    private MetricsImpl getMetrics(JsonElement container) throws NullPointerException, InvalidValueException
     {
         MetricsImpl containerMetrics = new MetricsImpl();
         String containerName = container.getAsJsonObject().get("name").getAsString();
         containerMetrics.setName(containerName);
-        containerMetrics.setNamespace("local");
         containerMetrics.setStatus("running");
+        containerMetrics.setNamespace("local");
+        containerMetrics.setLabelName(containerName);
         containerMetrics.setApplicationName(containerName);
 
         if (container.getAsJsonObject().has("mem_limit")) {
@@ -157,6 +232,14 @@ public class DockerEnvImpl extends EnvTypeImpl
 
         if (container.getAsJsonObject().has("cpu_limit")) {
             containerMetrics.setOriginalMemoryLimit(container.getAsJsonObject().get("cpu_limit").getAsDouble());
+        }
+
+        for (String runtime : applicationRecommendations.runtimesMap.keySet())
+        {
+            if (applicationRecommendations.runtimesMap.get(runtime).contains(containerMetrics.getLabelName()))
+            {
+                containerMetrics.setRuntime(runtime);
+            }
         }
 
         return containerMetrics;

@@ -16,6 +16,7 @@
 
 package com.kruize.query.runtimes.java.openj9;
 
+import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.runtimes.java.NonHeapQuery;
 
@@ -48,24 +49,44 @@ public class OpenJ9NonHeapQuery implements NonHeapQuery
 
     public String getMiscellaneous(String area, String name)
     {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
+                    "job=\"" + name + "\"}";
+        }
+
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
                 "kubernetes_name=\"" + name + "\"}";
     }
 
     public String getClassStorage(String area, String name)
     {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
+                    "job=\"" + name + "\"}";
+        }
+
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
                 "kubernetes_name=\"" + name + "\"}";
     }
 
     public String getJitCodeCache(String area, String name)
     {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
+                    "job=\"" + name + "\"}";
+        }
+
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
                 "kubernetes_name=\"" + name + "\"}";
     }
 
     public String getJitDataCache(String area, String name)
     {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
+                    "job=\"" + name + "\"}";
+        }
+
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
                 "kubernetes_name=\"" + name + "\"}";
     }
