@@ -14,13 +14,13 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java.openj9;
+package com.kruize.query.prometheus.runtimes.java.openj9;
 
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.runtimes.java.NonHeapQuery;
 
-public class OpenJ9NonHeapQuery implements NonHeapQuery
+public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
 {
     private final String[] partsOfNonHeap = {"miscellaneous", "class storage", "JIT code cache", "JIT data cache"};
 

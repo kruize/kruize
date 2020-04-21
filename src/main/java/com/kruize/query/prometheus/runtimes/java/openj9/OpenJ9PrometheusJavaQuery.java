@@ -14,25 +14,25 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java.openj9;
+package com.kruize.query.prometheus.runtimes.java.openj9;
 
 import com.kruize.query.runtimes.java.JavaQuery;
 
-public class OpenJ9JavaQuery extends JavaQuery
+public class OpenJ9PrometheusJavaQuery extends JavaQuery
 {
     /**
      * @return String for a generic Java query that will fetch all applications exporting Java metrics
      */
     @Override
-    public String getAppsQuery()
+    public String fetchJavaAppsQuery()
     {
         return "jvm_memory_used_bytes{area=\"heap\",id=\"tenured-SOA\"}";
     }
 
-    public OpenJ9JavaQuery()
+    public OpenJ9PrometheusJavaQuery()
     {
-        heapQuery = new OpenJ9HeapQuery();
-        nonHeapQuery = new OpenJ9NonHeapQuery();
+        heapQuery = new OpenJ9PrometheusHeapQuery();
+        nonHeapQuery = new OpenJ9PrometheusNonHeapQuery();
     }
 }
 

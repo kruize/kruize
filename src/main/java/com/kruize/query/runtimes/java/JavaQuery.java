@@ -16,16 +16,31 @@
 
 package com.kruize.query.runtimes.java;
 
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.exceptions.InvalidValueException;
+import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
+
 public class JavaQuery
 {
     /**
      * @return String for a generic Java query that will fetch all applications exporting Java metrics
      */
-    public String getAppsQuery()
+    public String fetchJavaAppsQuery()
     {
         return null;
     };
 
     public HeapQuery heapQuery = null;
     public NonHeapQuery nonHeapQuery = null;
+
+    public static JavaQuery getInstance(String vm) throws InvalidValueException
+    {
+        if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
+        {
+            if (vm.equals("OpenJ9"))
+                return new OpenJ9PrometheusJavaQuery();
+        }
+
+        throw new InvalidValueException("JavaQuery not supported");
+    }
 }

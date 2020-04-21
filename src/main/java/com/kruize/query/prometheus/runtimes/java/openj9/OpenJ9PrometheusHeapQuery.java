@@ -14,13 +14,13 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java.openj9;
+package com.kruize.query.prometheus.runtimes.java.openj9;
 
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.runtimes.java.HeapQuery;
 
-public class OpenJ9HeapQuery implements HeapQuery
+public class OpenJ9PrometheusHeapQuery implements HeapQuery
 {
     private final String[] partsOfHeap = {"tenured-LOA", "tenured-SOA", "nursery-survivor", "nursery-allocate"};
 
