@@ -200,10 +200,12 @@ public class CollectMetrics implements Runnable
     {
         if (metrics.getRuntime().equals("java"))
         {
-            if (JavaApplicationMetricsImpl.javaVmMap.get(metrics.getLabelName()).equals("OpenJ9"))
+            if (JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(metrics.getLabelName())
+                    .getVM().equals("OpenJ9"))
             {
-                OpenJ9AnalysisImpl.analyseHeapRecommendation();
-                OpenJ9AnalysisImpl.analyseNonHeapRecommendation();
+                OpenJ9AnalysisImpl.analyseHeapRecommendation(metrics);
+                OpenJ9AnalysisImpl.analyseNonHeapRecommendation(metrics);
             }
         }
     }

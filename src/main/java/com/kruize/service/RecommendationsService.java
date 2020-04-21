@@ -23,8 +23,12 @@ import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+<<<<<<< HEAD
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+=======
+import com.kruize.recommendations.runtimes.java.JavaRecommendations;
+>>>>>>> Add gc-heap association
 import com.kruize.util.MathUtil;
 
 import javax.servlet.http.HttpServlet;
@@ -164,7 +168,18 @@ public class RecommendationsService extends HttpServlet
                 } catch (NoSuchApplicationException | NullPointerException ignored) { }
             }
 
+<<<<<<< HEAD
             return resourcesJson;
+=======
+        /* Runtime data is available, and other recommendations are generated */
+        if (applicationRecommendations.getRuntime(application) != null
+                && applicationRecommendations.getRssRequests(application) != 0)
+        {
+            try {
+                JsonObject runtimeRecommendationJson = getRuntimeOptions(applicationRecommendations, application);
+                resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
+            } catch (NoSuchApplicationException | NullPointerException ignored) { }
+>>>>>>> Add gc-heap association
         }
 
         LOGGER.info("Application {} is no longer running and has no recommendations generated earlier", application);
@@ -188,15 +203,27 @@ public class RecommendationsService extends HttpServlet
 
         String labelName = applicationRecommendations.applicationMap.get(application)
                 .get(0).getLabelName();
-        double heapRecommendations = JavaApplicationMetricsImpl.javaRecommendationsMap.get(labelName)
-                .getHeapRecommendation();
+
+        JavaRecommendations javaRecommendations = JavaApplicationMetricsImpl.javaApplicationInfoMap
+                .get(labelName)
+                .getJavaRecommendations();
+
+        double heapRecommendations = javaRecommendations.getHeapRecommendation();
+
+        String gcPolicyRecommendation = javaRecommendations.getGcPolicy();
 
         String percentage = precisionTwo.format((MathUtil.bytesToMB(heapRecommendations * 100)
                 /  applicationRecommendations.getRssLimits(application)));
 
         JsonObject runtimeRecommendationJson = new JsonObject();
-        runtimeRecommendationJson.addProperty("java",
-                "-XX:InitialRAMPercentage=" + percentage + " -XX:MaxRAMPercentage=" + percentage);
+
+        if (JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName)
+                .getVM().equals("OpenJ9")) {
+            runtimeRecommendationJson.addProperty("java",
+                    "-XX:InitialRAMPercentage=" + percentage +
+                            " -XX:MaxRAMPercentage=" + percentage +
+                            " -Xgcpolicy:" + gcPolicyRecommendation);
+        }
 
         return runtimeRecommendationJson;
     }

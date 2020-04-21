@@ -17,7 +17,6 @@
 package com.kruize.metrics.runtimes.java;
 
 import com.kruize.exceptions.NoSuchApplicationException;
-import com.kruize.recommendations.runtimes.java.JavaRecommendations;
 
 import java.util.ArrayList;
 import java.util.HashMap;

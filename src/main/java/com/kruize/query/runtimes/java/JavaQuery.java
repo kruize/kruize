@@ -19,6 +19,8 @@ package com.kruize.query.runtimes.java;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
+import com.kruize.recommendations.runtimes.java.JavaRecommendations;
 
 public class JavaQuery
 {

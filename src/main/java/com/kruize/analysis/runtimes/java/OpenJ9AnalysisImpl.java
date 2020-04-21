@@ -20,7 +20,6 @@ import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaMetricCollector;
 import com.kruize.metrics.runtimes.java.openj9.OpenJ9MetricCollector;
-import com.kruize.recommendations.runtimes.java.openj9.OpenJ9JavaRecommendations;
 import com.kruize.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +52,7 @@ public class OpenJ9AnalysisImpl
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9AnalysisImpl.class);
 
+<<<<<<< HEAD
     private static JavaTriplet heapMax = new JavaTriplet();
     private static JavaTriplet nonHeapMax = new JavaTriplet();
 
@@ -61,6 +61,8 @@ public class OpenJ9AnalysisImpl
      *
      * @param metrics instance of the application
      */
+=======
+>>>>>>> Add gc-heap association
     public static void analyseHeapRecommendation(MetricsImpl metrics)
     {
         for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet()) {
@@ -69,6 +71,7 @@ public class OpenJ9AnalysisImpl
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
+<<<<<<< HEAD
 
                 if (openJ9MetricCollector.getHeap() > heapMax.heap)
                 {
@@ -81,6 +84,20 @@ public class OpenJ9AnalysisImpl
             }
 
             double heapRecommendation = heapMax.heap;
+=======
+                heapSum += openJ9MetricCollector.getHeap();
+            }
+
+            double numberOfMetrics = JavaApplicationMetricsImpl.javaApplicationMetricsMap
+                    .get(application).size();
+            double heapRecommendation = heapSum / numberOfMetrics;
+
+            if (MathUtil.bytesToMB(heapRecommendation) > metrics.getRssRequests())
+            {
+                double MbToBytes = 1024*1024;
+                heapRecommendation = 0.7 * metrics.getRssRequests() * MbToBytes;
+            }
+>>>>>>> Add gc-heap association
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
@@ -93,11 +110,14 @@ public class OpenJ9AnalysisImpl
         }
     }
 
+<<<<<<< HEAD
     /**
      * Get the non-heap recommendation for an instance
      *
      * @param metrics instance of the application
      */
+=======
+>>>>>>> Add gc-heap association
     public static void analyseNonHeapRecommendation(MetricsImpl metrics)
     {
         for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet()) {
@@ -106,6 +126,7 @@ public class OpenJ9AnalysisImpl
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
+<<<<<<< HEAD
 
                 if (openJ9MetricCollector.getNonHeap() > nonHeapMax.nonHeap)
                 {
@@ -119,6 +140,20 @@ public class OpenJ9AnalysisImpl
             }
 
             double nonHeapRecommendation = nonHeapMax.nonHeap;
+=======
+                nonHeapSum += openJ9MetricCollector.getNonHeap();
+            }
+
+            double numberOfMetrics = JavaApplicationMetricsImpl.javaApplicationMetricsMap
+                    .get(application).size();
+            double nonHeapRecommendation = nonHeapSum / numberOfMetrics;
+
+            if (MathUtil.bytesToMB(nonHeapRecommendation) > metrics.getRssRequests())
+            {
+                double MbToBytes = 1024*1024;
+                nonHeapRecommendation = 0.7 * metrics.getRssRequests() * MbToBytes;
+            }
+>>>>>>> Add gc-heap association
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
@@ -128,6 +163,7 @@ public class OpenJ9AnalysisImpl
             LOGGER.info("Non-heap recommendation for {} is {}MB", application,
                     MathUtil.bytesToMB(nonHeapRecommendation));
 
+<<<<<<< HEAD
         }
     }
 
@@ -160,6 +196,8 @@ public class OpenJ9AnalysisImpl
                     .get(application)
                     .getJavaRecommendations()
                     .setRssMax(rssMax);
+=======
+>>>>>>> Add gc-heap association
         }
     }
 }

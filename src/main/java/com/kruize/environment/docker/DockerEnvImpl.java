@@ -25,11 +25,12 @@ import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationInfo;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
-import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
+import com.kruize.recommendations.runtimes.java.openj9.OpenJ9JavaRecommendations;
 import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,34 +130,49 @@ public class DockerEnvImpl extends EnvTypeImpl
         {
             applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
         }
-        getOpenJ9Apps();
-    }
 
-    private void getOpenJ9Apps() throws MalformedURLException
-    {
-        PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
-        JavaQuery openJ9JavaQuery = new OpenJ9PrometheusJavaQuery();
-
-        JsonArray javaApps = null;
-        try {
-            javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                    + prometheusQuery.getAPIEndpoint() + openJ9JavaQuery.fetchJavaAppsQuery()));
-        } catch (InvalidValueException ignored) { }
-
-        if (javaApps == null) return;
-
-        for (JsonElement jsonElement : javaApps)
+        try
         {
-            JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
-            String job = metric.get("job").getAsString();
+            PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
+            JavaQuery javaQuery = new JavaQuery();
 
-            /* Check if already in the list */
-            if (!applicationRecommendations.runtimesMap.get("java").contains(job))
+            JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                    + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery()));
+
+            if (javaApps == null) return;
+
+            for (JsonElement jsonElement : javaApps)
             {
-                applicationRecommendations.runtimesMap.get("java").add(job);
-                JavaApplicationMetricsImpl.javaVmMap.put(job, "OpenJ9");
+                JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+                String job = metric.get("job").getAsString();
+                String heap_id = metric.get("id").getAsString();
+
+                javaQuery = JavaQuery.getInstance(heap_id);
+
+                /* Check if already in the list */
+                if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
+                    continue;
+
+                if (!applicationRecommendations.runtimesMap.get("java").contains(job))
+                {
+                    applicationRecommendations.runtimesMap.get("java").add(job);
+
+                    String vm = javaQuery.getVm();
+
+                    if (vm.equals("OpenJ9"))
+                    {
+                        JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
+                                job,
+                                new JavaApplicationInfo(
+                                        vm, javaQuery.getGcPolicy(),
+                                        new OpenJ9JavaRecommendations()));
+                    }
+                }
             }
+        } catch (InvalidValueException e) {
+            e.printStackTrace();
         }
+
     }
 
     private void getNodeApps()

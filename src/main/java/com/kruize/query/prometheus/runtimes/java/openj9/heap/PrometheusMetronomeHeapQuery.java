@@ -14,30 +14,22 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.metrics.runtimes.java;
+package com.kruize.query.prometheus.runtimes.java.openj9.heap;
 
-public class JavaMetricCollector
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.query.runtimes.java.openj9.heap.MetronomeHeapQuery;
+
+public class PrometheusMetronomeHeapQuery extends MetronomeHeapQuery
 {
-    double heap = 0;
-    double nonHeap = 0;
-
-    public double getHeap()
+    @Override
+    public String getJavaHeap(String area, String name)
     {
-        return heap;
-    }
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                    "job=\"" + name + "\"}";
+        }
 
-    public void setHeap(double heap)
-    {
-        this.heap = heap;
-    }
-
-    public double getNonHeap()
-    {
-        return nonHeap;
-    }
-
-    public void setNonHeap(double nonHeap)
-    {
-        this.nonHeap = nonHeap;
+        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                "kubernetes_name=\"" + name + "\"}";
     }
 }
