@@ -14,12 +14,30 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java;
+package com.kruize.query.runtimes.java.openj9.heap;
 
 import com.kruize.exceptions.InvalidValueException;
+import com.kruize.query.runtimes.java.HeapQuery;
 
-public interface HeapQuery
+public abstract class NoGcHeapQuery implements HeapQuery
 {
-    String[] getPartsOfHeap();
-    String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
+    private final String[] partsOfHeap = {"tenured"};
+
+    @Override
+    public String[] getPartsOfHeap()
+    {
+        return partsOfHeap;
+    }
+
+    @Override
+    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    {
+        if ("tenured".equals(partOfHeap)) {
+            return getTenured(area, application);
+        }
+        throw new InvalidValueException("No " + partOfHeap + " present in heap");
+    }
+
+    public abstract String getTenured(String area, String name);
+
 }

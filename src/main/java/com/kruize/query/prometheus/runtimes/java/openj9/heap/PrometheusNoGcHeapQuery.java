@@ -14,12 +14,22 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java;
+package com.kruize.query.prometheus.runtimes.java.openj9.heap;
 
-import com.kruize.exceptions.InvalidValueException;
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.query.runtimes.java.openj9.heap.NoGcHeapQuery;
 
-public interface HeapQuery
+public class PrometheusNoGcHeapQuery extends NoGcHeapQuery
 {
-    String[] getPartsOfHeap();
-    String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
+    @Override
+    public String getTenured(String area, String name)
+    {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
+                    "job=\"" + name + "\"}";
+        }
+
+        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
+                "kubernetes_name=\"" + name + "\"}";
+    }
 }

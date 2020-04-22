@@ -22,25 +22,57 @@ import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuer
 
 public class JavaQuery
 {
-    /**
-     * @return String for a generic Java query that will fetch all applications exporting Java metrics
-     */
-    public String fetchJavaAppsQuery()
-    {
-        return null;
-    };
-
+    public String vm = null;
+    public String gcPolicy = null;
     public HeapQuery heapQuery = null;
     public NonHeapQuery nonHeapQuery = null;
 
-    public static JavaQuery getInstance(String vm) throws InvalidValueException
+    /**
+     * Each GC policy is associated with specific areas of heap.
+     * Returns the set GC policy of the application based on the area
+     *
+     * @param areaOfHeap Area of heap of an application
+     * @return String containing the GC policy of the application
+     */
+    public static String getGcPolicyForHeap(String areaOfHeap)
+    {
+        return null;
+    }
+
+    /**
+     * @return String for a generic Java query that will fetch all applications exporting Java metrics
+     */
+    public String fetchJavaAppsQuery() throws InvalidValueException
     {
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
+            return "jvm_memory_used_bytes{area=\"heap\"}";
+
+        throw new InvalidValueException("JavaQuery not supported");
+    }
+
+    public static JavaQuery getInstance(String areaOfHeap) throws InvalidValueException
+    {
+        String gcPolicy = null;
+
+        if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
         {
-            if (vm.equals("OpenJ9"))
-                return new OpenJ9PrometheusJavaQuery();
+            if ((gcPolicy = OpenJ9PrometheusJavaQuery.getGcPolicyForHeap(areaOfHeap)) != null)
+            {
+                return new OpenJ9PrometheusJavaQuery(gcPolicy);
+            }
         }
 
         throw new InvalidValueException("JavaQuery not supported");
     }
+
+    public String getVm()
+    {
+        return vm;
+    }
+
+    public String getGcPolicy()
+    {
+        return gcPolicy;
+    }
+
 }

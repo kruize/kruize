@@ -14,12 +14,22 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java;
+package com.kruize.query.prometheus.runtimes.java.openj9.heap;
 
-import com.kruize.exceptions.InvalidValueException;
+import com.kruize.environment.DeploymentInfo;
+import com.kruize.query.runtimes.java.openj9.heap.MetronomeHeapQuery;
 
-public interface HeapQuery
+public class PrometheusMetronomeHeapQuery extends MetronomeHeapQuery
 {
-    String[] getPartsOfHeap();
-    String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
+    @Override
+    public String getJavaHeap(String area, String name)
+    {
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                    "job=\"" + name + "\"}";
+        }
+
+        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                "kubernetes_name=\"" + name + "\"}";
+    }
 }

@@ -14,12 +14,30 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.runtimes.java;
+package com.kruize.query.runtimes.java.openj9.heap;
 
 import com.kruize.exceptions.InvalidValueException;
+import com.kruize.query.runtimes.java.HeapQuery;
 
-public interface HeapQuery
+public abstract class MetronomeHeapQuery implements HeapQuery
 {
-    String[] getPartsOfHeap();
-    String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
+    private final String[] partsOfHeap = {"JavaHeap"};
+
+    @Override
+    public String[] getPartsOfHeap()
+    {
+        return partsOfHeap;
+    }
+
+    @Override
+    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    {
+        if ("JavaHeap".equals(partOfHeap)) {
+            return getJavaHeap(area, application);
+        }
+        throw new InvalidValueException("No " + partOfHeap + " present in heap");
+    }
+
+    public abstract String getJavaHeap(String area, String name);
+
 }
