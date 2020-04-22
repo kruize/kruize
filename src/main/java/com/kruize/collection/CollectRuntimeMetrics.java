@@ -19,15 +19,26 @@ package com.kruize.collection;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.metrics.runtimes.java.openj9.OpenJ9MetricCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
 class CollectRuntimeMetrics
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CollectRuntimeMetrics.class);
+
+    /**
+     * Collect runtime metrics, if available, for an instance.
+     *
+     * @param metrics instance of the application
+     * @param monitoringAgentEndpoint monitoring agent endpoint
+     */
     static void collectRuntimeMetrics(MetricsImpl metrics, String monitoringAgentEndpoint)
     {
         if (metrics.getRuntime().equals("java"))
         {
+            LOGGER.info("Collecting java metrics for {}", metrics.getLabelName());
             collectJavaMetrics(metrics, monitoringAgentEndpoint);
         }
         else if (metrics.getRuntime().equals("nodejs"))
@@ -36,15 +47,27 @@ class CollectRuntimeMetrics
         }
     }
 
+    /**
+     * Collect runtime metrics, if available, for an instance of a java application.
+     *
+     * @param metrics instance of the application
+     * @param monitoringAgentEndpoint monitoring agent endpoint
+     */
     private static void collectJavaMetrics(MetricsImpl metrics, String monitoringAgentEndpoint)
     {
         String labelName = metrics.getLabelName();
 
-        if (JavaApplicationMetricsImpl.javaVmMap.containsKey(labelName))
+        LOGGER.info("Collecting runtime metrics for {}", labelName);
+        if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(labelName))
         {
-            if (JavaApplicationMetricsImpl.javaVmMap.get(labelName).equals("OpenJ9"))
+            if (JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(labelName)
+                    .getVM()
+                    .equals("OpenJ9"))
             {
-                OpenJ9MetricCollector openJ9MetricCollector = new OpenJ9MetricCollector();
+                OpenJ9MetricCollector openJ9MetricCollector = new OpenJ9MetricCollector(
+                        JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName).getGcPolicy());
+
                 openJ9MetricCollector.collectOpenJ9Metrics(metrics, monitoringAgentEndpoint, "used");
 
                 if (!JavaApplicationMetricsImpl.javaApplicationMetricsMap.containsKey(labelName))

@@ -17,23 +17,23 @@
 package com.kruize.metrics.runtimes.java;
 
 import com.kruize.exceptions.NoSuchApplicationException;
-import com.kruize.recommendations.runtimes.java.JavaRecommendations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class JavaApplicationMetricsImpl implements JavaApplicationMetrics
 {
+    public static HashMap<String, JavaApplicationInfo> javaApplicationInfoMap = new HashMap<>();
     public static HashMap<String, ArrayList<JavaMetricCollector>> javaApplicationMetricsMap = new HashMap<>();
-    public static HashMap<String, JavaRecommendations> javaRecommendationsMap = new HashMap<>();
-    public static HashMap<String, String> javaVmMap = new HashMap<>();
 
     @Override
     public double getHeapSize(String application) throws NoSuchApplicationException
     {
-        if (javaRecommendationsMap.containsKey(application))
+        if (javaApplicationInfoMap.containsKey(application))
         {
-            return javaRecommendationsMap.get(application).getHeapRecommendation();
+            return javaApplicationInfoMap.get(application)
+                    .getJavaRecommendations()
+                    .getHeapRecommendation();
         }
         else
         {
@@ -44,9 +44,11 @@ public class JavaApplicationMetricsImpl implements JavaApplicationMetrics
     @Override
     public double getNonHeapSize(String application) throws NoSuchApplicationException
     {
-        if (javaRecommendationsMap.containsKey(application))
+        if (javaApplicationInfoMap.containsKey(application))
         {
-            return javaRecommendationsMap.get(application).getHeapRecommendation();
+            return javaApplicationInfoMap.get(application)
+                    .getJavaRecommendations()
+                    .getNonHeapRecommendation();
         }
         else
         {

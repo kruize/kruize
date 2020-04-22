@@ -16,28 +16,11 @@
 
 package com.kruize.metrics.runtimes.java;
 
-public class JavaMetricCollector
+import com.kruize.exceptions.InvalidValueException;
+
+public interface JavaHeap
 {
-    double heap = 0;
-    double nonHeap = 0;
-
-    public double getHeap()
-    {
-        return heap;
-    }
-
-    public void setHeap(double heap)
-    {
-        this.heap = heap;
-    }
-
-    public double getNonHeap()
-    {
-        return nonHeap;
-    }
-
-    public void setNonHeap(double nonHeap)
-    {
-        this.nonHeap = nonHeap;
-    }
+    void setHeap(double value, String partOfHeap) throws InvalidValueException;
+    double getHeap(String partOfHeap) throws InvalidValueException;
+    double getTotalSize();
 }

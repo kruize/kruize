@@ -30,7 +30,7 @@ public class JavaQuery
     private static String podLabel = null;
 
     static {
-        if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER"))
+        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER"))
         {
             podLabel = "job";
         } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
@@ -92,4 +92,6 @@ public class JavaQuery
     {
         return gcPolicy;
     }
+
+    public static String getPodLabel() { return podLabel; }
 }

@@ -202,6 +202,4 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
 
         return null;
     }
-
-
 }
