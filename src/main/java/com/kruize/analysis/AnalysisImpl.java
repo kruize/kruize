@@ -67,6 +67,7 @@ public class AnalysisImpl implements Analysis
         if (metrics.size() == 0) {
             try {
                 instance.setCurrentCpuLimit(0);
+                LOGGER.info("Current CPU Limits set to 0");
             } catch (InvalidValueException e) {
                 e.printStackTrace();
             }
@@ -82,7 +83,7 @@ public class AnalysisImpl implements Analysis
         }
 
         double cpuLimit = maxCpu * CPU_BUFFER;
-        DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+        DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
         singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
@@ -105,6 +106,7 @@ public class AnalysisImpl implements Analysis
         if (metrics.size() == 0) {
             try {
                 instance.setCurrentCpuRequests(0);
+                LOGGER.info("Current CPU Requests set to 0");
             } catch (InvalidValueException e) {
                 e.printStackTrace();
             }
@@ -128,7 +130,7 @@ public class AnalysisImpl implements Analysis
             {
                 MetricCollector temp = MetricCollector.Copy(metric);
 
-                DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
+                DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
                 singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
                 double targetValue = temp.getFromIndex(INDEX);

@@ -5,5 +5,7 @@ containers:
   - name: "grafana"
   - name: "kruize"
   - name: "prometheus"
+  - name: "another_app"
+  - name: "appsody_app"
 #  - name: "acmeair-mono-app1"
 #  - name: "acmeair-db1"

@@ -30,3 +30,21 @@ scrape_configs:
   static_configs:
   - targets:
     - kruize:31313
+- job_name: another_app
+  honor_timestamps: true
+  scrape_interval: 2s
+  scrape_timeout: 1s
+  metrics_path: /actuator/prometheus
+  scheme: http
+  static_configs:
+  - targets:
+    - localhost:30031
+- job_name: appsody_app
+  honor_timestamps: true
+  scrape_interval: 2s
+  scrape_timeout: 1s
+  metrics_path: /actuator/prometheus
+  scheme: http
+  static_configs:
+  - targets:
+    - localhost:30032

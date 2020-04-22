@@ -168,7 +168,7 @@ function docker_deploy() {
 	echo "Info: Waiting for prometheus/grafana/cadvisor to be up and running"
 	sleep 2
 	echo "Starting kruize container"
-	docker run -d --rm --name=kruize     -p ${KRUIZE_PORT}:${KRUIZE_PORT}          --net=${NETWORK} --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://prometheus:${PROMETHEUS_PORT}" --env MONITORING_AGENT="Prometheus" -v ${ROOT_DIR}/${DOCKER_JSON}:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
+#	docker run -d --rm --name=kruize     -p ${KRUIZE_PORT}:${KRUIZE_PORT}          --net=host --env CLUSTER_TYPE="DOCKER" --env MONITORING_AGENT_ENDPOINT="http://localhost:${PROMETHEUS_PORT}" --env MONITORING_AGENT="Prometheus" -v ${ROOT_DIR}/${DOCKER_JSON}:/opt/app/kruize-docker.json ${KRUIZE_DOCKER_IMAGE}
 	check_err "Error: kruize did not start up"
 	echo "Waiting for kruize container to come up"
 	sleep 10
