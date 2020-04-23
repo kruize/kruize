@@ -22,6 +22,7 @@ import com.google.gson.JsonParser;
 import com.kruize.analysis.runtimes.java.OpenJ9AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
+import com.kruize.exceptions.ApplicationIdleStateException;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.MetricCollector;
@@ -215,10 +216,12 @@ public class CollectMetrics implements Runnable
     public void run()
     {
         try {
+/*
             for (String application : applicationRecommendations.applicationMap.keySet()) {
                 getPreviousData(application);
                 getPreviousKruizeRecs(application, query);
             }
+*/
 
             while (true) {
                 for (String application : applicationRecommendations.applicationMap.keySet()) {
@@ -382,16 +385,23 @@ public class CollectMetrics implements Runnable
                 //TODO Get network data from monitoring agent
                 double network = 0;
 
-/*
-                if (cpu < MIN_CPU)
+                if (cpu < MIN_CPU) {
                     throw new ApplicationIdleStateException();
-*/
+                }
+
+                if (monitoringAgentEndPoint.contains("petclinic") || cpuQuery.contains("petclinic")) {
+                    LOGGER.info("Current CPU {} and memory {}", cpu, rss);
+                }
 
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
                 return this;
 
             } catch (IndexOutOfBoundsException e) {
+                LOGGER.info(monitoringAgentEndPoint + cpuQuery);
+                LOGGER.info(monitoringAgentEndPoint + rssQuery);
                 e.printStackTrace();
+                return this;
+            } catch (ApplicationIdleStateException e) {
                 return this;
             }
 

@@ -52,6 +52,10 @@ public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
+                    "pod=\"" + name + "\"}";
+
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
@@ -63,6 +67,10 @@ public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
+                    "pod=\"" + name + "\"}";
+
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
@@ -74,6 +82,10 @@ public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
+                    "pod=\"" + name + "\"}";
+
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
@@ -85,6 +97,10 @@ public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
+                    "pod=\"" + name + "\"}";
+
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +

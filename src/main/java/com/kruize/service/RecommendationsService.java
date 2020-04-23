@@ -23,12 +23,9 @@ import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
-<<<<<<< HEAD
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-=======
 import com.kruize.recommendations.runtimes.java.JavaRecommendations;
->>>>>>> Add gc-heap association
 import com.kruize.util.MathUtil;
 
 import javax.servlet.http.HttpServlet;
@@ -37,6 +34,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RecommendationsService extends HttpServlet
 {
@@ -119,7 +119,7 @@ public class RecommendationsService extends HttpServlet
             }
         }
 
-        resp.setContentType("application/json");
+        resp.setContentType("application/json; charset=utf-8");
 
         /* Pretty print the recommendations JSON */
         resp.getWriter().println(new GsonBuilder().setPrettyPrinting().create().toJson(jsonArray));
@@ -168,18 +168,7 @@ public class RecommendationsService extends HttpServlet
                 } catch (NoSuchApplicationException | NullPointerException ignored) { }
             }
 
-<<<<<<< HEAD
             return resourcesJson;
-=======
-        /* Runtime data is available, and other recommendations are generated */
-        if (applicationRecommendations.getRuntime(application) != null
-                && applicationRecommendations.getRssRequests(application) != 0)
-        {
-            try {
-                JsonObject runtimeRecommendationJson = getRuntimeOptions(applicationRecommendations, application);
-                resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
-            } catch (NoSuchApplicationException | NullPointerException ignored) { }
->>>>>>> Add gc-heap association
         }
 
         LOGGER.info("Application {} is no longer running and has no recommendations generated earlier", application);
@@ -219,10 +208,14 @@ public class RecommendationsService extends HttpServlet
 
         if (JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName)
                 .getVM().equals("OpenJ9")) {
+            String suggestedOptions = "-XX:InitialRAMPercentage=" + percentage +
+                    " -XX:MaxRAMPercentage=" + percentage +
+                    " -Xgcpolicy:" + gcPolicyRecommendation;
+
+            byte[] ptext = suggestedOptions.getBytes(ISO_8859_1);
+
             runtimeRecommendationJson.addProperty("java",
-                    "-XX:InitialRAMPercentage=" + percentage +
-                            " -XX:MaxRAMPercentage=" + percentage +
-                            " -Xgcpolicy:" + gcPolicyRecommendation);
+                    new String(ptext, UTF_8));
         }
 
         return runtimeRecommendationJson;

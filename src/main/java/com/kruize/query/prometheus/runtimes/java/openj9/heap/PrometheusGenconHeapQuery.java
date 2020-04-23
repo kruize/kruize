@@ -27,6 +27,9 @@ public class PrometheusGenconHeapQuery extends GenconHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +
@@ -39,6 +42,9 @@ public class PrometheusGenconHeapQuery extends GenconHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-SOA\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-SOA\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-SOA\"," +
@@ -51,6 +57,9 @@ public class PrometheusGenconHeapQuery extends GenconHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-survivor\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-survivor\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-survivor\"," +
@@ -63,6 +72,9 @@ public class PrometheusGenconHeapQuery extends GenconHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-allocate\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-allocate\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-allocate\"," +

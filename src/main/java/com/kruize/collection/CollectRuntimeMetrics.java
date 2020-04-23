@@ -38,6 +38,7 @@ class CollectRuntimeMetrics
     {
         if (metrics.getRuntime().equals("java"))
         {
+            LOGGER.info("Collecting java metrics for {}", metrics.getLabelName());
             collectJavaMetrics(metrics, monitoringAgentEndpoint);
         }
         else if (metrics.getRuntime().equals("nodejs"))
@@ -56,6 +57,7 @@ class CollectRuntimeMetrics
     {
         String labelName = metrics.getLabelName();
 
+        LOGGER.info("Collecting runtime metrics for {}", labelName);
         if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(labelName))
         {
             if (JavaApplicationMetricsImpl.javaApplicationInfoMap

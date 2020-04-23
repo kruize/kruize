@@ -242,7 +242,14 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             for (JsonElement jsonElement : javaApps)
             {
                 JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
-                String kubernetes_name = metric.get("kubernetes_name").getAsString();
+
+                String kubernetes_name;
+                if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+                    kubernetes_name = metric.get("pod").getAsString();
+                } else {
+                    kubernetes_name = metric.get("kubernetes_name").getAsString();
+                }
+
                 String heap_id = metric.get("id").getAsString();
 
                 javaQuery = JavaQuery.getInstance(heap_id);
@@ -253,9 +260,11 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
                 if (!applicationRecommendations.runtimesMap.get("java").contains(kubernetes_name))
                 {
+                    LOGGER.info("{} added to java runtime collection array", kubernetes_name);
                     applicationRecommendations.runtimesMap.get("java").add(kubernetes_name);
 
                     String vm = javaQuery.getVm();
+                    LOGGER.info("VM is {}", vm);
 
                     if (vm.equals("OpenJ9"))
                     {
@@ -267,7 +276,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     }
                 }
             }
-        } catch (InvalidValueException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -322,8 +331,12 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         String podTemplateHash;
 
         try {
-            metrics.setLabelName(pod.getMetadata()
-                    .getLabels().get("name"));
+            if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+                metrics.setLabelName(metrics.getName());
+            } else {
+                metrics.setLabelName(pod.getMetadata()
+                        .getLabels().get("name"));
+            }
 
             String podHashLabel = "pod-template-hash";
             podTemplateHash = pod.getMetadata()
@@ -341,7 +354,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             }
         }
 
-        String applicationName = parseApplicationName(pod.getMetadata().getName(),
+        String applicationName = parseApplicationName(metrics.getName(),
                 podTemplateHash);
 
         metrics.setApplicationName(applicationName);

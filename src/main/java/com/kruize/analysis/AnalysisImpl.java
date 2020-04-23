@@ -76,14 +76,22 @@ public class AnalysisImpl implements Analysis
             return;
         }
 
+        if (instance.getName().contains("petclinic")) {
+            for (MetricCollector metricCollector : metrics) {
+                LOGGER.info("Memory {}", MathUtil.bytesToMB(metricCollector.getFromIndex(MetricCollector.RSS_INDEX)));
+            }
+        }
         for (MetricCollector metricCollector : metrics) {
             double cpu = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
+            if (instance.getName().contains("petclinic")) {
+                LOGGER.info("CPU {}", metricCollector.getFromIndex(MetricCollector.CPU_INDEX));
+            }
             if (maxCpu < cpu)
                 maxCpu = cpu;
         }
 
         double cpuLimit = maxCpu * CPU_BUFFER;
-        DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
+        DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
         singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
         cpuLimit = Double.parseDouble(singleDecimalPlace.format(cpuLimit));
@@ -130,7 +138,7 @@ public class AnalysisImpl implements Analysis
             {
                 MetricCollector temp = MetricCollector.Copy(metric);
 
-                DecimalFormat singleDecimalPlace = new DecimalFormat("#.###");
+                DecimalFormat singleDecimalPlace = new DecimalFormat("#.#");
                 singleDecimalPlace.setRoundingMode(RoundingMode.CEILING);
 
                 double targetValue = temp.getFromIndex(INDEX);
@@ -224,6 +232,11 @@ public class AnalysisImpl implements Analysis
 
         spike = getLargestSpike(rssValues);
         LOGGER.debug("Spike is {}" , spike);
+
+        if (instance.getName().contains("petclinic"))
+        {
+            LOGGER.info("Spike is {}", spike);
+        }
 
         double memRequests = instance.getRssRequests();
 

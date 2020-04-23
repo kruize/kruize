@@ -52,6 +52,8 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9MetricCollector.class);
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9MetricCollector.class);
+
     public OpenJ9MetricCollector(String gcPolicy)
     {
         nonHeap = new OpenJ9NonHeap();
@@ -119,6 +121,7 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
     public void collectOpenJ9Metrics(MetricsImpl metrics, String monitoringAgentEndPoint, String area)
     {
         String labelName = metrics.getLabelName();
+        LOGGER.info("Calling openj9 collection");
 
         try {
             double rss = getValueForQuery(new URL(monitoringAgentEndPoint +
