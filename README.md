@@ -34,6 +34,11 @@ Even though Kruize currently supports Prometheus as the metrics provider, it can
 See the [Install README](/docs/README.md) for more details on the installation.
 
 
+## REST API
+
+See the [API README](/docs/API.md) for more details on the Kruize REST API.
+
+
 ## Contributing
 
 Refer to [CONTRIBUTING.md](/CONTRIBUTING.md).
