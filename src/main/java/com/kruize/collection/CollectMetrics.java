@@ -20,7 +20,6 @@ import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
 import com.kruize.exceptions.InvalidValueException;
-import com.kruize.main.Kruize;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
@@ -29,6 +28,7 @@ import com.kruize.util.HttpUtil;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.prometheus.client.Gauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
@@ -39,6 +39,60 @@ import java.util.concurrent.TimeUnit;
 
 public class CollectMetrics implements Runnable
 {
+    /*
+     * Gauges in Prometheus are values that can arbitrarily change to some other value.
+     */
+    private static final Gauge cpuRequestsGauge = Gauge.build()
+            .name("kruize_exp_cpu_requests")
+            .help("CPU Requests obtained by Kruize")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge cpuLimitsGauge = Gauge.build()
+            .name("kruize_exp_cpu_limits")
+            .help("CPU Limits obtained by Kruize")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge memoryRequestsGauge = Gauge.build()
+            .name("kruize_exp_memory_requests")
+            .help("Memory Requests obtained by Kruize")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge memoryLimitsGauge = Gauge.build()
+            .name("kruize_exp_memory_limits")
+            .help("Memory Limits obtained by Kruize")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge originalMemoryLimitsGauge = Gauge.build()
+            .name("kruize_exp_original_memory_limits")
+            .help("Original Memory Limits")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge originalMemoryRequestsGauge = Gauge.build()
+            .name("kruize_exp_original_memory_requests")
+            .help("Original Memory Requests")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge originalCpuRequestsGauge = Gauge.build()
+            .name("kruize_exp_original_cpu_requests")
+            .help("Original CPU Requests")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge originalCpuLimitsGauge = Gauge.build()
+            .name("kruize_exp_original_cpu_limits")
+            .help("Original CPU Limits")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge applicationCpuUsedGauge = Gauge.build()
+            .name("kruize_exp_application_cpu_current")
+            .help("Current CPU used by application")
+            .labelNames("namespace", "application_name")
+            .register();
+    private static final Gauge applicationMemUsedGauge = Gauge.build()
+            .name("kruize_exp_application_rss_current")
+            .help("Current RSS of application")
+            .labelNames("namespace", "application_name")
+            .register();
+
     private EnvTypeImpl envType = EnvTypeImpl.getInstance();
     private Query query = envType.query;
 
@@ -80,45 +134,54 @@ public class CollectMetrics implements Runnable
     }
 
     private void setKruizeRecommendations(String application, Metrics metrics,
-                                         CurrentMetrics currentMetrics)
+                                          CurrentMetrics currentMetrics)
     {
-        final double MIN_CPU_REQUEST = 0.5;
-        final double MIN_CPU_LIMIT = 1;
-
         String namespace = metrics.getNamespace();
 
-        Kruize.applicationCpuUsed.labels(namespace, application).set(currentMetrics.getCpu());
-        Kruize.applicationMemUsed.labels(namespace, application).set(currentMetrics.getRss());
+        if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS")) {
+            exportPrometheusRecommendations(application, metrics, currentMetrics, namespace);
+        }
+    }
+
+    private void exportPrometheusRecommendations(String application, Metrics metrics,
+                                                 CurrentMetrics currentMetrics,
+                                                 String namespace)
+    {
+        double MIN_CPU_REQUEST = 0.5;
+        double MIN_CPU_LIMIT = 1.0;
+
+        applicationCpuUsedGauge.labels(namespace, application).set(currentMetrics.getCpu());
+        applicationMemUsedGauge.labels(namespace, application).set(currentMetrics.getRss());
 
         double cpuRequests = metrics.getCpuRequests();
         double cpuLimit = metrics.getCpuLimit();
 
         try {
             if (cpuRequests > 0) {
-                Kruize.cpuRequests.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
+                cpuRequestsGauge.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
                 metrics.setStatus("running");
             } else {
-                Kruize.cpuRequests.labels(namespace, application).set(0);
+                cpuRequestsGauge.labels(namespace, application).set(0);
                 metrics.setStatus("idle");
             }
 
             if (cpuLimit > 0) {
-                Kruize.cpuLimits.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
+                cpuLimitsGauge.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
                 metrics.setStatus("running");
             } else {
-                Kruize.cpuLimits.labels(namespace, application).set(0);
+                cpuLimitsGauge.labels(namespace, application).set(0);
                 metrics.setStatus("idle");
             }
         } catch (InvalidValueException ignored) { }
 
-        Kruize.memoryLimits.labels(namespace, application).set(metrics.getRssLimits());
-        Kruize.memoryRequests.labels(namespace, application).set(metrics.getRssRequests());
+        memoryLimitsGauge.labels(namespace, application).set(metrics.getRssLimits());
+        memoryRequestsGauge.labels(namespace, application).set(metrics.getRssRequests());
 
-        Kruize.originalCpuLimits.labels(namespace, application).set(metrics.getOriginalCpuLimit());
-        Kruize.originalCpuRequests.labels(namespace, application).set(metrics.getOriginalCpuRequests());
+        originalCpuLimitsGauge.labels(namespace, application).set(metrics.getOriginalCpuLimit());
+        originalCpuRequestsGauge.labels(namespace, application).set(metrics.getOriginalCpuRequests());
 
-        Kruize.originalMemoryRequests.labels(namespace, application).set(metrics.getOriginalMemoryRequests());
-        Kruize.originalMemoryLimits.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
+        originalMemoryRequestsGauge.labels(namespace, application).set(metrics.getOriginalMemoryRequests());
+        originalMemoryLimitsGauge.labels(namespace, application).set(metrics.getOriginalMemoryLimit());
     }
 
     private void analyseMetrics(MetricsImpl metrics)

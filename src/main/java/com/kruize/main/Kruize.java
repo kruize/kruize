@@ -16,12 +16,11 @@
 
 package com.kruize.main;
 
+import com.kruize.collection.CollectMetrics;
+import com.kruize.initialize.Initialize;
 import com.kruize.service.HealthService;
 import com.kruize.service.ListApplicationsService;
 import com.kruize.service.RecommendationsService;
-import com.kruize.collection.CollectMetrics;
-import com.kruize.initialize.Initialize;
-import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.MetricsServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -31,73 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class Kruize
 {
-    // port to listen connection
     private static final int PORT = 31313;
-
-    /*
-     * Gauges in Prometheus are values that can arbitrarily change to some other value.
-     */
-    public static final Gauge cpuRequests = Gauge.build()
-            .name("kruize_exp_cpu_requests")
-            .help("CPU Requests obtained by Kruize")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge cpuLimits = Gauge.build()
-            .name("kruize_exp_cpu_limits")
-            .help("CPU Limits obtained by Kruize")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge memoryRequests = Gauge.build()
-            .name("kruize_exp_memory_requests")
-            .help("Memory Requests obtained by Kruize")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge memoryLimits = Gauge.build()
-            .name("kruize_exp_memory_limits")
-            .help("Memory Limits obtained by Kruize")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge originalMemoryLimits = Gauge.build()
-            .name("kruize_exp_original_memory_limits")
-            .help("Original Memory Limits")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge originalMemoryRequests = Gauge.build()
-            .name("kruize_exp_original_memory_requests")
-            .help("Original Memory Requests")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge originalCpuRequests = Gauge.build()
-            .name("kruize_exp_original_cpu_requests")
-            .help("Original CPU Requests")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge originalCpuLimits = Gauge.build()
-            .name("kruize_exp_original_cpu_limits")
-            .help("Original CPU Limits")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge applicationCpuUsed = Gauge.build()
-            .name("kruize_exp_application_cpu_current")
-            .help("Current CPU used by application")
-            .labelNames("namespace", "application_name")
-            .register();
-
-    public static final Gauge applicationMemUsed = Gauge.build()
-            .name("kruize_exp_application_rss_current")
-            .help("Current RSS of application")
-            .labelNames("namespace", "application_name")
-            .register();
-
-
     private static final Logger LOGGER = LoggerFactory.getLogger(Kruize.class);
 
     public static void main(String[] args) throws Exception
