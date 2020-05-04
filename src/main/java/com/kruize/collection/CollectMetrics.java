@@ -16,22 +16,25 @@
 
 package com.kruize.collection;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
 import com.kruize.exceptions.InvalidValueException;
-import com.kruize.metrics.MetricsImpl;
+import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
+import com.kruize.metrics.MetricsImpl;
 import com.kruize.query.Query;
+import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.kruize.util.MathUtil;
 import io.prometheus.client.Gauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -147,35 +150,27 @@ public class CollectMetrics implements Runnable
                                                  CurrentMetrics currentMetrics,
                                                  String namespace)
     {
-        double MIN_CPU_REQUEST = 0.5;
-        double MIN_CPU_LIMIT = 1.0;
-
         applicationCpuUsedGauge.labels(namespace, application).set(currentMetrics.getCpu());
         applicationMemUsedGauge.labels(namespace, application).set(currentMetrics.getRss());
 
-        double cpuRequests = metrics.getCpuRequests();
-        double cpuLimit = metrics.getCpuLimit();
+        double cpuRequests = 0;
+        double cpuLimit = 0;
+        double memoryRequests = 0;
+        double memoryLimit = 0;
 
         try {
-            if (cpuRequests > 0) {
-                cpuRequestsGauge.labels(namespace, application).set(Math.max(cpuRequests, MIN_CPU_REQUEST));
-                metrics.setStatus("running");
-            } else {
-                cpuRequestsGauge.labels(namespace, application).set(0);
-                metrics.setStatus("idle");
-            }
+            cpuRequests = applicationRecommendations.getCpuRequests(application);
+            cpuLimit = applicationRecommendations.getCpuLimit(application);
 
-            if (cpuLimit > 0) {
-                cpuLimitsGauge.labels(namespace, application).set(Math.max(cpuLimit, MIN_CPU_LIMIT));
-                metrics.setStatus("running");
-            } else {
-                cpuLimitsGauge.labels(namespace, application).set(0);
-                metrics.setStatus("idle");
-            }
-        } catch (InvalidValueException ignored) { }
+            memoryRequests = MathUtil.MBToBytes(applicationRecommendations.getRssRequests(application));
+            memoryLimit = MathUtil.MBToBytes(applicationRecommendations.getRssLimits(application));
+        } catch (NoSuchApplicationException ignored) { }
 
-        memoryLimitsGauge.labels(namespace, application).set(metrics.getRssLimits());
-        memoryRequestsGauge.labels(namespace, application).set(metrics.getRssRequests());
+        cpuRequestsGauge.labels(namespace, application).set(cpuRequests);
+        cpuLimitsGauge.labels(namespace, application).set(cpuLimit);
+
+        memoryLimitsGauge.labels(namespace, application).set(memoryLimit);
+        memoryRequestsGauge.labels(namespace, application).set(memoryRequests);
 
         originalCpuLimitsGauge.labels(namespace, application).set(metrics.getOriginalCpuLimit());
         originalCpuRequestsGauge.labels(namespace, application).set(metrics.getOriginalCpuRequests());

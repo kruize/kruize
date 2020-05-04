@@ -251,16 +251,35 @@ public class AnalysisImpl implements Analysis
     @Override
     public void finalizeY2DRecommendations(MetricsImpl instance)
     {
+        double MIN_CPU_REQUEST = 0.5;
+        double MIN_CPU_LIMIT = 1.0;
+
         double currentCpuLimit = instance.getCurrentCpuLimit();
         double currentCpuRequests = instance.getCurrentCpuRequests();
         double currentRssLimit = instance.getCurrentRssLimit();
         double currentRssRequests = instance.getCurrentRssRequests();
 
         try {
+            if (currentCpuLimit > 0) {
+                double cpuLimitRecommendation = Math.max(currentCpuLimit, instance.getCpuLimit());
+                instance.setCpuLimit(Math.max(cpuLimitRecommendation, MIN_CPU_LIMIT));
+                instance.setStatus("running");
+            } else {
+                instance.setCpuLimit(0);
+                instance.setStatus("idle");
+            }
+
+            if (currentCpuRequests > 0) {
+                double cpuRequestRecommendation = Math.max(currentCpuRequests, instance.getCpuRequests());
+                instance.setCpuRequests(Math.max(cpuRequestRecommendation, MIN_CPU_REQUEST));
+                instance.setStatus("running");
+            } else {
+                instance.setCpuRequests(0);
+                instance.setStatus("idle");
+            }
+
             instance.setRssLimit(Math.max(instance.getRssLimits(), currentRssLimit));
             instance.setRssRequests(Math.max(instance.getRssRequests(), currentRssRequests));
-            instance.setCpuLimit(Math.max(instance.getCpuLimit(), currentCpuLimit));
-            instance.setCpuRequests(Math.max(instance.getCpuRequests(), currentCpuRequests));
         } catch (InvalidValueException e) {
             e.printStackTrace();
         }
