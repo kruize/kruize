@@ -58,4 +58,10 @@ public class MathUtil
         double ONE_MB = (1024 * 1024);
         return bytes / ONE_MB;
     }
+
+    public static double MBToBytes(double MB)
+    {
+        double ONE_MB = (1024 * 1024);
+        return MB * ONE_MB;
+    }
 }
