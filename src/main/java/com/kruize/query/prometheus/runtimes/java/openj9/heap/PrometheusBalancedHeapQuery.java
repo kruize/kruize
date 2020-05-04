@@ -27,6 +27,9 @@ public class PrometheusBalancedHeapQuery extends BalancedHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-old\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-old\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-old\"," +
@@ -39,6 +42,9 @@ public class PrometheusBalancedHeapQuery extends BalancedHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-eden\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-eden\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-eden\"," +
@@ -51,6 +57,9 @@ public class PrometheusBalancedHeapQuery extends BalancedHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-survivor\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-survivor\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-survivor\"," +
@@ -63,6 +72,9 @@ public class PrometheusBalancedHeapQuery extends BalancedHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-reserved\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-reserved\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-reserved\"," +

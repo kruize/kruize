@@ -27,6 +27,9 @@ public class PrometheusMetronomeHeapQuery extends MetronomeHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +

@@ -27,6 +27,9 @@ public class PrometheusNoGcHeapQuery extends NoGcHeapQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
             return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
                     "job=\"" + name + "\"}";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
+                    "pod=\"" + name + "\"}";
         }
 
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
