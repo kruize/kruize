@@ -22,7 +22,7 @@ import com.google.gson.JsonParser;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
-import com.kruize.query.PrometheusQuery;
+import com.kruize.query.prometheus.PrometheusQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.kruize.analysis.AnalysisImpl;

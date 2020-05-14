@@ -14,9 +14,9 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.kruize.query.docker;
+package com.kruize.query.prometheus.docker;
 
-import com.kruize.query.PrometheusQuery;
+import com.kruize.query.prometheus.PrometheusQuery;
 
 public class DockerPrometheusQuery extends PrometheusQuery {
 

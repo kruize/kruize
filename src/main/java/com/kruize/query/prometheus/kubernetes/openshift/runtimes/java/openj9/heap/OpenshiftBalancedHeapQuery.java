@@ -16,10 +16,9 @@
 
 package com.kruize.query.prometheus.kubernetes.openshift.runtimes.java.openj9.heap;
 
-import com.kruize.environment.DeploymentInfo;
 import com.kruize.query.runtimes.java.openj9.heap.BalancedHeapQuery;
 
-public class PrometheusBalancedHeapQuery extends BalancedHeapQuery
+public class OpenshiftBalancedHeapQuery extends BalancedHeapQuery
 {
     @Override
     public String getBalancedOld(String area, String name)

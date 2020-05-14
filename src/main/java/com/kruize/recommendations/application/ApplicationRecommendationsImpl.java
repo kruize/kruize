@@ -18,6 +18,7 @@ package com.kruize.recommendations.application;
 
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.NoSuchApplicationException;
+import com.kruize.query.runtimes.RuntimeQuery;
 import com.kruize.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
 
     public HashMap< String, ArrayList<MetricsImpl>> applicationMap = new HashMap<>();
 
+    public RuntimeQuery runtimeQuery = null;
 
     static {
         getInstance();
@@ -189,5 +191,15 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         }
 
         return "idle";
+    }
+
+    public RuntimeQuery getRuntimeQuery()
+    {
+        return runtimeQuery;
+    }
+
+    public void setRuntimeQuery(RuntimeQuery runtimeQuery)
+    {
+        this.runtimeQuery = runtimeQuery;
     }
 }

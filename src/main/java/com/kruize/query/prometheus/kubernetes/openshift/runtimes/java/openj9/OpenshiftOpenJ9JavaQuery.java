@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OpenJ9JavaQuery extends JavaQuery
+public class OpenshiftOpenJ9JavaQuery extends JavaQuery
 {
     private static final Set<String> noGcHeap =
             new HashSet<>(Collections.singletonList("tenured"));
@@ -37,7 +37,7 @@ public class OpenJ9JavaQuery extends JavaQuery
         return "jvm_memory_used_bytes{area=\"heap\"}";
     }
 
-    public OpenJ9JavaQuery(String gcPolicy)
+    public OpenshiftOpenJ9JavaQuery(String gcPolicy)
     {
         vm = "OpenJ9";
         this.gcPolicy = gcPolicy;
