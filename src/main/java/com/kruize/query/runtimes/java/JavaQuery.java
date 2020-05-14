@@ -18,7 +18,7 @@ package com.kruize.query.runtimes.java;
 
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
-import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 
 public class JavaQuery
 {
@@ -26,6 +26,19 @@ public class JavaQuery
     public String gcPolicy = null;
     public HeapQuery heapQuery = null;
     public NonHeapQuery nonHeapQuery = null;
+
+    private static String podLabel = null;
+
+    static {
+        if (DeploymentInfo.getKubernetesType().toUpperCase().equals("DOCKER"))
+        {
+            podLabel = "job";
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            podLabel = "pod";
+        } else {
+            podLabel = "kubernetes_name";
+        }
+    }
 
     /**
      * Each GC policy is associated with specific areas of heap.
@@ -50,15 +63,20 @@ public class JavaQuery
         throw new InvalidValueException("JavaQuery not supported");
     }
 
+    /**
+     * @param areaOfHeap
+     * @return JavaQuery supporting the VM-GC policy of the application
+     * @throws InvalidValueException if not supported
+     */
     public static JavaQuery getInstance(String areaOfHeap) throws InvalidValueException
     {
         String gcPolicy = null;
 
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
         {
-            if ((gcPolicy = OpenJ9PrometheusJavaQuery.getGcPolicyForHeap(areaOfHeap)) != null)
+            if ((gcPolicy = OpenJ9JavaQuery.getGcPolicyForHeap(areaOfHeap)) != null)
             {
-                return new OpenJ9PrometheusJavaQuery(gcPolicy);
+                return new OpenJ9JavaQuery(gcPolicy, podLabel);
             }
         }
 

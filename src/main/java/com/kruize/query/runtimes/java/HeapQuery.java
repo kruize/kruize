@@ -20,6 +20,18 @@ import com.kruize.exceptions.InvalidValueException;
 
 public interface HeapQuery
 {
+    /**
+     * @return String array containing heap parts of memory
+     */
     String[] getPartsOfHeap();
+
+    /**
+     * Get non-heap query for the specified application and part of heap
+     * @param application
+     * @param partOfHeap
+     * @param area
+     * @return query string
+     * @throws InvalidValueException
+     */
     String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
 }

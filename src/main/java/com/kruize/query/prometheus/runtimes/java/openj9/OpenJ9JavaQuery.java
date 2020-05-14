@@ -16,10 +16,10 @@
 
 package com.kruize.query.prometheus.runtimes.java.openj9;
 
-import com.kruize.query.prometheus.runtimes.java.openj9.heap.PrometheusBalancedHeapQuery;
-import com.kruize.query.prometheus.runtimes.java.openj9.heap.PrometheusGenconHeapQuery;
-import com.kruize.query.prometheus.runtimes.java.openj9.heap.PrometheusMetronomeHeapQuery;
-import com.kruize.query.prometheus.runtimes.java.openj9.heap.PrometheusNoGcHeapQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.heap.OpenJ9BalancedHeapQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.heap.OpenJ9GenconHeapQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.heap.OpenJ9MetronomeHeapQuery;
+import com.kruize.query.prometheus.runtimes.java.openj9.heap.OpenJ9NoGcHeapQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OpenJ9PrometheusJavaQuery extends JavaQuery
+public class OpenJ9JavaQuery extends JavaQuery
 {
     private static final Set<String> noGcHeap =
             new HashSet<>(Collections.singletonList("tenured"));
@@ -41,24 +41,27 @@ public class OpenJ9PrometheusJavaQuery extends JavaQuery
     private static final Set<String> balancedHeap =
             new HashSet<>(Arrays.asList("balanced-old", "balanced-eden", "balanced-survivor", "balanced-reserved"));
 
-    public OpenJ9PrometheusJavaQuery(String gcPolicy)
+    private String podLabel = null;
+
+    public OpenJ9JavaQuery(String gcPolicy, String podLabel)
     {
         vm = "OpenJ9";
         this.gcPolicy = gcPolicy;
-        nonHeapQuery = new OpenJ9PrometheusNonHeapQuery();
+        this.podLabel = podLabel;
+        nonHeapQuery = new OpenJ9NonHeapQuery(podLabel);
 
         switch (gcPolicy) {
             case "gencon":
-                heapQuery = new PrometheusGenconHeapQuery();
+                heapQuery = new OpenJ9GenconHeapQuery(podLabel);
                 break;
             case "balanced":
-                heapQuery = new PrometheusBalancedHeapQuery();
+                heapQuery = new OpenJ9BalancedHeapQuery(podLabel);
                 break;
             case "metronome":
-                heapQuery = new PrometheusMetronomeHeapQuery();
+                heapQuery = new OpenJ9MetronomeHeapQuery(podLabel);
                 break;
             case "nogc":
-                heapQuery = new PrometheusNoGcHeapQuery();
+                heapQuery = new OpenJ9NoGcHeapQuery(podLabel);
         }
     }
 

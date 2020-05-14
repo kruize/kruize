@@ -16,23 +16,21 @@
 
 package com.kruize.query.prometheus.runtimes.java.openj9.heap;
 
-import com.kruize.environment.DeploymentInfo;
 import com.kruize.query.runtimes.java.openj9.heap.MetronomeHeapQuery;
 
-public class PrometheusMetronomeHeapQuery extends MetronomeHeapQuery
+public class OpenJ9MetronomeHeapQuery extends MetronomeHeapQuery
 {
+    private String podLabel = null;
+
+    public OpenJ9MetronomeHeapQuery(String podLabel)
+    {
+        this.podLabel = podLabel;
+    }
+
     @Override
     public String getJavaHeap(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 }

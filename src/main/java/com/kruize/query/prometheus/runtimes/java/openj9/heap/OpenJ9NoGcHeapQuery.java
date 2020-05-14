@@ -16,23 +16,21 @@
 
 package com.kruize.query.prometheus.runtimes.java.openj9.heap;
 
-import com.kruize.environment.DeploymentInfo;
 import com.kruize.query.runtimes.java.openj9.heap.NoGcHeapQuery;
 
-public class PrometheusNoGcHeapQuery extends NoGcHeapQuery
+public class OpenJ9NoGcHeapQuery extends NoGcHeapQuery
 {
+    private String podLabel = null;
+
+    public OpenJ9NoGcHeapQuery(String podLabel)
+    {
+        this.podLabel = podLabel;
+    }
+
     @Override
     public String getTenured(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 }

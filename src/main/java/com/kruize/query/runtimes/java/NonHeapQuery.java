@@ -20,6 +20,18 @@ import com.kruize.exceptions.InvalidValueException;
 
 public interface NonHeapQuery
 {
+    /**
+     * @return String array containing non-heap parts of memory
+     */
     String[] getPartsOfNonHeap();
+
+    /**
+     * Get non-heap query for the specified application and part of non-heap
+     * @param application
+     * @param partOfNonHeap
+     * @param area
+     * @return query string
+     * @throws InvalidValueException
+     */
     String getNonHeapQuery(String application, String partOfNonHeap, String area) throws InvalidValueException;
 }

@@ -16,13 +16,18 @@
 
 package com.kruize.query.prometheus.runtimes.java.openj9;
 
-import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.runtimes.java.NonHeapQuery;
 
-public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
+public class OpenJ9NonHeapQuery implements NonHeapQuery
 {
     private final String[] partsOfNonHeap = {"miscellaneous", "class storage", "JIT code cache", "JIT data cache"};
+    private String podLabel = null;
+
+    OpenJ9NonHeapQuery(String podLabel)
+    {
+        this.podLabel = podLabel;
+    }
 
     @Override
     public String[] getPartsOfNonHeap()
@@ -49,57 +54,25 @@ public class OpenJ9PrometheusNonHeapQuery implements NonHeapQuery
 
     public String getMiscellaneous(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 
     public String getClassStorage(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 
     public String getJitCodeCache(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 
     public String getJitDataCache(String area, String name)
     {
-        if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
-                    "job=\"" + name + "\"}";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
-            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
-                    "pod=\"" + name + "\"}";
-        }
-
         return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
-                "kubernetes_name=\"" + name + "\"}";
+                podLabel + "=\"" + name + "\"}";
     }
 }
