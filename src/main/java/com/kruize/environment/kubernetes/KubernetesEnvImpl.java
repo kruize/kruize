@@ -24,7 +24,7 @@ import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
-import com.kruize.query.PrometheusQuery;
+import com.kruize.query.prometheus.PrometheusQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
