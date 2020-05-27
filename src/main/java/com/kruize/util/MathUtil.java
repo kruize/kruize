@@ -55,13 +55,15 @@ public class MathUtil
 
     public static double bytesToMB(double bytes)
     {
-        double ONE_MB = (1024 * 1024);
+        /* In SI units */
+        double ONE_MB = (1000 * 1000);
         return bytes / ONE_MB;
     }
 
     public static double MBToBytes(double MB)
     {
-        double ONE_MB = (1024 * 1024);
+        /* In SI units */
+        double ONE_MB = (1000 * 1000);
         return MB * ONE_MB;
     }
 }
