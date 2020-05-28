@@ -396,12 +396,7 @@ public class CollectMetrics implements Runnable
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
                 return this;
 
-            } catch (IndexOutOfBoundsException e) {
-                LOGGER.info(monitoringAgentEndPoint + cpuQuery);
-                LOGGER.info(monitoringAgentEndPoint + rssQuery);
-                e.printStackTrace();
-                return this;
-            } catch (ApplicationIdleStateException e) {
+            } catch (IndexOutOfBoundsException | ApplicationIdleStateException e) {
                 return this;
             }
 

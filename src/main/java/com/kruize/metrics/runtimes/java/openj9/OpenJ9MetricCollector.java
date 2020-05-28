@@ -32,7 +32,6 @@ import com.kruize.query.Query;
 import com.kruize.query.prometheus.DockerPrometheusQuery;
 import com.kruize.query.prometheus.KubernetesPrometheusQuery;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
-import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9PrometheusJavaQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
@@ -49,8 +48,6 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
     private JavaNonHeap nonHeap;
     private JavaQuery javaQuery;
     private Query query;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9MetricCollector.class);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9MetricCollector.class);
 
