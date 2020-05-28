@@ -33,7 +33,7 @@ public class AnalysisImpl implements Analysis
 {
     private static AnalysisImpl analysis = null;
 
-    private static final double ONE_MB = 1024 * 1024;
+    private static final double ONE_MB = 1000 * 1000;
     private static final double DEFAULT_SPIKE = 50 * ONE_MB;
     private static final int CPU_PERCENTILE = 80;
 
@@ -67,6 +67,7 @@ public class AnalysisImpl implements Analysis
         if (metrics.size() == 0) {
             try {
                 instance.setCurrentCpuLimit(0);
+                LOGGER.info("Current CPU Limits set to 0");
             } catch (InvalidValueException e) {
                 e.printStackTrace();
             }
@@ -105,6 +106,7 @@ public class AnalysisImpl implements Analysis
         if (metrics.size() == 0) {
             try {
                 instance.setCurrentCpuRequests(0);
+                LOGGER.info("Current CPU Requests set to 0");
             } catch (InvalidValueException e) {
                 e.printStackTrace();
             }
@@ -283,14 +285,6 @@ public class AnalysisImpl implements Analysis
         } catch (InvalidValueException e) {
             e.printStackTrace();
         }
-
-        LOGGER.info("{}: CPU Limit = {}", instance.getName(), instance.getCpuLimit());
-        LOGGER.info("{}: CPU Requests = {}", instance.getName(), instance.getCpuRequests());
-        LOGGER.info("{}: Memory Limit = {} MB", instance.getName(),
-                MathUtil.bytesToMB(instance.getRssLimits()));
-        LOGGER.info("{}: Memory Requests = {} MB\n", instance.getName(),
-                MathUtil.bytesToMB(instance.getRssRequests()));
-
     }
 
     // function to round the number to multiple of number specified
@@ -299,6 +293,4 @@ public class AnalysisImpl implements Analysis
     {
         return multipleOf * (Math.ceil(Math.abs(number/multipleOf)));
     }
-
-
 }
