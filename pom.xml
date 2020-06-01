@@ -114,6 +114,7 @@
                         </manifest>
                         <manifestEntries>
                             <Main-Class>com.kruize.main.Kruize</Main-Class>
+                            <Multi-Release>true</Multi-Release>
                         </manifestEntries>
                     </archive>
                 </configuration>
