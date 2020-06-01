@@ -127,11 +127,11 @@ public class RecommendationsService extends HttpServlet
         JsonObject resourcesJson = new JsonObject();
 
         JsonObject resourceRequestsJson = new JsonObject();
-        resourceRequestsJson.addProperty("memory", applicationRecommendations.getRssRequests(application) + "MB");
+        resourceRequestsJson.addProperty("memory", applicationRecommendations.getRssRequests(application) + "M");
         resourceRequestsJson.addProperty("cpu", applicationRecommendations.getCpuRequests(application));
 
         JsonObject resourceLimitsJson = new JsonObject();
-        resourceLimitsJson.addProperty("memory", applicationRecommendations.getRssLimits(application) + "MB");
+        resourceLimitsJson.addProperty("memory", applicationRecommendations.getRssLimits(application) + "M");
         resourceLimitsJson.addProperty("cpu", applicationRecommendations.getCpuLimit(application));
 
         resourcesJson.add("requests", resourceRequestsJson);
