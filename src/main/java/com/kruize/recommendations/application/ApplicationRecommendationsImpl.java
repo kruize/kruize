@@ -38,7 +38,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
     private DecimalFormat oneDecimalPlace = new DecimalFormat("#.#");
 
     public HashMap< String, ArrayList<MetricsImpl>> applicationMap = new HashMap<>();
-
+    public HashMap< String, ArrayList<String>> runtimesMap = new HashMap<>();
 
     static {
         getInstance();
@@ -66,7 +66,6 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         }
         applicationMap.get(applicationName).add(metrics);
         LOGGER.debug("Application {} added for monitoring", applicationName);
-
     }
 
     @Override
@@ -189,5 +188,18 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         }
 
         return "idle";
+    }
+
+    public String getRuntime(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getRuntime() != null)
+            {
+                return metric.getRuntime();
+            }
+        }
+
+        return null;
     }
 }
