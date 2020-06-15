@@ -42,22 +42,10 @@ public class OpenJ9AnalysisImpl
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
-                maxHeap = (maxHeap > openJ9MetricCollector.getHeap()) ? maxHeap : openJ9MetricCollector.getHeap();
+                maxHeap = Math.max(maxHeap, openJ9MetricCollector.getHeap());
             }
 
             double heapRecommendation = maxHeap;
-
-            /*
-             If heap recommendation is greater than memory requests recommendation.
-             This might happen because java VMs can only look at the limit value set, and can possibly
-             expand beyond the request recommendation.
-            */
-            if (MathUtil.bytesToMB(heapRecommendation) > metrics.getRssRequests())
-            {
-                double MbToBytes = 1000*1000;
-                double seventyPercent = 0.7;
-                heapRecommendation = seventyPercent * metrics.getRssRequests() * MbToBytes;
-            }
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
@@ -84,11 +72,11 @@ public class OpenJ9AnalysisImpl
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
-                maxNonHeap = (maxNonHeap > openJ9MetricCollector.getNonHeap()) ? maxNonHeap : openJ9MetricCollector.getNonHeap();
+                maxNonHeap = Math.max(maxNonHeap, openJ9MetricCollector.getNonHeap());
             }
 
             double nonHeapRecommendation = maxNonHeap;
-            
+
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
                     .getJavaRecommendations()
@@ -97,6 +85,60 @@ public class OpenJ9AnalysisImpl
             LOGGER.info("Non-heap recommendation for {} is {}MB", application,
                     MathUtil.bytesToMB(nonHeapRecommendation));
 
+        }
+    }
+
+    /**
+     * Use obtained heap and non-heap recommendations to get improved rss sizing recommendations,
+     * which can in turn be used to improve requests sizing.
+     *
+     * @param metrics
+     */
+    public static void analyseRssMax(MetricsImpl metrics)
+    {
+        for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
+        {
+            double rssMax = 0;
+            double rssHeapMax = 0;
+            double openJ9MemMax = 0;
+            double rssNonHeapMax = 0;
+
+            double heapRecommendation = JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(application)
+                    .getJavaRecommendations()
+                    .getHeapRecommendation();
+
+            double nonHeapRecommendation = JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(application)
+                    .getJavaRecommendations()
+                    .getNonHeapRecommendation();
+
+            for (JavaMetricCollector javaMetricCollector :
+                    JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
+            {
+                OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) javaMetricCollector;
+                if (openJ9MetricCollector.getHeap() == heapRecommendation) {
+                    //rss at instant where heap was max.
+                    rssHeapMax = openJ9MetricCollector.getRss();
+                }
+
+                if (openJ9MetricCollector.getNonHeap() == nonHeapRecommendation) {
+                    //rss at instant where non-heap was max.
+                    rssNonHeapMax = openJ9MetricCollector.getRss();
+                }
+
+                openJ9MemMax = Math.max(openJ9MemMax,
+                        openJ9MetricCollector.getRss() -
+                                (openJ9MetricCollector.getHeap() + openJ9MetricCollector.getNonHeap()));
+            }
+
+            rssMax = Math.max(rssHeapMax, rssNonHeapMax);
+            rssMax = Math.max(rssMax, (heapRecommendation + nonHeapRecommendation + openJ9MemMax));
+
+            JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(application)
+                    .getJavaRecommendations()
+                    .setRssMax(rssMax);
         }
     }
 }

@@ -20,9 +20,11 @@ public interface JavaRecommendations
 {
     double getHeapRecommendation();
     double getNonHeapRecommendation();
+    double getRssMax();
 
     void setHeapRecommendation(double heapRecommendation);
     void setNonHeapRecommendation(double nonHeapRecommendation);
+    void setRssMax(double rss);
 
     String getGcPolicy();
     void setGcPolicy(String gcPolicy);

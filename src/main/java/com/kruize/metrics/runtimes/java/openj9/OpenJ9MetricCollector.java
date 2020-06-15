@@ -18,6 +18,7 @@ package com.kruize.metrics.runtimes.java.openj9;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
+import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaHeap;
@@ -27,6 +28,9 @@ import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9BalancedHeap;
 import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9GenconHeap;
 import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9MetronomeHeap;
 import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9NoGcHeap;
+import com.kruize.query.Query;
+import com.kruize.query.prometheus.DockerPrometheusQuery;
+import com.kruize.query.prometheus.KubernetesPrometheusQuery;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.util.HttpUtil;
@@ -38,9 +42,12 @@ import java.net.URL;
 
 public class OpenJ9MetricCollector extends JavaMetricCollector
 {
+    private double rss;
+
     private JavaHeap heap;
     private JavaNonHeap nonHeap;
     private JavaQuery javaQuery;
+    private Query query;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9MetricCollector.class);
 
@@ -62,6 +69,15 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
             case "metronome":
                 heap = new OpenJ9MetronomeHeap();
                 break;
+        }
+
+        if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
+        {
+            if (DeploymentInfo.getClusterType().toUpperCase().equals("KUBERNETES")) {
+                query = new KubernetesPrometheusQuery();
+            } else {
+                query = new DockerPrometheusQuery();
+            }
         }
     }
 
@@ -89,11 +105,25 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
 
     }
 
+    public double getRss()
+    {
+        return rss;
+    }
+
+    public void setRss(double rss)
+    {
+        this.rss = rss;
+    }
+
     public void collectOpenJ9Metrics(MetricsImpl metrics, String monitoringAgentEndPoint, String area)
     {
         String labelName = metrics.getLabelName();
 
         try {
+            double rss = getValueForQuery(new URL(monitoringAgentEndPoint +
+                    query.getRssQuery(metrics.getName())));
+            setRss(rss);
+
             for (String partOfHeap: javaQuery.heapQuery.getPartsOfHeap())
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
