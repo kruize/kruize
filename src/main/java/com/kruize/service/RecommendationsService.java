@@ -16,10 +16,14 @@
 
 package com.kruize.service;
 
-import com.google.gson.*;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -28,6 +32,8 @@ import java.io.IOException;
 
 public class RecommendationsService extends HttpServlet
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecommendationsService.class);
+
     /**
      *
      * Returns a JSON of recommendations for applications monitored by Kruize.
@@ -97,7 +103,8 @@ public class RecommendationsService extends HttpServlet
             try {
                 JsonObject applicationRecommendationJson = getApplicationJson(applicationRecommendations,
                         application_name);
-                jsonArray.add(applicationRecommendationJson);
+                if (applicationRecommendationJson != null)
+                    jsonArray.add(applicationRecommendationJson);
             } catch (NoSuchApplicationException e) {
                 resp.getWriter().println("Error: No such application found");
                 return;
@@ -117,25 +124,40 @@ public class RecommendationsService extends HttpServlet
 
         JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
 
-        applicationRecommendationJson.add("resources", resourcesJson);
+        if (resourcesJson != null) {
+            applicationRecommendationJson.add("resources", resourcesJson);
+            return applicationRecommendationJson;
+        }
 
-        return applicationRecommendationJson;
+        return null;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
     {
-        JsonObject resourcesJson = new JsonObject();
+        String applicationStatus = applicationRecommendations.getStatus(application);
 
-        JsonObject resourceRequestsJson = new JsonObject();
-        resourceRequestsJson.addProperty("memory", applicationRecommendations.getRssRequests(application) + "M");
-        resourceRequestsJson.addProperty("cpu", applicationRecommendations.getCpuRequests(application));
+        /* If application is still running or idle, or if application is removed,
+            but Kruize has earlier generated recommendations.
+         */
+        if (applicationStatus.equals("running") || applicationStatus.equals("idle")
+                || (applicationRecommendations.getRssRequests(application) != 0))
+        {
+            JsonObject resourcesJson = new JsonObject();
+            JsonObject resourceRequestsJson = new JsonObject();
+            resourceRequestsJson.addProperty("memory", applicationRecommendations.getRssRequests(application) + "M");
+            resourceRequestsJson.addProperty("cpu", applicationRecommendations.getCpuRequests(application));
 
-        JsonObject resourceLimitsJson = new JsonObject();
-        resourceLimitsJson.addProperty("memory", applicationRecommendations.getRssLimits(application) + "M");
-        resourceLimitsJson.addProperty("cpu", applicationRecommendations.getCpuLimit(application));
+            JsonObject resourceLimitsJson = new JsonObject();
+            resourceLimitsJson.addProperty("memory", applicationRecommendations.getRssLimits(application) + "M");
+            resourceLimitsJson.addProperty("cpu", applicationRecommendations.getCpuLimit(application));
 
-        resourcesJson.add("requests", resourceRequestsJson);
-        resourcesJson.add("limits", resourceLimitsJson);
-        return resourcesJson;
+            resourcesJson.add("requests", resourceRequestsJson);
+            resourcesJson.add("limits", resourceLimitsJson);
+            return resourcesJson;
+        }
+
+        LOGGER.info("Application {} is no longer running and has no recommendations generated earlier", application);
+        LOGGER.info("Not returning any recommendations");
+        return null;
     }
 }

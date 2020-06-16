@@ -131,6 +131,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     @Override
     public void getAllApps()
     {
+        ArrayList<String> monitoredInstances = new ArrayList<>();
         ApiClient apiClient = null;
         try {
             apiClient = Config.defaultClient();
@@ -167,6 +168,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
                     if (containsLabel || isAppsodyApplication) {
                         insertMetrics(pod);
+                        monitoredInstances.add(pod.getMetadata().getName());
                     }
                 } catch (NullPointerException ignored) {
                 }
@@ -174,6 +176,29 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         } else {
             LOGGER.debug("Insufficient RBAC permissions (list, get, watch) for pods and services.");
             System.exit(1);
+        }
+
+        updateStatus(monitoredInstances);
+    }
+
+    /**
+     * Check if the application being monitored has been terminated,
+     * and update status if so
+     * @param monitoredInstances Arraylist of all pods currently running that Kruize is monitoring
+     */
+    private void updateStatus(ArrayList<String> monitoredInstances)
+    {
+        for (String application : applicationRecommendations.applicationMap.keySet())
+        {
+            for (MetricsImpl instance : applicationRecommendations.applicationMap.get(application))
+            {
+                if (!monitoredInstances.contains(instance.getName()))
+                {
+                    try {
+                        instance.setStatus("terminated");
+                    } catch (InvalidValueException ignored) { }
+                }
+            }
         }
     }
 

@@ -64,6 +64,7 @@ public class DockerEnvImpl extends EnvTypeImpl
     public void getAllApps()
     {
         JsonArray containerList = null;
+        ArrayList<String> monitoredInstances = new ArrayList<>();
         /*
          * kruize-docker.json contains the details of the containers.
          * For each container, the details are expressed in the form of key-value pairs
@@ -93,12 +94,14 @@ public class DockerEnvImpl extends EnvTypeImpl
             for (JsonElement container : containerList) {
                 if (container != null && container.getAsJsonObject().size() > 0)
                     insertMetrics(container);
+                    monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
             }
         } else {
             LOGGER.error("No containers to monitor.");
             System.exit(1);
         }
 
+        updateStatus(monitoredInstances);
     }
 
     @SuppressWarnings("unchecked")
@@ -120,6 +123,22 @@ public class DockerEnvImpl extends EnvTypeImpl
             ArrayList<MetricsImpl> containerMetricsArrayList = new ArrayList<>();
             containerMetricsArrayList.add(containerMetrics);
             applicationRecommendations.applicationMap.put(containerName, containerMetricsArrayList);
+        }
+    }
+
+    private void updateStatus(ArrayList<String> monitoredInstances)
+    {
+        for (String application : applicationRecommendations.applicationMap.keySet())
+        {
+            for (MetricsImpl instance : applicationRecommendations.applicationMap.get(application))
+            {
+                if (!monitoredInstances.contains(instance.getName()))
+                {
+                    try {
+                        instance.setStatus("terminated");
+                    } catch (InvalidValueException ignored) { }
+                }
+            }
         }
     }
 
