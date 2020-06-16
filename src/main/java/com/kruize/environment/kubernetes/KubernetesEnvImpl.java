@@ -181,6 +181,11 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         updateStatus(monitoredInstances);
     }
 
+    /**
+     * Check if the application being monitored has been terminated,
+     * and update status if so
+     * @param monitoredInstances Arraylist of all pods currently running that Kruize is monitoring
+     */
     private void updateStatus(ArrayList<String> monitoredInstances)
     {
         for (String application : applicationRecommendations.applicationMap.keySet())

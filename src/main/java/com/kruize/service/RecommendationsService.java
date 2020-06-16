@@ -124,15 +124,12 @@ public class RecommendationsService extends HttpServlet
 
         JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
 
-        if (resourcesJson != null)
-        {
+        if (resourcesJson != null) {
             applicationRecommendationJson.add("resources", resourcesJson);
             return applicationRecommendationJson;
         }
-        else
-        {
-            return null;
-        }
+
+        return null;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException

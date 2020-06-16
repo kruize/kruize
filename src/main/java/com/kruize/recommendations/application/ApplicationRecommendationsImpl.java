@@ -184,6 +184,9 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         boolean applicationIdle = false;
         for (MetricsImpl metric: applicationMap.get(applicationName))
         {
+            /*
+                If any instance of the application is running, return running
+             */
             if (metric.getStatus().equals("running"))
                 return "running";
 
@@ -194,6 +197,12 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         if (applicationIdle)
             return "idle";
 
+        /*
+            No instance of the application is running or idle, return
+            the status of the application as reported by Kubernetes.
+
+            Will be one of {"Pending", "Succeeded", "Failed", "Unknown"}
+         */
         return applicationMap.get(applicationName).get(0).getStatus();
     }
 
