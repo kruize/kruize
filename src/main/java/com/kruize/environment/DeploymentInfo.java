@@ -19,8 +19,12 @@ package com.kruize.environment;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.exceptions.env.ClusterTypeNotSupportedException;
 import com.kruize.exceptions.env.K8sTypeNotSupportedException;
+import com.kruize.util.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class DeploymentInfo
 {
@@ -31,6 +35,7 @@ public class DeploymentInfo
     private static String monitoringAgent = "prometheus";
     private static String monitoringAgentService = "prometheus-k8s";
     private static String monitoringAgentEndpoint = "";
+    private static boolean monitoringAgentRunning = false;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeploymentInfo.class);
 
@@ -140,12 +145,32 @@ public class DeploymentInfo
             DeploymentInfo.monitoringAgentService = monitoringAgentService.toUpperCase();
     }
 
+    public static boolean isMonitoringAgentRunning()
+    {
+        return monitoringAgentRunning;
+    }
+
+    public static void checkMonitoringAgentRunning()
+    {
+        int responseCode = 0;
+        if (monitoringAgentEndpoint != "") {
+            try {
+                responseCode = HttpUtil.getResponseCode(new URL(getMonitoringAgentEndpoint() + "/-/healthy"));
+            } catch (MalformedURLException ignored) { }
+        }
+
+        if (responseCode == 200)
+            DeploymentInfo.monitoringAgentRunning = true;
+    }
+
     public static void logDeploymentInfo()
     {
         LOGGER.info("Cluster Type: {}", getClusterType());
         LOGGER.info("Kubernetes Type: {}", getKubernetesType());
         LOGGER.info("Auth Type: {}", getAuthType());
         LOGGER.info("Monitoring Agent: {}", getMonitoringAgent());
+        LOGGER.info("Monitoring Agent URL: {}", getMonitoringAgentEndpoint());
+        LOGGER.info("Is Monitoring Agent Running: {}", isMonitoringAgentRunning());
         LOGGER.info("Monitoring agent service: {}\n\n", getMonitoringAgentService());
     }
 }

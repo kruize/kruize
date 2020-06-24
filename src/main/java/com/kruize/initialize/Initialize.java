@@ -47,6 +47,7 @@ public class Initialize
         DeploymentInfo.setAuthToken(auth_token);
         DeploymentInfo.setMonitoringAgentEndpoint(monitoring_agent_endpoint);
         DeploymentInfo.setMonitoringAgentService(monitoring_agent_service);
+        DeploymentInfo.checkMonitoringAgentRunning();
 
         /* Initialization done successfully */
         HealthService.setCurrentStatus(HealthService.STATUS_UP);
