@@ -126,7 +126,7 @@ function openshift_terminate() {
 	${oc_cmd} delete -f ${SA_MANIFEST} 2>/dev/null
 
 	echo
-	echo "Removing kruize deployment from ICP cluster"
+	echo "Removing kruize deployment from Openshift cluster"
 	${oc_cmd} delete -f ${DEPLOY_MANIFEST} 2>/dev/null
 
 	echo
