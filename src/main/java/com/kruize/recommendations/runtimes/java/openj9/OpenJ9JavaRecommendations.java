@@ -22,6 +22,8 @@ public class OpenJ9JavaRecommendations implements JavaRecommendations
 {
     /* TODO Also add nursery recommendations and GC */
     private String gcPolicy = "gencon";
+
+    private double rssMax;
     private double heapRecommendation;
     private double nonHeapRecommendation;
 
@@ -59,5 +61,17 @@ public class OpenJ9JavaRecommendations implements JavaRecommendations
     public void setGcPolicy(String gcPolicy)
     {
         this.gcPolicy = gcPolicy;
+    }
+
+    @Override
+    public double getRssMax()
+    {
+        return rssMax;
+    }
+
+    @Override
+    public void setRssMax(double rss)
+    {
+        this.rssMax = rss;
     }
 }
