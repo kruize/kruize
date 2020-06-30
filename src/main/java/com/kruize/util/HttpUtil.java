@@ -68,6 +68,30 @@ public class HttpUtil
         return result;
     }
 
+    public static int getResponseCode(URL url)
+    {
+        try {
+            HttpURLConnection connection;
+
+            if (url.getProtocol().equals("https")) {
+                connection = (HttpsURLConnection) url.openConnection();
+            } else {
+                connection = (HttpURLConnection) url.openConnection();
+            }
+
+            //TODO Find another way to authorize
+            String bearerToken = DeploymentInfo.getAuthToken();
+
+            connection.setRequestProperty("Authorization", bearerToken);
+
+            return connection.getResponseCode();
+        }
+
+        catch (IOException e) {
+            return -1;
+        }
+    }
+
     private static String getDataFromConnection(HttpURLConnection connection) throws IOException
     {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
