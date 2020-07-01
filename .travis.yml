@@ -3,5 +3,9 @@ services:
 
 language: bash
 
+arch:
+  - amd64
+  - ppc64le
+
 script:
   - ./scripts/build_sanity_test.sh

@@ -67,7 +67,11 @@ if [ -z "${DOCKER_TAG}" ]; then
 fi
 
 # Build the docker image with the given version string
-docker build --pull --no-cache --build-arg KRUIZE_VERSION=${DOCKER_TAG} -t ${KRUIZE_DOCKER_IMAGE} .
+DOCKERFILE="Dockerfile"
+if [ $(arch) == "ppc64le" ]; then
+	DOCKERFILE="Dockerfile.ppc64le"
+fi
+docker build --pull --no-cache --build-arg KRUIZE_VERSION=${DOCKER_TAG} -t ${KRUIZE_DOCKER_IMAGE} -f ${DOCKERFILE} .
 check_err "Docker build of ${KRUIZE_DOCKER_IMAGE} failed."
 
 docker images | grep -e "TAG" -e "${DOCKER_REPO}" | grep "${DOCKER_TAG}"
