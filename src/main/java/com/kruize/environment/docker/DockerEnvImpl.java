@@ -72,9 +72,11 @@ public class DockerEnvImpl extends EnvTypeImpl
     @Override
     public void getAllApps()
     {
-        getRuntimeInfo();
         JsonArray containerList = null;
         ArrayList<String> monitoredInstances = new ArrayList<>();
+
+        getRuntimeInfo();
+
         /*
          * kruize-docker.json contains the details of the containers.
          * For each container, the details are expressed in the form of key-value pairs

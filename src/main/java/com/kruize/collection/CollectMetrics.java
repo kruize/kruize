@@ -144,7 +144,6 @@ public class CollectMetrics implements Runnable
         }
     }
 
-
     private void setKruizeRecommendations(String application, Metrics metrics,
                                           CurrentMetrics currentMetrics)
     {
@@ -216,12 +215,10 @@ public class CollectMetrics implements Runnable
     public void run()
     {
         try {
-/*
             for (String application : applicationRecommendations.applicationMap.keySet()) {
                 getPreviousData(application);
                 getPreviousKruizeRecs(application, query);
             }
-*/
 
             while (true) {
                 for (String application : applicationRecommendations.applicationMap.keySet()) {
@@ -387,10 +384,6 @@ public class CollectMetrics implements Runnable
 
                 if (cpu < MIN_CPU) {
                     throw new ApplicationIdleStateException();
-                }
-
-                if (monitoringAgentEndPoint.contains("petclinic") || cpuQuery.contains("petclinic")) {
-                    LOGGER.info("Current CPU {} and memory {}", cpu, rss);
                 }
 
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));

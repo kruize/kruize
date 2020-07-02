@@ -76,16 +76,8 @@ public class AnalysisImpl implements Analysis
             return;
         }
 
-        if (instance.getName().contains("petclinic")) {
-            for (MetricCollector metricCollector : metrics) {
-                LOGGER.info("Memory {}", MathUtil.bytesToMB(metricCollector.getFromIndex(MetricCollector.RSS_INDEX)));
-            }
-        }
         for (MetricCollector metricCollector : metrics) {
             double cpu = metricCollector.getFromIndex(MetricCollector.CPU_INDEX);
-            if (instance.getName().contains("petclinic")) {
-                LOGGER.info("CPU {}", metricCollector.getFromIndex(MetricCollector.CPU_INDEX));
-            }
             if (maxCpu < cpu)
                 maxCpu = cpu;
         }
@@ -232,11 +224,6 @@ public class AnalysisImpl implements Analysis
 
         spike = getLargestSpike(rssValues);
         LOGGER.debug("Spike is {}" , spike);
-
-        if (instance.getName().contains("petclinic"))
-        {
-            LOGGER.info("Spike is {}", spike);
-        }
 
         double memRequests = instance.getRssRequests();
 

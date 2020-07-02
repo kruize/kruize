@@ -60,7 +60,6 @@ public class OpenJ9AnalysisImpl
      *
      * @param metrics instance of the application
      */
-
     public static void analyseHeapRecommendation(MetricsImpl metrics)
     {
         for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
