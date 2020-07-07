@@ -212,6 +212,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
+    /**
+     * Obtain applications exporting runtime specific information
+     */
     private void getRuntimeInfo()
     {
         try {
@@ -222,6 +225,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
+    /**
+     * Get applications exporting java metrics, and add them to list of java applications monitored.
+     * @throws MalformedURLException
+     */
     private void getJavaApps() throws MalformedURLException
     {
         if (!applicationRecommendations.runtimesMap.containsKey("java"))

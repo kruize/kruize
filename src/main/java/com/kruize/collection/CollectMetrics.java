@@ -196,6 +196,10 @@ public class CollectMetrics implements Runnable
         envType.analysis.finalizeY2DRecommendations(metrics);
     }
 
+    /**
+     * Generate runtime specific recommendations if available for the instance
+     * @param metrics instance of an application
+     */
     private void analyseRuntimeMetrics(MetricsImpl metrics)
     {
         if (metrics.getRuntime().equals("java"))

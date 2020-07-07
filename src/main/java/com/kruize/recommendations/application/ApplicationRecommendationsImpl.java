@@ -58,6 +58,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
             if (metric.getName().equals(metrics.getName())) {
                 try {
                     metric.setStatus(metrics.getStatus());
+                    metric.setRuntime(metrics.getRuntime());
                 } catch (InvalidValueException e) {
                     e.printStackTrace();
                 }
