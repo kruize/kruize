@@ -251,7 +251,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
 
                 String kubernetes_name;
-                if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+                String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
+
+                if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
                     kubernetes_name = metric.get("pod").getAsString();
                 } else {
                     kubernetes_name = metric.get("kubernetes_name").getAsString();
@@ -338,7 +340,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         String podTemplateHash;
 
         try {
-            if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+            String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
+
+            if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
                 metrics.setLabelName(metrics.getName());
             } else {
                 metrics.setLabelName(pod.getMetadata()
@@ -374,11 +378,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podRequests != null) {
             if (podRequests.containsKey("memory")) {
                 Quantity memoryRequests = (Quantity) podRequests.get("memory");
-                double memoryRequestsValue = memoryRequests.getNumber().doubleValue();
-                LOGGER.debug("Original memory requests for {}: {} MB", applicationName,
-                        MathUtil.bytesToMB(memoryRequestsValue));
+                double memoryRequestsValue = MathUtil.bytesToMB(memoryRequests.getNumber().doubleValue());
+                LOGGER.debug("Original memory requests for {}: {} MB", applicationName, memoryRequestsValue);
 
-                metrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
+                metrics.setOriginalMemoryRequests(memoryRequestsValue);
             }
 
             if (podRequests.containsKey("cpu")) {
@@ -394,11 +397,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podLimits != null) {
             if (podLimits.containsKey("memory")) {
                 Quantity memoryLimit = (Quantity) podLimits.get("memory");
-                double memoryLimitValue = memoryLimit.getNumber().doubleValue();
-                LOGGER.debug("Original memory limit for {}: {} MB", applicationName,
-                        MathUtil.bytesToMB(memoryLimitValue));
+                double memoryLimitValue = MathUtil.bytesToMB(memoryLimit.getNumber().doubleValue());
+                LOGGER.debug("Original memory limit for {}: {} MB", applicationName, memoryLimitValue);
 
-                metrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
+                metrics.setOriginalMemoryLimit(memoryLimitValue);
             }
 
             if (podLimits.containsKey("cpu")) {

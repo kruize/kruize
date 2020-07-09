@@ -191,7 +191,7 @@ public class AnalysisImpl implements Analysis
         LOGGER.debug("Current Memory Requests for {} is {}", instance.getName(), memRequests);
 
         try {
-            instance.setCurrentRssRequests(memRequests);
+            instance.setCurrentRssRequests(MathUtil.bytesToMB(memRequests));
         } catch (InvalidValueException e) {
             e.printStackTrace();
         }
@@ -231,7 +231,7 @@ public class AnalysisImpl implements Analysis
         double memLimit = Math.max(memRequests + spike, maxMem * MEM_BUFFER);
         LOGGER.debug("Current Memory Limit for {} is {}", instance.getName(), memLimit);
         try {
-            instance.setCurrentRssLimit(memLimit);
+            instance.setCurrentRssLimit(MathUtil.bytesToMB(memLimit));
         } catch (InvalidValueException e) {
             e.printStackTrace();
         }

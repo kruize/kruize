@@ -19,6 +19,7 @@ package com.kruize.metrics.runtimes.java.openj9;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.kruize.environment.DeploymentInfo;
+import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaHeap;
@@ -29,8 +30,6 @@ import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9GenconHeap;
 import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9MetronomeHeap;
 import com.kruize.metrics.runtimes.java.openj9.heap.OpenJ9NoGcHeap;
 import com.kruize.query.Query;
-import com.kruize.query.prometheus.DockerPrometheusQuery;
-import com.kruize.query.prometheus.KubernetesPrometheusQuery;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.util.HttpUtil;
@@ -73,11 +72,7 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
 
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
         {
-            if (DeploymentInfo.getClusterType().toUpperCase().equals("KUBERNETES")) {
-                query = new KubernetesPrometheusQuery();
-            } else {
-                query = new DockerPrometheusQuery();
-            }
+            query = EnvTypeImpl.getInstance().query;
         }
     }
 
@@ -129,7 +124,6 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
                         javaQuery.heapQuery.getHeapQuery(labelName, partOfHeap, area)));
-                LOGGER.info("Heap value for {} is {}", partOfHeap, value);
                 heap.setHeap(value, partOfHeap);
             }
 
@@ -137,7 +131,6 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
                         javaQuery.nonHeapQuery.getNonHeapQuery(labelName, partOfNonHeap, area)));
-                LOGGER.info("Non-heap value for {} is {}", partOfNonHeap, value);
                 nonHeap.setNonHeap(value, partOfNonHeap);
             }
 

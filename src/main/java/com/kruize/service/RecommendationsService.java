@@ -23,10 +23,9 @@ import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+import com.kruize.recommendations.runtimes.java.JavaRecommendations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.kruize.recommendations.runtimes.java.JavaRecommendations;
-import com.kruize.util.MathUtil;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -176,7 +175,16 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
-    private JsonObject getRuntimeOptions(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException, NullPointerException
+    /**
+     * Get runtime recommendations JSON for an application if available
+     * @param applicationRecommendations
+     * @param application
+     * @return JSON containing the runtime recommendation
+     * @throws NoSuchApplicationException
+     * @throws NullPointerException
+     */
+    private JsonObject getRuntimeOptions(ApplicationRecommendationsImpl applicationRecommendations, String application)
+            throws NoSuchApplicationException, NullPointerException
     {
         if (applicationRecommendations.getRuntime(application).equals("java"))
         {
@@ -185,7 +193,16 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
-    private JsonObject getJavaOptions(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException, NullPointerException
+    /**
+     * Get java runtime options recommendations if available
+     * @param applicationRecommendations
+     * @param application
+     * @return JSON containing the runtime recommendation
+     * @throws NoSuchApplicationException
+     * @throws NullPointerException
+     */
+    private JsonObject getJavaOptions(ApplicationRecommendationsImpl applicationRecommendations, String application)
+            throws NoSuchApplicationException, NullPointerException
     {
         DecimalFormat precisionTwo = new DecimalFormat("#.##");
         precisionTwo.setRoundingMode(RoundingMode.CEILING);
@@ -201,8 +218,8 @@ public class RecommendationsService extends HttpServlet
 
         String gcPolicyRecommendation = javaRecommendations.getGcPolicy();
 
-        String percentage = precisionTwo.format((MathUtil.bytesToMB(heapRecommendations * 100)
-                /  applicationRecommendations.getRssLimits(application)));
+        String percentage = precisionTwo.format((heapRecommendations * 100)
+                /  applicationRecommendations.getRssLimits(application));
 
         JsonObject runtimeRecommendationJson = new JsonObject();
 
