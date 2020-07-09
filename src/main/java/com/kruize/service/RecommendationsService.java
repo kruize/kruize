@@ -58,12 +58,14 @@ public class RecommendationsService extends HttpServlet
      *         "memory": "51.4MB",
      *         "cpu": 0.6
      *       },
+     *
      *       "limits": {
      *         "memory": "83.5MB",
      *         "cpu": 0.9
      *       }
-     *     }
-     *   },
+     *     },
+     *     "runtimeClassName": "kata-qemu"
+     **   },
      *   {
      *     "application_name": "cadvisor",
      *     "resources": {
@@ -131,8 +133,30 @@ public class RecommendationsService extends HttpServlet
 
         JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
 
+        String recommendRuntime;
         if (resourcesJson != null) {
             applicationRecommendationJson.add("resources", resourcesJson);
+
+            String policy = applicationRecommendations.getPolicy(application);
+            recommendRuntime = null;
+            if(policy != null)
+            {
+                if(policy.contains("STARTUP") && policy.contains("SECURITY") )
+                {
+                    recommendRuntime = "kata-qemu-virtiofs";
+                }
+                else if(policy.contains("SECURITY"))
+                {
+                    recommendRuntime = "kata-qemu";
+                }
+                else if(policy.contains("THROUGHPUT"))
+                {
+                    recommendRuntime = "runc";
+                }
+
+                applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
+            }
+
             return applicationRecommendationJson;
         }
 
@@ -173,6 +197,7 @@ public class RecommendationsService extends HttpServlet
         LOGGER.info("Not returning any recommendations");
         return null;
     }
+
 
     /**
      * Get additional env options recommendations
@@ -259,4 +284,5 @@ public class RecommendationsService extends HttpServlet
 
         return runtimeRecommendationJson;
     }
+
 }

@@ -37,4 +37,8 @@ public class SupportedTypes
 
     public static final Set<String> RUNTIMES_SUPPORTED =
             new HashSet<>(Collections.singletonList("JAVA"));
+
+    public static final Set<String> POLICIES_SUPPORTED =
+            new HashSet<>(Arrays.asList("THROUGHPUT", "SECURITY","STARTUP"));
+
 }

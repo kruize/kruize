@@ -216,4 +216,17 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
 
         return null;
     }
+
+    public String getPolicy(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getPolicy() != null)
+            {
+                return metric.getPolicy();
+            }
+        }
+
+        return null;
+    }
 }
