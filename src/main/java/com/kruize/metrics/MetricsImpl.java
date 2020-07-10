@@ -94,8 +94,11 @@ public class MetricsImpl implements Metrics
 
     public void setPolicy(String policy)
     {
-        if(SupportedTypes.POLICIES_SUPPORTED.contains(policy))
-            this.policy = policy;
+        for (String supportedPolicy : SupportedTypes.POLICIES_SUPPORTED)
+        {
+            if (policy.contains(supportedPolicy))
+                this.policy = policy;
+        }
     }
 
     public String getApplicationName()
