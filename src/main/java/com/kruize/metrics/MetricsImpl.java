@@ -19,6 +19,7 @@ package com.kruize.metrics;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.instance.RecommendationsImpl;
+import com.kruize.recommendations.runtimes.java.JavaRecommendations;
 
 import java.util.ArrayList;
 

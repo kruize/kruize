@@ -34,4 +34,7 @@ public class SupportedTypes
 
     public static final Set<String> MONITORING_AGENTS_SUPPORTED =
             new HashSet<>(Collections.singletonList("PROMETHEUS"));
+
+    public static final Set<String> RUNTIMES_SUPPORTED =
+            new HashSet<>(Collections.singletonList("JAVA"));
 }

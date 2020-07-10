@@ -19,6 +19,7 @@ package com.kruize.collection;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.kruize.analysis.runtimes.java.OpenJ9AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
 import com.kruize.exceptions.ApplicationIdleStateException;
@@ -27,6 +28,7 @@ import com.kruize.exceptions.NoSuchApplicationException;
 import com.kruize.metrics.MetricCollector;
 import com.kruize.metrics.Metrics;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.Query;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
 import com.kruize.util.HttpUtil;
@@ -127,6 +129,12 @@ public class CollectMetrics implements Runnable
 
                     analyseMetrics(metrics);
 
+                    if (metrics.getRuntime() != null)
+                    {
+                        CollectRuntimeMetrics.collectRuntimeMetrics(metrics, monitoringAgentEndPoint);
+                        analyseRuntimeMetrics(metrics);
+                    }
+
                     setKruizeRecommendations(application, metrics, currentMetrics);
 
                 } catch (Exception e) {
@@ -188,12 +196,29 @@ public class CollectMetrics implements Runnable
         envType.analysis.finalizeY2DRecommendations(metrics);
     }
 
+    /**
+     * Generate runtime specific recommendations if available for the instance
+     * @param metrics instance of an application
+     */
+    private void analyseRuntimeMetrics(MetricsImpl metrics)
+    {
+        if (metrics.getRuntime().equals("java"))
+        {
+            if (JavaApplicationMetricsImpl.javaApplicationInfoMap
+                    .get(metrics.getLabelName())
+                    .getVM().equals("OpenJ9"))
+            {
+                OpenJ9AnalysisImpl.analyseHeapRecommendation(metrics);
+                OpenJ9AnalysisImpl.analyseNonHeapRecommendation(metrics);
+            }
+        }
+    }
+
     @Override
     @SuppressWarnings("InfiniteLoopStatement")
     public void run()
     {
         try {
-
             for (String application : applicationRecommendations.applicationMap.keySet()) {
                 getPreviousData(application);
                 getPreviousKruizeRecs(application, query);
@@ -286,7 +311,10 @@ public class CollectMetrics implements Runnable
                 previousRssRequests =
                         getPreviousKruizeData(prometheusURL +
                                 query.getPreviousMemReqRec(applicationName), applicationName);
-            } catch (IndexOutOfBoundsException ignored) { }
+            } catch (IndexOutOfBoundsException | MalformedURLException e) {
+                LOGGER.info("No previous recommendations available for {}", applicationName);
+                return;
+            }
 
             try {
                 metrics.setCurrentCpuLimit(previousCpuLimit);
@@ -305,21 +333,17 @@ public class CollectMetrics implements Runnable
     }
 
     private double getPreviousKruizeData(String recommendationURL, String applicationName)
+            throws IndexOutOfBoundsException, MalformedURLException
     {
         LOGGER.debug("Recommendation URL: {}", recommendationURL);
-        try {
-            JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
+        JsonArray kruizeArray = getAsJsonArray(new URL(recommendationURL), "values");
 
-            //get last old value
-            return kruizeArray
-                    .get(kruizeArray.size() - 1)
-                    .getAsJsonArray()
-                    .get(1)
-                    .getAsDouble();
-        } catch (IndexOutOfBoundsException | MalformedURLException e) {
-            LOGGER.info("No previous recommendations available for {}", applicationName);
-            return 0;
-        }
+        //get last old value
+        return kruizeArray
+                .get(kruizeArray.size() - 1)
+                .getAsJsonArray()
+                .get(1)
+                .getAsDouble();
     }
 
     private class CurrentMetrics
@@ -362,8 +386,9 @@ public class CollectMetrics implements Runnable
                 //TODO Get network data from monitoring agent
                 double network = 0;
 
-                if (cpu < MIN_CPU)
+                if (cpu < MIN_CPU) {
                     throw new ApplicationIdleStateException();
+                }
 
                 metrics.metricCollector.add(new MetricCollector(rss, cpu, network));
                 return this;

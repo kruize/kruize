@@ -18,10 +18,9 @@ package com.kruize.recommendations.application;
 
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.NoSuchApplicationException;
-import com.kruize.util.MathUtil;
+import com.kruize.metrics.MetricsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.kruize.metrics.MetricsImpl;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -58,6 +57,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
             if (metric.getName().equals(metrics.getName())) {
                 try {
                     metric.setStatus(metrics.getStatus());
+                    metric.setRuntime(metrics.getRuntime());
                 } catch (InvalidValueException e) {
                     e.printStackTrace();
                 }
@@ -87,8 +87,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
             if (totalValues == 0) {
                 return 0;
             } else {
-                return Double.parseDouble(oneDecimalPlace.format(
-                        MathUtil.bytesToMB(weightedRssLimits / totalValues)));
+                return Double.parseDouble(oneDecimalPlace.format(weightedRssLimits / totalValues));
             }
 
         } else {
@@ -142,8 +141,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
             if (totalValues == 0) {
                 return 0;
             } else {
-                return Double.parseDouble(oneDecimalPlace.format(
-                        MathUtil.bytesToMB(weightedRssRequests / totalValues)));
+                return Double.parseDouble(oneDecimalPlace.format(weightedRssRequests / totalValues));
             }
 
         } else {

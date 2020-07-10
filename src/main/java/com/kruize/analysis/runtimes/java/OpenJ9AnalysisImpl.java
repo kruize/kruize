@@ -62,8 +62,8 @@ public class OpenJ9AnalysisImpl
      */
     public static void analyseHeapRecommendation(MetricsImpl metrics)
     {
-        for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet()) {
-
+        for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
+        {
             for (JavaMetricCollector metricCollector :
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
@@ -71,9 +71,9 @@ public class OpenJ9AnalysisImpl
 
                 if (openJ9MetricCollector.getHeap() > heapMax.heap)
                 {
-                    double rss = openJ9MetricCollector.getRss();
-                    double heap = openJ9MetricCollector.getHeap();
-                    double nonHeap = openJ9MetricCollector.getNonHeap();
+                    double rss = MathUtil.bytesToMB(openJ9MetricCollector.getRss());
+                    double heap = MathUtil.bytesToMB(openJ9MetricCollector.getHeap());
+                    double nonHeap = MathUtil.bytesToMB(openJ9MetricCollector.getNonHeap());
 
                     heapMax = new JavaTriplet(rss, heap, nonHeap);
                 }
@@ -86,8 +86,7 @@ public class OpenJ9AnalysisImpl
                     .getJavaRecommendations()
                     .setHeapRecommendation(heapRecommendation);
 
-            LOGGER.info("Heap recommendation for {} is {}MB", application,
-                    MathUtil.bytesToMB(heapRecommendation));
+            LOGGER.info("Heap recommendation for {} is {}MB", application, heapRecommendation);
 
         }
     }
@@ -99,8 +98,8 @@ public class OpenJ9AnalysisImpl
      */
     public static void analyseNonHeapRecommendation(MetricsImpl metrics)
     {
-        for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet()) {
-
+        for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
+        {
             for (JavaMetricCollector metricCollector :
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
@@ -108,13 +107,12 @@ public class OpenJ9AnalysisImpl
 
                 if (openJ9MetricCollector.getNonHeap() > nonHeapMax.nonHeap)
                 {
-                    double rss = openJ9MetricCollector.getRss();
-                    double heap = openJ9MetricCollector.getHeap();
-                    double nonHeap = openJ9MetricCollector.getNonHeap();
+                    double rss = MathUtil.bytesToMB(openJ9MetricCollector.getRss());
+                    double heap = MathUtil.bytesToMB(openJ9MetricCollector.getHeap());
+                    double nonHeap = MathUtil.bytesToMB(openJ9MetricCollector.getNonHeap());
 
                     nonHeapMax = new JavaTriplet(rss, heap, nonHeap);
                 }
-
             }
 
             double nonHeapRecommendation = nonHeapMax.nonHeap;
@@ -124,8 +122,7 @@ public class OpenJ9AnalysisImpl
                     .getJavaRecommendations()
                     .setNonHeapRecommendation(nonHeapRecommendation);
 
-            LOGGER.info("Non-heap recommendation for {} is {}MB", application,
-                    MathUtil.bytesToMB(nonHeapRecommendation));
+            LOGGER.info("Non-heap recommendation for {} is {}MB", application, nonHeapRecommendation);
 
         }
     }

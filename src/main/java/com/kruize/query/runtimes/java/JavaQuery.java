@@ -33,7 +33,8 @@ public class JavaQuery
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER"))
         {
             podLabel = "job";
-        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")) {
+        } else if (DeploymentInfo.getKubernetesType().toUpperCase().equals("OPENSHIFT")
+                || DeploymentInfo.getKubernetesType().toUpperCase().equals("MINIKUBE")) {
             podLabel = "pod";
         } else {
             podLabel = "kubernetes_name";

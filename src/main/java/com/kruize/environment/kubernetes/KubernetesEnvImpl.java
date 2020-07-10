@@ -16,6 +16,10 @@
 
 package com.kruize.environment.kubernetes;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.kruize.analysis.AnalysisImpl;
 import com.kruize.environment.DeploymentInfo;
 import com.kruize.environment.EnvTypeImpl;
@@ -24,8 +28,12 @@ import com.kruize.exceptions.InvalidValueException;
 import com.kruize.exceptions.MonitoringAgentMissingException;
 import com.kruize.exceptions.MonitoringAgentNotSupportedException;
 import com.kruize.metrics.MetricsImpl;
+import com.kruize.metrics.runtimes.java.JavaApplicationInfo;
+import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.query.prometheus.PrometheusQuery;
+import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.recommendations.application.ApplicationRecommendationsImpl;
+import com.kruize.recommendations.runtimes.java.openj9.OpenJ9JavaRecommendations;
 import com.kruize.util.HttpUtil;
 import com.kruize.util.MathUtil;
 import io.kubernetes.client.ApiClient;
@@ -132,6 +140,8 @@ public class KubernetesEnvImpl extends EnvTypeImpl
     public void getAllApps()
     {
         ArrayList<String> monitoredInstances = new ArrayList<>();
+        getRuntimeInfo();
+
         ApiClient apiClient = null;
         try {
             apiClient = Config.defaultClient();
@@ -202,6 +212,103 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
+    /**
+     * Obtain applications exporting runtime specific information
+     */
+    private void getRuntimeInfo()
+    {
+        try {
+            getJavaApps();
+            getNodeApps();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get applications exporting java metrics, and add them to list of java applications monitored.
+     * @throws MalformedURLException
+     */
+    private void getJavaApps() throws MalformedURLException
+    {
+        if (!applicationRecommendations.runtimesMap.containsKey("java"))
+        {
+            applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
+        }
+
+        try
+        {
+            PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
+            JavaQuery javaQuery = new JavaQuery();
+
+            JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                    + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery()));
+
+            if (javaApps == null) return;
+
+            for (JsonElement jsonElement : javaApps)
+            {
+                JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+
+                String kubernetes_name;
+                String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
+
+                if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
+                    kubernetes_name = metric.get("pod").getAsString();
+                } else {
+                    kubernetes_name = metric.get("kubernetes_name").getAsString();
+                }
+
+                String heap_id = metric.get("id").getAsString();
+
+                javaQuery = JavaQuery.getInstance(heap_id);
+
+                /* Check if already in the list */
+                if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(kubernetes_name))
+                    continue;
+
+                if (!applicationRecommendations.runtimesMap.get("java").contains(kubernetes_name))
+                {
+                    LOGGER.info("{} added to java runtime collection array", kubernetes_name);
+                    applicationRecommendations.runtimesMap.get("java").add(kubernetes_name);
+
+                    String vm = javaQuery.getVm();
+                    LOGGER.info("VM is {}", vm);
+
+                    if (vm.equals("OpenJ9"))
+                    {
+                        JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
+                                kubernetes_name,
+                                new JavaApplicationInfo(
+                                        vm, javaQuery.getGcPolicy(),
+                                        new OpenJ9JavaRecommendations()));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getNodeApps()
+    {
+
+    }
+
+    private JsonArray getJsonArray(URL url)
+    {
+        String response = HttpUtil.getDataFromURL(url);
+
+        return new JsonParser()
+                .parse(response)
+                .getAsJsonObject()
+                .get("data")
+                .getAsJsonObject()
+                .get("result")
+                .getAsJsonArray();
+
+    }
+
     private void insertMetrics(V1Pod pod)
     {
         MetricsImpl metricsImpl = null;
@@ -223,16 +330,25 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
-    private static MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
+    private MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
     {
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());
         metrics.setNamespace(pod.getMetadata().getNamespace());
-        metrics.setStatus(pod.getStatus().getPhase().toString().toLowerCase());
+        metrics.setStatus(pod.getStatus().getPhase().toLowerCase());
 
         String podTemplateHash;
 
         try {
+            String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
+
+            if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
+                metrics.setLabelName(metrics.getName());
+            } else {
+                metrics.setLabelName(pod.getMetadata()
+                        .getLabels().get("name"));
+            }
+
             String podHashLabel = "pod-template-hash";
             podTemplateHash = pod.getMetadata()
                     .getLabels().get(podHashLabel);
@@ -241,7 +357,15 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             podTemplateHash = null;
         }
 
-        String applicationName = parseApplicationName(pod.getMetadata().getName(),
+        for (String runtime : applicationRecommendations.runtimesMap.keySet())
+        {
+            if (applicationRecommendations.runtimesMap.get(runtime).contains(metrics.getLabelName()))
+            {
+                metrics.setRuntime(runtime);
+            }
+        }
+
+        String applicationName = parseApplicationName(metrics.getName(),
                 podTemplateHash);
 
         metrics.setApplicationName(applicationName);
@@ -254,11 +378,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podRequests != null) {
             if (podRequests.containsKey("memory")) {
                 Quantity memoryRequests = (Quantity) podRequests.get("memory");
-                double memoryRequestsValue = memoryRequests.getNumber().doubleValue();
-                LOGGER.debug("Original memory requests for {}: {} MB", applicationName,
-                        MathUtil.bytesToMB(memoryRequestsValue));
+                double memoryRequestsValue = MathUtil.bytesToMB(memoryRequests.getNumber().doubleValue());
+                LOGGER.debug("Original memory requests for {}: {} MB", applicationName, memoryRequestsValue);
 
-                metrics.setOriginalMemoryRequests(memoryRequests.getNumber().doubleValue());
+                metrics.setOriginalMemoryRequests(memoryRequestsValue);
             }
 
             if (podRequests.containsKey("cpu")) {
@@ -274,11 +397,10 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         if (podLimits != null) {
             if (podLimits.containsKey("memory")) {
                 Quantity memoryLimit = (Quantity) podLimits.get("memory");
-                double memoryLimitValue = memoryLimit.getNumber().doubleValue();
-                LOGGER.debug("Original memory limit for {}: {} MB", applicationName,
-                        MathUtil.bytesToMB(memoryLimitValue));
+                double memoryLimitValue = MathUtil.bytesToMB(memoryLimit.getNumber().doubleValue());
+                LOGGER.debug("Original memory limit for {}: {} MB", applicationName, memoryLimitValue);
 
-                metrics.setOriginalMemoryLimit(memoryLimit.getNumber().doubleValue());
+                metrics.setOriginalMemoryLimit(memoryLimitValue);
             }
 
             if (podLimits.containsKey("cpu")) {

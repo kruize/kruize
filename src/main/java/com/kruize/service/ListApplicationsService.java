@@ -80,10 +80,16 @@ public class ListApplicationsService extends HttpServlet
                     recommendationsGenerated = "yes";
             } catch (NoSuchApplicationException ignored) { }
 
+            String runtime = applicationRecommendations.getRuntime(application);
+
             JsonObject applicationJson = new JsonObject();
             applicationJson.addProperty("application_name", application);
-            applicationJson.addProperty("recommendations_generated", recommendationsGenerated);
             applicationJson.addProperty("status", applicationRecommendations.getStatus(application));
+            applicationJson.addProperty("recommendations_generated", recommendationsGenerated);
+
+            if (runtime != null)
+                applicationJson.addProperty("runtime", runtime);
+
             jsonArray.add(applicationJson);
         }
 
