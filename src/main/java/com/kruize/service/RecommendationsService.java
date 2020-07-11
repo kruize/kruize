@@ -65,6 +65,12 @@ public class RecommendationsService extends HttpServlet
      *       }
      *     },
      *     "runtimeClassName": "kata-qemu"
+     *     "env": [
+ *               {
+ *                 "name": "CONTAINER_RUNTIME",
+ *                 "value": "KATA_RUNTIME"
+ *               }
+ *             ],
      **   },
      *   {
      *     "application_name": "cadvisor",
@@ -155,12 +161,26 @@ public class RecommendationsService extends HttpServlet
                 }
 
                 applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
+
+                if(recommendRuntime.contains("kata"))
+                {
+                    JsonObject envJson = getEnvJson();
+                    applicationRecommendationJson.add("env", envJson);
+                }
             }
 
             return applicationRecommendationJson;
         }
 
         return null;
+    }
+
+    private JsonObject getEnvJson()
+    {
+        JsonObject envJson = new JsonObject();
+        envJson.addProperty("name", "CONTAINER_RUNTIME");
+        envJson.addProperty("value", "KATA_RUNTIME");
+        return envJson;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
