@@ -145,25 +145,18 @@ public class RecommendationsService extends HttpServlet
 
             String policy = applicationRecommendations.getPolicy(application);
             recommendRuntime = null;
-            if(policy != null)
-            {
-                if(policy.contains("STARTUP") && policy.contains("SECURITY") )
-                {
+            if (policy != null) {
+                if (policy.contains("STARTUP") && policy.contains("SECURITY") ) {
                     recommendRuntime = "kata-qemu-virtiofs";
-                }
-                else if(policy.contains("SECURITY"))
-                {
+                } else if (policy.contains("SECURITY")) {
                     recommendRuntime = "kata-qemu";
-                }
-                else if(policy.contains("THROUGHPUT"))
-                {
+                } else if (policy.contains("THROUGHPUT")) {
                     recommendRuntime = "runc";
                 }
 
                 applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
 
-                if(recommendRuntime.contains("kata"))
-                {
+                if (recommendRuntime.contains("kata")) {
                     JsonObject envJson = getEnvJson();
                     applicationRecommendationJson.add("env", envJson);
                 }
@@ -240,6 +233,7 @@ public class RecommendationsService extends HttpServlet
 
         return null;
     }
+
 
     /**
      * Get runtime recommendations JSON for an application if available
