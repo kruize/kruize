@@ -38,6 +38,9 @@ See the [Install README](/docs/README.md) for more details on the installation.
 
 See the [API README](/docs/API.md) for more details on the Kruize REST API.
 
+## Additional runtimes recommendations
+
+See the [Runtimes README](/docs/Runtimes.md) for more details on how to generate additional runtimes specific recommendations for your application through Kruize. Currently runtime recommendations are only available for Java with OpenJ9.
 
 ## Contributing
 
@@ -46,3 +49,4 @@ Refer to [CONTRIBUTING.md](/CONTRIBUTING.md).
 ## License
 
 Apache License 2.0, see [LICENSE](/LICENSE).
+
