@@ -20,9 +20,11 @@ import com.kruize.metrics.MetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaApplicationMetricsImpl;
 import com.kruize.metrics.runtimes.java.JavaMetricCollector;
 import com.kruize.metrics.runtimes.java.openj9.OpenJ9MetricCollector;
-import com.kruize.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OpenJ9AnalysisImpl
 {
@@ -50,10 +52,26 @@ public class OpenJ9AnalysisImpl
         }
     }
 
+    /**
+     * Triplet of JavaTriplets needed for analysis
+     */
+    private static class JavaAnalysisTriplet
+    {
+        JavaTriplet rssMax;
+        JavaTriplet heapMax;
+        JavaTriplet nonHeapMax;
+
+        JavaAnalysisTriplet()
+        {
+            rssMax = new JavaTriplet();
+            heapMax = new JavaTriplet();
+            nonHeapMax = new JavaTriplet();
+        }
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenJ9AnalysisImpl.class);
 
-    private static JavaTriplet heapMax = new JavaTriplet();
-    private static JavaTriplet nonHeapMax = new JavaTriplet();
+    private static Map<String,JavaAnalysisTriplet> applicationAnalysisMap = new HashMap<>();
 
     /**
      * Get the heap recommendation for an instance
@@ -64,22 +82,27 @@ public class OpenJ9AnalysisImpl
     {
         for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
         {
+            if (!applicationAnalysisMap.containsKey(application))
+            {
+                applicationAnalysisMap.put(application, new JavaAnalysisTriplet());
+            }
+
             for (JavaMetricCollector metricCollector :
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
 
-                if (openJ9MetricCollector.getHeap() > heapMax.heap)
+                if (openJ9MetricCollector.getHeap() > applicationAnalysisMap.get(application).heapMax.heap)
                 {
-                    double rss = MathUtil.bytesToMB(openJ9MetricCollector.getRss());
-                    double heap = MathUtil.bytesToMB(openJ9MetricCollector.getHeap());
-                    double nonHeap = MathUtil.bytesToMB(openJ9MetricCollector.getNonHeap());
+                    double rss = openJ9MetricCollector.getRss();
+                    double heap = openJ9MetricCollector.getHeap();
+                    double nonHeap = openJ9MetricCollector.getNonHeap();
 
-                    heapMax = new JavaTriplet(rss, heap, nonHeap);
+                    applicationAnalysisMap.get(application).heapMax = new JavaTriplet(rss, heap, nonHeap);
                 }
             }
 
-            double heapRecommendation = heapMax.heap;
+            double heapRecommendation = applicationAnalysisMap.get(application).heapMax.heap;
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
@@ -100,22 +123,27 @@ public class OpenJ9AnalysisImpl
     {
         for (String application : JavaApplicationMetricsImpl.javaApplicationMetricsMap.keySet())
         {
+            if (!applicationAnalysisMap.containsKey(application))
+            {
+                applicationAnalysisMap.put(application, new JavaAnalysisTriplet());
+            }
+
             for (JavaMetricCollector metricCollector :
                     JavaApplicationMetricsImpl.javaApplicationMetricsMap.get(application))
             {
                 OpenJ9MetricCollector openJ9MetricCollector = (OpenJ9MetricCollector) metricCollector;
 
-                if (openJ9MetricCollector.getNonHeap() > nonHeapMax.nonHeap)
+                if (openJ9MetricCollector.getNonHeap() > applicationAnalysisMap.get(application).nonHeapMax.nonHeap)
                 {
-                    double rss = MathUtil.bytesToMB(openJ9MetricCollector.getRss());
-                    double heap = MathUtil.bytesToMB(openJ9MetricCollector.getHeap());
-                    double nonHeap = MathUtil.bytesToMB(openJ9MetricCollector.getNonHeap());
+                    double rss = openJ9MetricCollector.getRss();
+                    double heap = openJ9MetricCollector.getHeap();
+                    double nonHeap = openJ9MetricCollector.getNonHeap();
 
-                    nonHeapMax = new JavaTriplet(rss, heap, nonHeap);
+                    applicationAnalysisMap.get(application).nonHeapMax = new JavaTriplet(rss, heap, nonHeap);
                 }
             }
 
-            double nonHeapRecommendation = nonHeapMax.nonHeap;
+            double nonHeapRecommendation = applicationAnalysisMap.get(application).nonHeapMax.nonHeap;
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)
@@ -149,8 +177,12 @@ public class OpenJ9AnalysisImpl
                                 (openJ9MetricCollector.getHeap() + openJ9MetricCollector.getNonHeap()));
             }
 
-            rssMax = Math.max(heapMax.rss, nonHeapMax.rss);
-            rssMax = Math.max(rssMax, (heapMax.heap + nonHeapMax.nonHeap + openJ9MemMax));
+            JavaAnalysisTriplet javaAnalysisTriplet = applicationAnalysisMap.get(application);
+
+            rssMax = Math.max(javaAnalysisTriplet.heapMax.rss, javaAnalysisTriplet.nonHeapMax.rss);
+
+            rssMax = Math.max(rssMax, (javaAnalysisTriplet.heapMax.heap +
+                    javaAnalysisTriplet.nonHeapMax.nonHeap + openJ9MemMax));
 
             JavaApplicationMetricsImpl.javaApplicationInfoMap
                     .get(application)

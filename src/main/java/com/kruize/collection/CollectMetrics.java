@@ -210,6 +210,7 @@ public class CollectMetrics implements Runnable
             {
                 OpenJ9AnalysisImpl.analyseHeapRecommendation(metrics);
                 OpenJ9AnalysisImpl.analyseNonHeapRecommendation(metrics);
+                OpenJ9AnalysisImpl.analyseRssMax(metrics);
             }
         }
     }

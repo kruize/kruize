@@ -33,6 +33,7 @@ import com.kruize.query.Query;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 import com.kruize.query.runtimes.java.JavaQuery;
 import com.kruize.util.HttpUtil;
+import com.kruize.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,20 +119,20 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
         try {
             double rss = getValueForQuery(new URL(monitoringAgentEndPoint +
                     query.getRssQuery(metrics.getName())));
-            setRss(rss);
+            setRss(MathUtil.bytesToMB(rss));
 
             for (String partOfHeap: javaQuery.heapQuery.getPartsOfHeap())
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
                         javaQuery.heapQuery.getHeapQuery(labelName, partOfHeap, area)));
-                heap.setHeap(value, partOfHeap);
+                heap.setHeap(MathUtil.bytesToMB(value), partOfHeap);
             }
 
             for (String partOfNonHeap : javaQuery.nonHeapQuery.getPartsOfNonHeap())
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
                         javaQuery.nonHeapQuery.getNonHeapQuery(labelName, partOfNonHeap, area)));
-                nonHeap.setNonHeap(value, partOfNonHeap);
+                nonHeap.setNonHeap(MathUtil.bytesToMB(value), partOfNonHeap);
             }
 
         } catch (InvalidValueException | IndexOutOfBoundsException | MalformedURLException | NullPointerException e) {
