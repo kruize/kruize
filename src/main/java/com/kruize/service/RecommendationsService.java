@@ -92,7 +92,7 @@ public class RecommendationsService extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException
     {
-        LOGGER.info("doGet info called");
+        LOGGER.info("doGet info v2 called");
         LOGGER.debug("doGet debug called");
         String application_name = req.getParameter("application_name");
 
