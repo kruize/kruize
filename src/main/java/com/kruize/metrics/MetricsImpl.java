@@ -100,7 +100,7 @@ public class MetricsImpl implements Metrics
     {
         for (String supportedPolicy : SupportedTypes.POLICIES_SUPPORTED)
         {
-            if (policy.contains(supportedPolicy))
+            if (policy != null && policy.contains(supportedPolicy))
                 this.policy = policy;
         }
         LOGGER.info("Policy set to {}",this.policy);
