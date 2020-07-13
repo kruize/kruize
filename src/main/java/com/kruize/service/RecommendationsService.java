@@ -140,7 +140,7 @@ public class RecommendationsService extends HttpServlet
         applicationRecommendationJson.addProperty("application_name", application);
 
         JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
-
+        LOGGER.info("Resources JSON is {}",resourcesJson);
         String recommendRuntime;
         if (resourcesJson != null) {
             applicationRecommendationJson.add("resources", resourcesJson);

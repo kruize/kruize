@@ -173,9 +173,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             for (V1Pod pod : podList.getItems()) {
                 try {
                     final String label = "app.kubernetes.io/name";
-                    final String policyLabel = "app.kubernetes.io/policy";
                     boolean containsLabel = pod.getMetadata().getLabels().containsKey(label);
-                    boolean containsPolicyLabel = pod.getMetadata().getLabels().containsKey(policyLabel);
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
                     String policy = pod.getMetadata().getLabels().get("app.kubernetes.io/policy");
