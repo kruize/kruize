@@ -92,6 +92,8 @@ public class RecommendationsService extends HttpServlet
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException
     {
+        LOGGER.info("doGet info called");
+        LOGGER.debug("doGet debug called");
         String application_name = req.getParameter("application_name");
 
         JsonArray jsonArray = new JsonArray();
