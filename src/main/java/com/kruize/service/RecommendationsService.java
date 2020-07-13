@@ -171,12 +171,14 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
-    private JsonObject getEnvJson()
+    private JsonArray getEnvJson()
     {
         JsonObject envJson = new JsonObject();
         envJson.addProperty("name", "CONTAINER_RUNTIME");
         envJson.addProperty("value", "KATA_RUNTIME");
-        return envJson;
+        JsonArray envJsonArray = new JsonArray();
+        envJsonArray.add(envJson);
+        return envJsonArray;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
