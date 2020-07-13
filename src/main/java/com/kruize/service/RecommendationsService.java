@@ -146,6 +146,7 @@ public class RecommendationsService extends HttpServlet
             applicationRecommendationJson.add("resources", resourcesJson);
 
             String policy = applicationRecommendations.getPolicy(application);
+            LOGGER.info("Policy to set runtime is {}",policy);
             recommendRuntime = null;
             if (policy != null) {
                 if (policy.contains("STARTUP") && policy.contains("SECURITY") ) {
@@ -155,7 +156,7 @@ public class RecommendationsService extends HttpServlet
                 } else if (policy.contains("THROUGHPUT")) {
                     recommendRuntime = "runc";
                 }
-
+                LOGGER.info("Recommend runtime is set to {}",recommendRuntime);
                 applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
 
                 if (recommendRuntime != null && recommendRuntime.contains("kata")) {

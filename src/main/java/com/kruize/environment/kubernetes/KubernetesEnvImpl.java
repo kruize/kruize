@@ -179,7 +179,7 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
                     String policy = pod.getMetadata().getLabels().get("app.kubernetes.io/policy");
-                    LOGGER.info("Policy fetched is {} for pod {}", policy,pod);
+                    LOGGER.info("Policy fetched is {} for pod {}", policy,pod.getMetadata().getLabels());
                     if (containsLabel || isAppsodyApplication) {
                         insertMetrics(pod, policy);
                         monitoredInstances.add(pod.getMetadata().getName());
@@ -341,6 +341,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());
         metrics.setNamespace(pod.getMetadata().getNamespace());
+        if (policy != null) {
+            metrics.setPolicy(policy.toUpperCase());
+        }
         metrics.setStatus(pod.getStatus().getPhase().toLowerCase());
         metrics.setPolicy(policy.toUpperCase());
         String podTemplateHash;
