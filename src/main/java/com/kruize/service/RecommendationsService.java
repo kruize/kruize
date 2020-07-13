@@ -160,7 +160,7 @@ public class RecommendationsService extends HttpServlet
                 applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
 
                 if (recommendRuntime != null && recommendRuntime.contains("kata")) {
-                    JsonObject envJson = getEnvJson();
+                    JsonArray envJson = getEnvJson();
                     applicationRecommendationJson.add("env", envJson);
                 }
             }
