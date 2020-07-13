@@ -160,11 +160,10 @@ public class RecommendationsService extends HttpServlet
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
 
-            if (applicationRecommendations.getRuntime(application) != null) {
-                try {
-                    JsonObject runtimeRecommendationJson = getRuntimeOptions(applicationRecommendations, application);
-                    resourcesJson.add("runtime_recommendations", runtimeRecommendationJson);
-                } catch (NoSuchApplicationException | NullPointerException ignored) { }
+            JsonArray envJson = getEnvJson(applicationRecommendations, application);
+
+            if (envJson != null) {
+                resourcesJson.add("env", envJson);
             }
 
             return resourcesJson;
@@ -172,6 +171,28 @@ public class RecommendationsService extends HttpServlet
 
         LOGGER.info("Application {} is no longer running and has no recommendations generated earlier", application);
         LOGGER.info("Not returning any recommendations");
+        return null;
+    }
+
+    /**
+     * Get additional env options recommendations
+     * @param applicationRecommendations
+     * @param application
+     * @return
+     * @throws NullPointerException
+     */
+    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application)
+            throws NullPointerException
+    {
+        JsonArray envJsonArray = new JsonArray();
+
+        if (applicationRecommendations.getRuntime(application) != null) {
+            try {
+                envJsonArray.add(getRuntimeOptions(applicationRecommendations, application));
+                return envJsonArray;
+            } catch (NoSuchApplicationException | NullPointerException ignored) { }
+        }
+
         return null;
     }
 
@@ -222,6 +243,7 @@ public class RecommendationsService extends HttpServlet
                 /  applicationRecommendations.getRssLimits(application));
 
         JsonObject runtimeRecommendationJson = new JsonObject();
+        runtimeRecommendationJson.addProperty("name", "JAVA_TOOL_OPTIONS");
 
         if (JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName)
                 .getVM().equals("OpenJ9")) {
@@ -231,7 +253,7 @@ public class RecommendationsService extends HttpServlet
 
             byte[] ptext = suggestedOptions.getBytes(ISO_8859_1);
 
-            runtimeRecommendationJson.addProperty("java",
+            runtimeRecommendationJson.addProperty("value",
                     new String(ptext, UTF_8));
         }
 
