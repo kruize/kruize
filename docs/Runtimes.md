@@ -14,6 +14,17 @@ Kruize can help optimize your application by generating optimal runtime recommen
 ### Java
 Kruize currently supports generating additional runtime options for applications bundling the Springboot actuator for OpenJ9.
 
+**Heap size recommendation**
+On supported Java environments, Kruize analyses the Java heap, generates optimal heap sizing for the application and exports the recommendations in the form of command line options for users to quickly apply and use.
+
+```
+      "env": [
+        {
+          "name": "JAVA_TOOL_OPTIONS",
+          "value": "-XX:InitialRAMPercentage=49.24 -XX:MaxRAMPercentage=49.24 -Xgcpolicy:gencon"
+        }
+      ]
+```
 ##  Exposing application runtime metrics 
 If your application exports runtimes metrics for a supported runtime, the metrics endpoint can be added as a scrape target for Prometheus, allowing Kruize to pick up the metrics, run its analysis and generate additional runtime recommendations. 
 
@@ -75,5 +86,4 @@ Deploy the ServiceMonitor resource for your application as in the case above. Yo
         prometheus.io/port: '8080'
         prometheus.io/path: '/manage/prometheus'
 ```
-
 
