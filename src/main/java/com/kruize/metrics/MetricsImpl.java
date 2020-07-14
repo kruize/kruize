@@ -103,7 +103,6 @@ public class MetricsImpl implements Metrics
             if (policy != null && policy.contains(supportedPolicy))
                 this.policy = policy;
         }
-        LOGGER.info("Policy set to {}",this.policy);
     }
 
     public String getApplicationName()

@@ -224,7 +224,6 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         {
             if (metric.getPolicy() != null)
             {
-                LOGGER.info("Policy is {}",metric.getPolicy());
                 return metric.getPolicy();
             }
         }
