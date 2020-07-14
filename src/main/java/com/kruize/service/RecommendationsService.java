@@ -154,10 +154,7 @@ public class RecommendationsService extends HttpServlet
 
                 applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
 
-                if (recommendRuntime != null && recommendRuntime.contains("kata")) {
-                    JsonArray envJson = getEnvJson();
-                    applicationRecommendationJson.add("env", envJson);
-                }
+
             }
 
             return applicationRecommendationJson;
@@ -166,14 +163,12 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
-    private JsonArray getEnvJson()
+    private JsonObject getRuntimeClassJson()
     {
         JsonObject envJson = new JsonObject();
         envJson.addProperty("name", "CONTAINER_RUNTIME");
         envJson.addProperty("value", "KATA_RUNTIME");
-        JsonArray envJsonArray = new JsonArray();
-        envJsonArray.add(envJson);
-        return envJsonArray;
+        return envJson;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
@@ -197,7 +192,7 @@ public class RecommendationsService extends HttpServlet
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
 
-            JsonArray envJson = getEnvJson(applicationRecommendations, application);
+            JsonArray envJson = getEnvJson(applicationRecommendations, application,);
 
             if (envJson != null) {
                 resourcesJson.add("env", envJson);
@@ -219,7 +214,7 @@ public class RecommendationsService extends HttpServlet
      * @return
      * @throws NullPointerException
      */
-    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application)
+    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application, String recommendRuntime,JsonObject applicationRecommendationJson)
             throws NullPointerException
     {
         JsonArray envJsonArray = new JsonArray();
@@ -229,6 +224,11 @@ public class RecommendationsService extends HttpServlet
                 envJsonArray.add(getRuntimeOptions(applicationRecommendations, application));
                 return envJsonArray;
             } catch (NoSuchApplicationException | NullPointerException ignored) { }
+        }
+
+        if (recommendRuntime != null && recommendRuntime.contains("kata")) {
+            JsonObject envJson = getRuntimeClassJson();
+            applicationRecommendationJson.add("env", envJson);
         }
 
         return null;
