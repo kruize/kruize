@@ -165,7 +165,9 @@ Info: kruize deploy succeeded: Running
 kruize-5cd5967d97-tz2cb                        1/1     Running   0          24s
 ```
 
-Now you need to install the Kruize Dashboard, see the [Install the Grafana dashboard](#install-the-grafana-dashboard) section for more details.
+Now you need to install the Kruize Dashboard, see the [Install the Grafana dashboard](#install-the-grafana-dashboard) section for more details. 
+
+Note: OpenShift versions <=4.3 do not support adding additional dashboards to Grafana and in that case visualization through the Kruize dashboard is not currently supported. Versions 4.4 onwards, there is a separate Prometheus/Grafana instance that can be deployed and used to monitor applications (currently tech preview only).
 
 Note: Kruize only monitors application with a specific label. See [Add Application Label](#add-application-label) below for more info.
 
