@@ -224,7 +224,8 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
         {
             if (metric.getPolicy() != null)
             {
-                return metric.getPolicy();
+                if (!metric.getStatus().toUpperCase().equals("TERMINATED"))
+                    return metric.getPolicy();
             }
         }
 

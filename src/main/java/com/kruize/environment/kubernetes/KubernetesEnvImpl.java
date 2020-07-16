@@ -342,7 +342,6 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             metrics.setPolicy(policy.toUpperCase());
         }
         metrics.setStatus(pod.getStatus().getPhase().toLowerCase());
-        metrics.setPolicy(policy.toUpperCase());
         String podTemplateHash;
 
         try {

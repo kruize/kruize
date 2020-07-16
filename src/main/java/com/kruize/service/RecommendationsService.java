@@ -66,11 +66,11 @@ public class RecommendationsService extends HttpServlet
      *     },
      *     "runtimeClassName": "kata-qemu"
      *     "env": [
- *               {
- *                 "name": "CONTAINER_RUNTIME",
- *                 "value": "KATA_RUNTIME"
- *               }
- *             ],
+     *               {
+     *                 "name": "CONTAINER_RUNTIME",
+     *                 "value": "KATA_RUNTIME"
+     *               }
+     *             ],
      **   },
      *   {
      *     "application_name": "cadvisor",
@@ -106,7 +106,8 @@ public class RecommendationsService extends HttpServlet
                 try {
                     JsonObject applicationRecommendationJson = getApplicationJson(applicationRecommendations,
                             application);
-                    jsonArray.add(applicationRecommendationJson);
+                    if (applicationRecommendationJson != null)
+                        jsonArray.add(applicationRecommendationJson);
                 } catch (NoSuchApplicationException e) {
                     System.out.println(application + " not found");
 
@@ -137,41 +138,39 @@ public class RecommendationsService extends HttpServlet
         JsonObject applicationRecommendationJson = new JsonObject();
         applicationRecommendationJson.addProperty("application_name", application);
 
-        JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
         String recommendRuntime;
-        if (resourcesJson != null) {
-            applicationRecommendationJson.add("resources", resourcesJson);
-            String policy = applicationRecommendations.getPolicy(application);
-            recommendRuntime = null;
-            if (policy != null) {
-                if (policy.contains("STARTUP") && policy.contains("SECURITY") ) {
-                    recommendRuntime = "kata-qemu-virtiofs";
-                } else if (policy.contains("SECURITY")) {
-                    recommendRuntime = "kata-qemu";
-                } else if (policy.contains("THROUGHPUT")) {
-                    recommendRuntime = "runc";
-                }
+        String policy = applicationRecommendations.getPolicy(application);
 
-                applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
-
-
+        recommendRuntime = null;
+        if (policy != null) {
+            if (policy.contains("STARTUP") && policy.contains("SECURITY")) {
+                recommendRuntime = "kata-qemu-virtiofs";
+            } else if (policy.contains("SECURITY")) {
+                recommendRuntime = "kata-qemu";
+            } else if (policy.contains("THROUGHPUT")) {
+                recommendRuntime = "runc";
             }
-
-            return applicationRecommendationJson;
         }
+            JsonObject resourcesJson = getResourceJson(applicationRecommendations, application, recommendRuntime);
+
+            if (resourcesJson != null) {
+                applicationRecommendationJson.add("resources", resourcesJson);
+                applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
+                return applicationRecommendationJson;
+            }
 
         return null;
     }
 
     private JsonObject getRuntimeClassJson()
     {
-        JsonObject envJson = new JsonObject();
-        envJson.addProperty("name", "CONTAINER_RUNTIME");
-        envJson.addProperty("value", "KATA_RUNTIME");
-        return envJson;
+        JsonObject runtimeClassJson = new JsonObject();
+        runtimeClassJson.addProperty("name", "CONTAINER_RUNTIME");
+        runtimeClassJson.addProperty("value", "KATA_RUNTIME");
+        return runtimeClassJson;
     }
 
-    private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
+    private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application, String runtimeClass) throws NoSuchApplicationException
     {
         String applicationStatus = applicationRecommendations.getStatus(application);
 
@@ -192,7 +191,7 @@ public class RecommendationsService extends HttpServlet
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
 
-            JsonArray envJson = getEnvJson(applicationRecommendations, application,);
+            JsonArray envJson = getEnvJson(applicationRecommendations, application, runtimeClass);
 
             if (envJson != null) {
                 resourcesJson.add("env", envJson);
@@ -214,7 +213,7 @@ public class RecommendationsService extends HttpServlet
      * @return
      * @throws NullPointerException
      */
-    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application, String recommendRuntime,JsonObject applicationRecommendationJson)
+    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application, String recommendRuntime)
             throws NullPointerException
     {
         JsonArray envJsonArray = new JsonArray();
@@ -222,13 +221,13 @@ public class RecommendationsService extends HttpServlet
         if (applicationRecommendations.getRuntime(application) != null) {
             try {
                 envJsonArray.add(getRuntimeOptions(applicationRecommendations, application));
-                return envJsonArray;
             } catch (NoSuchApplicationException | NullPointerException ignored) { }
         }
 
         if (recommendRuntime != null && recommendRuntime.contains("kata")) {
-            JsonObject envJson = getRuntimeClassJson();
-            applicationRecommendationJson.add("env", envJson);
+            JsonObject runtimeClassJson = getRuntimeClassJson();
+            envJsonArray.add(runtimeClassJson);
+            return envJsonArray;
         }
 
         return null;
@@ -278,8 +277,13 @@ public class RecommendationsService extends HttpServlet
 
         String gcPolicyRecommendation = javaRecommendations.getGcPolicy();
 
-        String percentage = precisionTwo.format((heapRecommendations * 100)
-                /  applicationRecommendations.getRssLimits(application));
+        String percentage = "0";
+
+        if (applicationRecommendations.getRssLimits(application) != 0)
+        {
+            percentage = precisionTwo.format((heapRecommendations * 100)
+                    /  applicationRecommendations.getRssLimits(application));
+        }
 
         JsonObject runtimeRecommendationJson = new JsonObject();
         runtimeRecommendationJson.addProperty("name", "JAVA_TOOL_OPTIONS");
