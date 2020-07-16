@@ -58,12 +58,20 @@ public class RecommendationsService extends HttpServlet
      *         "memory": "51.4MB",
      *         "cpu": 0.6
      *       },
+     *
      *       "limits": {
      *         "memory": "83.5MB",
      *         "cpu": 0.9
      *       }
-     *     }
-     *   },
+     *     },
+     *     "runtimeClassName": "kata-qemu"
+     *     "env": [
+ *               {
+ *                 "name": "CONTAINER_RUNTIME",
+ *                 "value": "KATA_RUNTIME"
+ *               }
+ *             ],
+     **   },
      *   {
      *     "application_name": "cadvisor",
      *     "resources": {
@@ -132,13 +140,37 @@ public class RecommendationsService extends HttpServlet
         applicationRecommendationJson.addProperty("application_name", application);
 
         JsonObject resourcesJson = getResourceJson(applicationRecommendations, application);
-
+        String recommendRuntime;
         if (resourcesJson != null) {
             applicationRecommendationJson.add("resources", resourcesJson);
+            String policy = applicationRecommendations.getPolicy(application);
+            recommendRuntime = null;
+            if (policy != null) {
+                if (policy.contains("STARTUP") && policy.contains("SECURITY") ) {
+                    recommendRuntime = "kata-qemu-virtiofs";
+                } else if (policy.contains("SECURITY")) {
+                    recommendRuntime = "kata-qemu";
+                } else if (policy.contains("THROUGHPUT")) {
+                    recommendRuntime = "runc";
+                }
+
+                applicationRecommendationJson.addProperty("runtimeClassName",recommendRuntime);
+
+
+            }
+
             return applicationRecommendationJson;
         }
 
         return null;
+    }
+
+    private JsonObject getRuntimeClassJson()
+    {
+        JsonObject envJson = new JsonObject();
+        envJson.addProperty("name", "CONTAINER_RUNTIME");
+        envJson.addProperty("value", "KATA_RUNTIME");
+        return envJson;
     }
 
     private JsonObject getResourceJson(ApplicationRecommendationsImpl applicationRecommendations, String application) throws NoSuchApplicationException
@@ -162,7 +194,7 @@ public class RecommendationsService extends HttpServlet
             resourcesJson.add("requests", resourceRequestsJson);
             resourcesJson.add("limits", resourceLimitsJson);
 
-            JsonArray envJson = getEnvJson(applicationRecommendations, application);
+            JsonArray envJson = getEnvJson(applicationRecommendations, application,);
 
             if (envJson != null) {
                 resourcesJson.add("env", envJson);
@@ -176,6 +208,7 @@ public class RecommendationsService extends HttpServlet
         return null;
     }
 
+
     /**
      * Get additional env options recommendations
      * @param applicationRecommendations
@@ -183,7 +216,7 @@ public class RecommendationsService extends HttpServlet
      * @return
      * @throws NullPointerException
      */
-    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application)
+    private JsonArray getEnvJson(ApplicationRecommendationsImpl applicationRecommendations, String application, String recommendRuntime,JsonObject applicationRecommendationJson)
             throws NullPointerException
     {
         JsonArray envJsonArray = new JsonArray();
@@ -195,8 +228,14 @@ public class RecommendationsService extends HttpServlet
             } catch (NoSuchApplicationException | NullPointerException ignored) { }
         }
 
+        if (recommendRuntime != null && recommendRuntime.contains("kata")) {
+            JsonObject envJson = getRuntimeClassJson();
+            applicationRecommendationJson.add("env", envJson);
+        }
+
         return null;
     }
+
 
     /**
      * Get runtime recommendations JSON for an application if available
@@ -266,4 +305,5 @@ public class RecommendationsService extends HttpServlet
 
         return runtimeRecommendationJson;
     }
+
 }

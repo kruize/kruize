@@ -16,10 +16,14 @@
 
 package com.kruize.metrics;
 
+import com.kruize.environment.SupportedTypes;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.recommendations.instance.Recommendations;
 import com.kruize.recommendations.instance.RecommendationsImpl;
 import com.kruize.recommendations.runtimes.java.JavaRecommendations;
+import com.kruize.service.RecommendationsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
@@ -30,6 +34,7 @@ public class MetricsImpl implements Metrics
     private String runtime;
     private String labelName;
     private String namespace;
+    private String policy;
     private String applicationName;
 
     private double originalMemoryLimit = 0;
@@ -42,6 +47,7 @@ public class MetricsImpl implements Metrics
     private Recommendations currentRecommendations = new RecommendationsImpl();
 
     public ArrayList<MetricCollector> metricCollector = new ArrayList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsImpl.class);
 
     public MetricsImpl() {}
 
@@ -83,6 +89,20 @@ public class MetricsImpl implements Metrics
             throw new InvalidValueException("Application status cannot be null");
 
         this.status = status;
+    }
+
+    public String getPolicy()
+    {
+        return policy;
+    }
+
+    public void setPolicy(String policy)
+    {
+        for (String supportedPolicy : SupportedTypes.POLICIES_SUPPORTED)
+        {
+            if (policy != null && policy.contains(supportedPolicy))
+                this.policy = policy;
+        }
     }
 
     public String getApplicationName()

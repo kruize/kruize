@@ -16,10 +16,7 @@
 
 package com.kruize.environment;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SupportedTypes
 {
@@ -37,4 +34,9 @@ public class SupportedTypes
 
     public static final Set<String> RUNTIMES_SUPPORTED =
             new HashSet<>(Collections.singletonList("JAVA"));
+
+    public static final ArrayList<String> POLICIES_SUPPORTED =
+            new ArrayList<>(Arrays.asList("THROUGHPUT", "SECURITY","STARTUP"));
+
+
 }

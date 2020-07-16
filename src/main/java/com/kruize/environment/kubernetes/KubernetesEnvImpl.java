@@ -176,8 +176,9 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                     boolean containsLabel = pod.getMetadata().getLabels().containsKey(label);
                     boolean isAppsodyApplication = pod.getKind() != null && pod.getKind().equals("AppsodyApplication");
 
+                    String policy = pod.getMetadata().getLabels().get("app.kubernetes.io/policy");
                     if (containsLabel || isAppsodyApplication) {
-                        insertMetrics(pod);
+                        insertMetrics(pod, policy);
                         monitoredInstances.add(pod.getMetadata().getName());
                     }
                 } catch (NullPointerException ignored) {
@@ -309,11 +310,12 @@ public class KubernetesEnvImpl extends EnvTypeImpl
 
     }
 
-    private void insertMetrics(V1Pod pod)
+
+    private void insertMetrics(V1Pod pod,String policy)
     {
         MetricsImpl metricsImpl = null;
         try {
-            metricsImpl = getPodMetrics(pod);
+            metricsImpl = getPodMetrics(pod,policy);
         } catch (InvalidValueException e) {
             e.printStackTrace();
         }
@@ -330,13 +332,17 @@ public class KubernetesEnvImpl extends EnvTypeImpl
         }
     }
 
-    private MetricsImpl getPodMetrics(V1Pod pod) throws InvalidValueException
+
+    private MetricsImpl getPodMetrics(V1Pod pod, String policy) throws InvalidValueException
     {
         MetricsImpl metrics = new MetricsImpl();
         metrics.setName(pod.getMetadata().getName());
         metrics.setNamespace(pod.getMetadata().getNamespace());
+        if (policy != null) {
+            metrics.setPolicy(policy.toUpperCase());
+        }
         metrics.setStatus(pod.getStatus().getPhase().toLowerCase());
-
+        metrics.setPolicy(policy.toUpperCase());
         String podTemplateHash;
 
         try {

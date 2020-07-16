@@ -58,6 +58,7 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
                 try {
                     metric.setStatus(metrics.getStatus());
                     metric.setRuntime(metrics.getRuntime());
+                    metric.setPolicy(metrics.getPolicy());
                 } catch (InvalidValueException e) {
                     e.printStackTrace();
                 }
@@ -211,6 +212,19 @@ public class ApplicationRecommendationsImpl implements ApplicationRecommendation
             if (metric.getRuntime() != null)
             {
                 return metric.getRuntime();
+            }
+        }
+
+        return null;
+    }
+
+    public String getPolicy(String applicationName)
+    {
+        for (MetricsImpl metric : applicationMap.get(applicationName))
+        {
+            if (metric.getPolicy() != null)
+            {
+                return metric.getPolicy();
             }
         }
 
