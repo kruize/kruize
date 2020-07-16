@@ -23,7 +23,7 @@ SA_MANIFEST="manifests/kruize-sa_rbac.yaml"
 SA_NAME="kruize-sa"
 SERVICE_MONITOR_MANIFEST="manifests/servicemonitor/kruize-service-monitor.yaml"
 
-KRUIZE_DOCKER_REPO="dinogun/kruize"
+KRUIZE_DOCKER_REPO="kruize/kruize"
 KRUIZE_DOCKER_IMAGE=${KRUIZE_DOCKER_REPO}:${KRUIZE_VERSION}
 KRUIZE_PORT="31313"
 
