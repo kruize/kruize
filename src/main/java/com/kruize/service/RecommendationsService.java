@@ -98,7 +98,9 @@ public class RecommendationsService extends HttpServlet
                 try {
                     JsonObject applicationRecommendationJson = getApplicationJson(applicationRecommendations,
                             application);
-                    jsonArray.add(applicationRecommendationJson);
+                    if (applicationRecommendationJson != null) {
+                        jsonArray.add(applicationRecommendationJson);
+                    }
                 } catch (NoSuchApplicationException e) {
                     System.out.println(application + " not found");
 
@@ -239,8 +241,13 @@ public class RecommendationsService extends HttpServlet
 
         String gcPolicyRecommendation = javaRecommendations.getGcPolicy();
 
-        String percentage = precisionTwo.format((heapRecommendations * 100)
-                /  applicationRecommendations.getRssLimits(application));
+        String percentage = "0";
+        double rssLimits = applicationRecommendations.getRssLimits(application);
+
+        if (rssLimits != 0) {
+            percentage = precisionTwo.format((heapRecommendations * 100)
+                    / rssLimits);
+        }
 
         JsonObject runtimeRecommendationJson = new JsonObject();
         runtimeRecommendationJson.addProperty("name", "JAVA_TOOL_OPTIONS");

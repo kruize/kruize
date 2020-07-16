@@ -256,7 +256,7 @@ public class DockerEnvImpl extends EnvTypeImpl
         }
 
         if (container.getAsJsonObject().has("cpu_limit")) {
-            containerMetrics.setOriginalMemoryLimit(container.getAsJsonObject().get("cpu_limit").getAsDouble());
+            containerMetrics.setOriginalCpuLimit(container.getAsJsonObject().get("cpu_limit").getAsDouble());
         }
 
         for (String runtime : applicationRecommendations.runtimesMap.keySet())
