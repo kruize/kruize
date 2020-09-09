@@ -23,6 +23,10 @@ GRAFANA_MANIFESTS="manifests/docker/grafana/"
 CADVISOR_DOCKER_IMAGE="google/cadvisor:latest"
 PROMETHEUS_DOCKER_IMAGE="prom/prometheus:latest"
 GRAFANA_DOCKER_IMAGE="grafana/grafana:latest"
+if [ $(arch) == "ppc64le" ]; then
+	PROMETHEUS_DOCKER_IMAGE="quay.io/powercloud/prometheus-linux-ppc64le:latest"
+	GRAFANA_DOCKER_IMAGE="ppc64le/grafana:latest"
+fi
 
 CADVISOR_PORT="8080"
 PROMETHEUS_PORT="9090"
