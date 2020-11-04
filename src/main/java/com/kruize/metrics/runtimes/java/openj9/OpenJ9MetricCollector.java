@@ -131,7 +131,7 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
             for (String partOfNonHeap : javaQuery.nonHeapQuery.getPartsOfNonHeap())
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        javaQuery.nonHeapQuery.getNonHeapQuery(labelName, partOfNonHeap, area)));
+                        javaQuery.nonHeapQuery.getNonHeapQuery(labelName, dataSource, partOfNonHeap, area)));
                 nonHeap.setNonHeap(MathUtil.bytesToMB(value), partOfNonHeap);
             }
 

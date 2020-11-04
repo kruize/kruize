@@ -82,6 +82,7 @@ public class JavaQuery
     {
         String gcPolicy = null;
 
+        System.out.println("Area of heap is: " + areaOfHeap);
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
         {
             if ((gcPolicy = OpenJ9JavaQuery.getGcPolicyForHeap(areaOfHeap)) != null)

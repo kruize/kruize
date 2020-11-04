@@ -90,8 +90,7 @@ public class DockerEnvImpl extends EnvTypeImpl
          *   ]
          * }
          */
-        try (FileReader reader = new FileReader("/opt/app/kruize-docker.json"))
-        {
+        try (FileReader reader = new FileReader("/opt/app/kruize-docker.json")) {
             containerList = new JsonParser()
                     .parse(reader)
                     .getAsJsonObject()
@@ -104,16 +103,17 @@ public class DockerEnvImpl extends EnvTypeImpl
 
         if (containerList != null && containerList.size() > 0) {
             for (JsonElement container : containerList) {
-                if (container != null && container.getAsJsonObject().size() > 0)
+                if (container != null && container.getAsJsonObject().size() > 0) {
                     insertMetrics(container);
-                monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
-            }
-        } else {
-            LOGGER.error("No containers to monitor.");
-            System.exit(1);
-        }
+                    monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
+                } else {
+                    LOGGER.error("No containers to monitor.");
+                    System.exit(1);
+                }
 
-        updateStatus(monitoredInstances);
+                updateStatus(monitoredInstances);
+            }
+        }
     }
 
     /**
@@ -140,7 +140,8 @@ public class DockerEnvImpl extends EnvTypeImpl
             applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
         }
 
-        try {
+        try
+        {
             PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
             JavaQuery javaQuery = new JavaQuery();
 
@@ -154,9 +155,19 @@ public class DockerEnvImpl extends EnvTypeImpl
                 for (JsonElement jsonElement : javaApps) {
                     JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
                     String job = metric.get("job").getAsString();
-                    String heap_id = metric.get("id").getAsString();
+                    String heap_id;
 
-                    javaQuery = JavaQuery.getInstance(heap_id);
+                    if (dataSource.equals("spring_actuator")) {
+                        heap_id = metric.get("id").getAsString();
+                    } else {
+                        heap_id = metric.get("name").getAsString();
+                    }
+
+                    try {
+                        javaQuery = JavaQuery.getInstance(heap_id);
+                    } catch (InvalidValueException e) {
+                        continue;
+                    }
 
                     /* Check if already in the list */
                     if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
@@ -167,7 +178,8 @@ public class DockerEnvImpl extends EnvTypeImpl
 
                         String vm = javaQuery.getVm();
 
-                        if (vm.equals("OpenJ9")) {
+                        if (vm.equals("OpenJ9"))
+                        {
                             JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
                                     job,
                                     new JavaApplicationInfo(

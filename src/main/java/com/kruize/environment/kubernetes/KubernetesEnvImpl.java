@@ -241,10 +241,11 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
             JavaQuery javaQuery = new JavaQuery();
 
-            for (String dataSource : javaQuery.fetchJavaAppsQuery().keySet())
+            Map<String, String> javaAppsQueryMap = javaQuery.fetchJavaAppsQuery();
+            for (String dataSource : javaAppsQueryMap.keySet())
             {
                 JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                        + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery().get(dataSource)));
+                        + prometheusQuery.getAPIEndpoint() + javaAppsQueryMap.get(dataSource)));
 
                 if (javaApps == null) return;
 
@@ -268,7 +269,11 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                         heap_id = metric.get("name").getAsString();
                     }
 
-                    javaQuery = JavaQuery.getInstance(heap_id);
+                    try {
+                        javaQuery = JavaQuery.getInstance(heap_id);
+                    } catch (InvalidValueException e) {
+                        continue;
+                    }
 
                     /* Check if already in the list */
                     if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(kubernetes_name))
@@ -296,7 +301,6 @@ public class KubernetesEnvImpl extends EnvTypeImpl
                 }
 
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
