@@ -30,28 +30,28 @@ public abstract class BalancedHeapQuery implements HeapQuery
     }
 
     @Override
-    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    public String getHeapQuery(String application, String dataSource, String partOfHeap, String area) throws InvalidValueException
     {
         switch (partOfHeap) {
             case "balanced-old":
-                return getBalancedOld(area, application);
+                return getBalancedOld(area, dataSource, application);
             case "balanced-eden":
-                return getBalancedEden(area, application);
+                return getBalancedEden(area, dataSource, application);
             case "balanced-survivor":
-                return getBalancedSurvivor(area, application);
+                return getBalancedSurvivor(area, dataSource, application);
             case "balanced-reserved":
-                return getBalancedReserved(area, application);
+                return getBalancedReserved(area, dataSource, application);
             default:
                 throw new InvalidValueException("No " + partOfHeap + " present in heap");
         }
     }
 
-    public abstract String getBalancedOld(String area, String name);
+    public abstract String getBalancedOld(String area, String dataSource, String name);
 
-    public abstract String getBalancedEden(String area, String name);
+    public abstract String getBalancedEden(String area, String dataSource, String name);
 
-    public abstract String getBalancedSurvivor(String area, String name);
+    public abstract String getBalancedSurvivor(String area, String dataSource, String name);
 
-    public abstract String getBalancedReserved(String area, String name);
+    public abstract String getBalancedReserved(String area, String dataSource, String name);
 
 }

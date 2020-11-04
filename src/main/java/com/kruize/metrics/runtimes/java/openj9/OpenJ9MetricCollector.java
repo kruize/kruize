@@ -111,7 +111,7 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
         this.rss = rss;
     }
 
-    public void collectOpenJ9Metrics(MetricsImpl metrics, String monitoringAgentEndPoint, String area)
+    public void collectOpenJ9Metrics(MetricsImpl metrics, String monitoringAgentEndPoint, String dataSource, String area)
     {
         String labelName = metrics.getLabelName();
         LOGGER.info("Calling openj9 collection");
@@ -124,7 +124,7 @@ public class OpenJ9MetricCollector extends JavaMetricCollector
             for (String partOfHeap: javaQuery.heapQuery.getPartsOfHeap())
             {
                 double value = getValueForQuery(new URL(monitoringAgentEndPoint +
-                        javaQuery.heapQuery.getHeapQuery(labelName, partOfHeap, area)));
+                        javaQuery.heapQuery.getHeapQuery(labelName, dataSource, partOfHeap, area)));
                 heap.setHeap(MathUtil.bytesToMB(value), partOfHeap);
             }
 

@@ -106,7 +106,7 @@ public class DockerEnvImpl extends EnvTypeImpl
             for (JsonElement container : containerList) {
                 if (container != null && container.getAsJsonObject().size() > 0)
                     insertMetrics(container);
-                    monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
+                monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
             }
         } else {
             LOGGER.error("No containers to monitor.");
@@ -140,49 +140,51 @@ public class DockerEnvImpl extends EnvTypeImpl
             applicationRecommendations.runtimesMap.put("java", new ArrayList<>());
         }
 
-        try
-        {
+        try {
             PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
             JavaQuery javaQuery = new JavaQuery();
 
-            JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                    + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery()));
+            for (String dataSource : javaQuery.fetchJavaAppsQuery().keySet()) {
 
-            if (javaApps == null) return;
+                JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                        + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery().get(dataSource)));
 
-            for (JsonElement jsonElement : javaApps)
-            {
-                JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
-                String job = metric.get("job").getAsString();
-                String heap_id = metric.get("id").getAsString();
+                if (javaApps == null) return;
 
-                javaQuery = JavaQuery.getInstance(heap_id);
+                for (JsonElement jsonElement : javaApps) {
+                    JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+                    String job = metric.get("job").getAsString();
+                    String heap_id = metric.get("id").getAsString();
 
-                /* Check if already in the list */
-                if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
-                    continue;
+                    javaQuery = JavaQuery.getInstance(heap_id);
 
-                if (!applicationRecommendations.runtimesMap.get("java").contains(job))
-                {
-                    applicationRecommendations.runtimesMap.get("java").add(job);
+                    /* Check if already in the list */
+                    if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
+                        continue;
 
-                    String vm = javaQuery.getVm();
+                    if (!applicationRecommendations.runtimesMap.get("java").contains(job)) {
+                        applicationRecommendations.runtimesMap.get("java").add(job);
 
-                    if (vm.equals("OpenJ9"))
-                    {
-                        JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
-                                job,
-                                new JavaApplicationInfo(
-                                        vm, javaQuery.getGcPolicy(),
-                                        new OpenJ9JavaRecommendations()));
+                        String vm = javaQuery.getVm();
+
+                        if (vm.equals("OpenJ9")) {
+                            JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
+                                    job,
+                                    new JavaApplicationInfo(
+                                            vm,
+                                            javaQuery.getGcPolicy(),
+                                            dataSource,
+                                            new OpenJ9JavaRecommendations()));
+                        }
                     }
                 }
             }
-        } catch (InvalidValueException e) {
+        }catch(InvalidValueException e){
             e.printStackTrace();
         }
-
     }
+
+
 
     private void getNodeApps()
     {

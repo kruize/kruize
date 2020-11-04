@@ -28,9 +28,16 @@ public class OpenJ9MetronomeHeapQuery extends MetronomeHeapQuery
     }
 
     @Override
-    public String getJavaHeap(String area, String name)
+    public String getJavaHeap(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"JavaHeap\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "JavaHeap" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 }

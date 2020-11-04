@@ -28,30 +28,62 @@ public class OpenJ9GenconHeapQuery extends GenconHeapQuery
     }
 
     @Override
-    public String getTenuredLOA(String area, String name)
+    public String getTenuredLOA(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-LOA\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "tenured-LOA" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+
     }
 
     @Override
-    public String getTenuredSOA(String area, String name)
+    public String getTenuredSOA(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-SOA\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured-SOA\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "tenured-SOA" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+
     }
 
     @Override
-    public String getNurserySurvivor(String area, String name)
+    public String getNurserySurvivor(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-survivor\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-survivor\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "nursery-survivor" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+
     }
 
     @Override
-    public String getNurseryAllocate(String area, String name)
+    public String getNurseryAllocate(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-allocate\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"nursery-allocate\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "nursery-allocate" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+
     }
 }

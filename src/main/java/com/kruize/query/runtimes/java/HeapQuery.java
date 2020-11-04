@@ -28,10 +28,11 @@ public interface HeapQuery
     /**
      * Get non-heap query for the specified application and part of heap
      * @param application
+     * @param dataSource
      * @param partOfHeap
      * @param area
      * @return query string
      * @throws InvalidValueException
      */
-    String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException;
+    String getHeapQuery(String application, String dataSource, String partOfHeap, String area) throws InvalidValueException;
 }
