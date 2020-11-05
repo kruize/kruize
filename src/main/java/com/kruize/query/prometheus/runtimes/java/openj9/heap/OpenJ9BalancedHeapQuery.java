@@ -28,29 +28,60 @@ public class OpenJ9BalancedHeapQuery extends BalancedHeapQuery
     }
 
     @Override
-    public String getBalancedOld(String area, String name)
+    public String getBalancedOld(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-old\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-old\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "balanced-old" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 
     @Override
-    public String getBalancedEden(String area, String name)
+    public String getBalancedEden(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-eden\"," +
-                podLabel + "=\"" + name + "\"}";
+
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-eden\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "balanced-eden" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 
     @Override
-    public String getBalancedSurvivor(String area, String name)
+    public String getBalancedSurvivor(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-survivor\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-survivor\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "balanced-survivor" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+
     }
 
     @Override
-    public String getBalancedReserved(String area, String name)
+    public String getBalancedReserved(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-reserved\"," +
-                podLabel + "=\"" + name + "\"}";    }
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"balanced-reserved\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "balanced-reserved" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
+    }
 }

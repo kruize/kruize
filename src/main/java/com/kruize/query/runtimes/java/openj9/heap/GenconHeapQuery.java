@@ -30,27 +30,27 @@ public abstract class GenconHeapQuery implements HeapQuery
     }
 
     @Override
-    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    public String getHeapQuery(String application, String dataSource, String partOfHeap, String area) throws InvalidValueException
     {
         switch (partOfHeap) {
             case "tenured-LOA":
-                return getTenuredLOA(area, application);
+                return getTenuredLOA(area, dataSource, application);
             case "tenured-SOA":
-                return getTenuredSOA(area, application);
+                return getTenuredSOA(area, dataSource, application);
             case "nursery-survivor":
-                return getNurserySurvivor(area, application);
+                return getNurserySurvivor(area, dataSource, application);
             case "nursery-allocate":
-                return getNurseryAllocate(area, application);
+                return getNurseryAllocate(area, dataSource, application);
             default:
                 throw new InvalidValueException("No " + partOfHeap + " present in heap");
         }
     }
 
-    public abstract String getTenuredLOA(String area, String name);
+    public abstract String getTenuredLOA(String area, String dataSource, String name);
 
-    public abstract String getTenuredSOA(String area, String name);
+    public abstract String getTenuredSOA(String area, String dataSource, String name);
 
-    public abstract String getNurserySurvivor(String area, String name);
+    public abstract String getNurserySurvivor(String area, String dataSource, String name);
 
-    public abstract String getNurseryAllocate(String area, String name);
+    public abstract String getNurseryAllocate(String area, String dataSource, String name);
 }

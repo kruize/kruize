@@ -28,10 +28,11 @@ public interface NonHeapQuery
     /**
      * Get non-heap query for the specified application and part of non-heap
      * @param application
+     * @param dataSource
      * @param partOfNonHeap
      * @param area
      * @return query string
      * @throws InvalidValueException
      */
-    String getNonHeapQuery(String application, String partOfNonHeap, String area) throws InvalidValueException;
+    String getNonHeapQuery(String application, String dataSource, String partOfNonHeap, String area) throws InvalidValueException;
 }
