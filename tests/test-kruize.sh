@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2019, 2020 IBM Corporation and others.
+# Copyright (c) 2020, 2020 IBM Corporation, Red Hat and others.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Main script to execute kruize tests
+#
 
 KRUIZE_VERSION=$(cat ../.kruize-version)
 
-APP_REPO="$HOME/rt-cloud-benchmarks"
+# Set the default benchmarks location repo
+APP_REPO="$HOME/benchmarks/"
 
 KRUIZE_DOCKER_REPO="kruize/kruize"
 KRUIZE_DOCKER_IMAGE=${KRUIZE_DOCKER_REPO}:${KRUIZE_VERSION}
@@ -33,29 +36,35 @@ KRUIZE_REPO="${ROOT_DIR}/.."
 # Defaults for the script
 # ICP is the default cluster type
 cluster_type="icp"
+
 # Call setup by default (and not terminate)
 setup=1
+
 # Default mode is interactive
 non_interactive=0
+
 # Default namespace is kube-system
 kruize_ns="kube-system"
+
 # Default userid is "admin"
 user="admin"
+
 # docker: loop timeout is turned off by default
 timeout=-1
 
 tctype="functional"
 resultsdir="$HOME/kruize-results"
 
+# usage function
 function usage() {
 	echo
 	echo "Usage: $0 [-a] [-k kurl ] [-c [docker|icp|minikube|openshift]] [-i docker-image] [-s|t] [-u user] [-p password] [-n namespace] [--timeout=x, x in seconds, for docker only]"
-	echo " -r [location of rt-cloud-benchmarks] [--resultsdir=results directory] [ --tctype=functional/sanity]   -s = start(default), -t = terminate"
+	echo " -r [location of benchmarks] [--resultsdir=results directory] [ --tctype=functional/sanity]   -s = start(default), -t = terminate"
 	exit -1
 }
 
 
-# Check if the cluster_type is one of icp or openshift
+# Check if the cluster_type is one of the supported types
 function check_cluster_type() {
 	case "${cluster_type}" in
 	docker|icp|minikube|openshift)
@@ -66,6 +75,7 @@ function check_cluster_type() {
 	esac
 }
 
+# Check if the test case type is supported
 function check_testcase_type() {
 	case "${tctype}" in
 	functional|sanity)
@@ -140,7 +150,7 @@ do
 	esac
 done
 
-# Call the proper setup function based on the cluster_type
+# Call the proper test function based on the test type
 if [ ${setup} == 1 ]; then
 	if [ $tctype == "functional" ]; then
 		functional_test

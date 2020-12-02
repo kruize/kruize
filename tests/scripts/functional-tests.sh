@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2019, 2019 IBM Corporation and others.
+# Copyright (c) 2020, 2020 IBM Corporation, Red Hat and others.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+# Kruize functional tests
 
 # source the common functions scripts
 . ${SCRIPTS_DIR}/common-functions.sh
 
 
+#
 # Multiple instances test - This test deploys multiple instances of petclinic and validates if kruize generates
 # recommendations for all instanes
+#
+# Output - Returns the test status
+#
 
 function multiple_instances_test() {
 	local failed=0
@@ -47,7 +51,7 @@ function multiple_instances_test() {
 	deploy_petclinic $num_instances
 	sleep 60
 
-	run_petclinic_jmeter_multiple_instances $num_instances
+	run_petclinic_jmeter_load $num_instances
 	sleep 60
 
 	for (( inst=0; inst<${num_instances}; inst++))
@@ -101,6 +105,15 @@ function multiple_instances_test() {
 	return $failed
 }
 
+#
+# This function tests the kruize recommendations and listApplications APIs by deploying both acmeair and spring-petclinic applications. The test does the following:
+# Deploys acmeair application
+# Deploys petclinic application
+# Runs the jmeter workload for both these applications
+# Validates kruize recommendations for both these applications 
+#
+# Output - Returns the test status
+#
 
 function multiple_apps_test() {
 	local failed=0
@@ -137,7 +150,7 @@ function multiple_apps_test() {
 	run_acmeair_jmeter_load
 
 	# Run the jmeter workload
-	run_petclinic_jmeter_load
+	run_petclinic_jmeter_load $num_instances
 	sleep 60
 
 	# Check if recommendations are generated for the deployed application
@@ -170,7 +183,7 @@ function multiple_apps_test() {
 	# Check if recommendations are generated for the deployed application
 	app="petclinic-sample-0"
 	if [ $cluster_type == "docker" ]; then
-		app="petclinic-app"
+		app="petclinic-app-0"
 	fi
 
 	app_status="deployed"
@@ -220,6 +233,11 @@ function multiple_apps_test() {
 }
 
 
+#
+# This function deploys petclinic and removes it and then validates the status of petclinic application using listApplications Kruize API
+#
+# Output - Returns the test status
+#
 
 function remove_app_test() {
 	local failed=0
@@ -235,19 +253,20 @@ function remove_app_test() {
 		backup_kruize_docker_yaml
 	fi
 
-	# Deploy acmeair application
-	deploy_acmeair 
+	# Deploy petclinic application
+	num_instances=1
+	deploy_petclinic $num_instances
 	sleep 60
 
-	# Remove acmeair application
-	acmeair_cleanup 
+	# Remove petclinic application
+	petclinic_cleanup 
 
 	sleep 200
 
 	# Check recommendations are not generated for the removed application
-	app="acmeair-sample"
+	app="petclinic-sample-0"
 	if [ $cluster_type == "docker" ]; then
-		app="acmeair-mono-app1"
+		app="petclinic-app-0"
 	fi
 
 	app_status="removed"
@@ -288,6 +307,15 @@ function remove_app_test() {
 	return $failed
 }
 
+#
+# This function tests the kruize recommendations and listApplications APIs by deploying a new application. The test does the following:
+# Deploys petclinic application
+# Runs the jmeter workload
+# Validates kruize recommendations for the new application
+# Also validates listApplications kruize API and kruize recommendations generated for other applications
+# 
+# Output - Returns the test status
+#
 
 function monitor_newapp_test() {
 	local failed=0
@@ -300,26 +328,27 @@ function monitor_newapp_test() {
 	echo
 
 
-	# Remove acmeair application
-	acmeair_cleanup  
+	# Remove petclinic application
+	petclinic_cleanup  
 
 	# Backup kruize-docker.yaml
 	if [ $cluster_type == "docker" ]; then
 		backup_kruize_docker_yaml
 	fi
 
-	# Deploy acmeair application
-	deploy_acmeair 
+	# Deploy petclinic application
+	num_instances=1
+	deploy_petclinic $num_instances
 	sleep 60
 
 	# Run the jmeter workload
-	run_acmeair_jmeter_load
+	run_petclinic_jmeter_load $num_instances
 	sleep 30
 
 	# Check if recommendations are generated for the deployed application
-	app="acmeair-sample"
+	app="petclinic-sample-0"
 	if [ $cluster_type == "docker" ]; then
-		app="acmeair-mono-app1"
+		app="petclinic-app-0"
 	fi
 
 	app_status="deployed"
@@ -354,8 +383,8 @@ function monitor_newapp_test() {
 		echo "failed=$failed"
 	fi
 
-	# Remove acmeair application
-	acmeair_cleanup 
+	# Remove petclinic application
+	petclinic_cleanup 
 
 	# Restore kruize-docker.yaml
 	if [ $cluster_type == "docker" ]; then
@@ -379,6 +408,9 @@ function monitor_newapp_test() {
 	return $failed
 }
 
+#
+# Setup function checks for pre-reqs, backs up prometheus yaml and updates it for docker case and deploys kruize
+#
 
 function setup() {
 	# Create results directory
@@ -399,7 +431,9 @@ function setup() {
 	deploy_kruize 
 }
 
-
+#
+# This function run only the monitor new app test as a sanity test for validating kruize recommendations
+#
 function sanity_test() {
 	# Call the setup routine
 	setup
@@ -429,6 +463,9 @@ function sanity_test() {
 }
 
 
+#
+# This function invokes all the functional tests after doing the required setup, reports final test result and does cleanup
+#
 function functional_test() {
 	local failed=0
 	# Call the setup routine
@@ -455,7 +492,7 @@ function functional_test() {
 
 	# Test to validate if kruize generates recommendations for multiple instances of an application and the status of the application reported by listApplications
 	if [ $cluster_type != "docker" ]; then
-		multiple_instances_test | tee -a "$RESULTS_DIR/multiple_instances.log"
+	multiple_instances_test | tee -a "$RESULTS_DIR/multiple_instances.log"
 		if [ $? != 0 ]; then
 			failed=1
 		fi
@@ -482,6 +519,9 @@ function functional_test() {
 
 }
 
+#
+# Clean up function to remove kruize and application deployments and restores prometheus yaml for docker case
+#
 function cleanup() {
 	# Terminate kruize and other apps deployed
 	kruize_cleanup

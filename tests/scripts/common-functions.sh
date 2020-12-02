@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2019, 2019 IBM Corporation and others.
+# Copyright (c) 2020, 2020 IBM Corporation, Red Hat and others.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 #
 ###############################################################
 
+# Common functions used in Kruize tests
+
 curl_cmd=""
 
 
-
+#
 # Check error code from last command, exit on error
+#
+
 function check_err() {
         err=$?
         if [ ${err} -ne 0 ]; then
@@ -29,8 +33,10 @@ function check_err() {
         fi
 }
 
-
+#
 # Check if jq is installed
+#
+
 function check_prereq() {
         echo
         echo "Info: Checking prerequisites..."
@@ -41,7 +47,11 @@ function check_prereq() {
         fi
 }
 
-# Deploy kruize on the specified cluster
+#
+# Deploy kruize on the specified cluster 
+# 
+#
+
 function deploy_kruize() {
         echo
         pushd $KRUIZE_REPO > /dev/null
@@ -82,7 +92,10 @@ function deploy_kruize() {
 	echo "curl_cmd = $curl_cmd"
 }
 
-# Deploy acmeair on the specified cluster
+#
+# Deploy acmeair application
+#
+
 function deploy_acmeair() {
         echo
         echo "Deploying acmeair app..."
@@ -133,8 +146,10 @@ function deploy_acmeair() {
 	echo "done"
 }
 
-
+#
 # Run jmeter load for acmeair application
+#
+
 function run_acmeair_jmeter_load() {
         echo
         echo "Starting acmeair jmeter workload..."
@@ -164,44 +179,41 @@ function run_acmeair_jmeter_load() {
 
 }
 
-# Update prometheus.yaml
+#
+# Update prometheus.yaml with the application details to scrape metrics for docker case
+#
+
 function update_prometheus_yaml() {
-		num_instances=1
-                # Update prometheus.yaml with petclinic job
-                PROMETHEUS_YAML="$KRUIZE_REPO/manifests/docker/prometheus.yaml"
-                port=8081
-                for(( inst=0; inst<${num_instances}; inst++ ))
-                do
-                        if [ $num_instances == 1 ]; then
-				echo "- job_name: petclinic-app" >> $PROMETHEUS_YAML
-			else
-				echo "- job_name: petclinic-app-$inst" >> $PROMETHEUS_YAML
-                        fi
-                        echo "  honor_timestamps: true" >> $PROMETHEUS_YAML
-                        echo "  scrape_interval: 2s" >> $PROMETHEUS_YAML
-                        echo "  scrape_timeout: 1s" >> $PROMETHEUS_YAML
-                        echo "  metrics_path: /manage/prometheus" >> $PROMETHEUS_YAML
-                        echo "  scheme: http" >> $PROMETHEUS_YAML
-                        echo "  static_configs:" >> $PROMETHEUS_YAML
-                        echo "  - targets:" >> $PROMETHEUS_YAML
-                        if [ $num_instances == 1 ]; then
-				echo "      - petclinic-app:$port" >> $PROMETHEUS_YAML
-			else
-				echo "      - petclinic-app-$inst:$port" >> $PROMETHEUS_YAML
-			fi
+	num_instances=1
+	# Update prometheus.yaml with petclinic job
+	PROMETHEUS_YAML="$KRUIZE_REPO/manifests/docker/prometheus.yaml"
+	port=8081
+        for(( inst=0; inst<${num_instances}; inst++ ))
+        do
+		echo "- job_name: petclinic-app-$inst" >> $PROMETHEUS_YAML
+		echo "  honor_timestamps: true" >> $PROMETHEUS_YAML
+		echo "  scrape_interval: 2s" >> $PROMETHEUS_YAML
+		echo "  scrape_timeout: 1s" >> $PROMETHEUS_YAML
+		echo "  metrics_path: /manage/prometheus" >> $PROMETHEUS_YAML
+		echo "  scheme: http" >> $PROMETHEUS_YAML
+		echo "  static_configs:" >> $PROMETHEUS_YAML
+		echo "  - targets:" >> $PROMETHEUS_YAML
+		echo "      - petclinic-app-$inst:$port" >> $PROMETHEUS_YAML
+		((port=port+1))
 
-                        ((port=port+1))
-
-                done
-
-                echo
-                echo "Updated Prometheus yaml..."
-                cat $PROMETHEUS_YAML
-
+	done
+	echo
+	echo "Updated Prometheus yaml..."
+	cat $PROMETHEUS_YAML
 }
 
 
+#
 # Deploy the specified number of instances of petclinic on a given cluster type
+#
+# Input - Number of instances of petclinic
+#
+
 function deploy_petclinic() {
 	echo
 	num_instances=$1
@@ -216,44 +228,14 @@ function deploy_petclinic() {
 		
 		for(( inst=0; inst<${num_instances}; inst++ ))
 	        do
-			if [ $num_instances == 1 ]; then
-				echo "  - name: \"petclinic-app\"" >> "$KRUIZE_REPO/manifests/docker/kruize-docker.yaml"
-			else
-				echo "  - name: \"petclinic-app-$inst\"" >> "$KRUIZE_REPO/manifests/docker/kruize-docker.yaml"
-			fi
+			echo "  - name: \"petclinic-app-$inst\"" >> "$KRUIZE_REPO/manifests/docker/kruize-docker.yaml"
 		done
 		cat "$KRUIZE_REPO/manifests/docker/kruize-docker.yaml"
 
-
-		port=8081
-		for(( inst=0; inst<${num_instances}; inst++ ))
-	        do
-
-		        # Run the petclinic app container on "petclinic-net"
-			if [ $num_instances == 1 ]; then
-				# We are using the petclinic image with port 8081 here as cadvisor uses port 8080 and prometheus can scrape data from
-				# petclinic using the internal port
-			        cmd="docker run --rm -d --name=petclinic-app -p ${port}:8081 --network="kruize-network" kruize/petclinic:8081"
-			else
-			        cmd="docker run --rm -d --name=petclinic-app-$inst -p ${port}:8081 --network="kruize-network" kruize/petclinic:8081"
-			fi
-			echo
-			echo "Running $cmd"
-			echo
-			$cmd
-			if [ $? != 0 ]; then
-				echo "Error: Unable to start petclinic container."
-		                echo
-				echo "See logs for more details"
-				exit -1
-			fi
-
-			((port=port+1))
-		done
-	        sleep 30
+		# Invoke the deploy script from petclinic benchmark
+		$APP_REPO/spring-petclinic/scripts/petclinic-deploy-docker.sh -i $num_instances
 	else 
 		MANIFESTS_DIR="$APP_REPO/spring-petclinic/manifests"	
-		app_ns="default"
 		if [ $cluster_type == "icp" ]; then
 			app_ns="cert-manager"
 		fi
@@ -269,122 +251,39 @@ function deploy_petclinic() {
 				app_ns="openshift-monitoring"
 				
 			fi
-			echo "$login_cmd $cmd $url $user $password $kruize_ns $app_ns $APP_REPO"
 			$login_cmd login ${url} -u ${user} -p ${password} -n $kruize_ns 
 		fi
 
 
-		# Deploy service monitors to get Java Heap recommendations from petclinic
-		if [[ $cluster_type == "minikube" || $cluster_type == "openshift" ]]; then
-			for(( inst=0; inst<${num_instances}; inst++ ))
-		        do
-			        sed 's/PETCLINIC_NAME/petclinic-'$inst'/g' $MANIFESTS_DIR/service-monitor-template.yaml > $MANIFESTS_DIR/service-monitor-$inst.yaml
-			        sed -i 's/PETCLINIC_APP/petclinic-app-'$inst'/g' $MANIFESTS_DIR/service-monitor-$inst.yaml
-			        sed -i 's/PETCLINIC_PORT/petclinic-port-'$inst'/g' $MANIFESTS_DIR/service-monitor-$inst.yaml
-
-			        $cmd create -f $MANIFESTS_DIR/service-monitor-$inst.yaml -n $app_ns
-			done
-		fi
-
-
-		sleep 30
-
 		# Deploy petclinic instances
-		port=32334
-		for(( inst=0; inst<${num_instances}; inst++ ))
-	        do
-		        sed 's/PETCLINIC_DEPLOYMENT_NAME/petclinic-sample-'$inst'/g' $MANIFESTS_DIR/petclinic-template.yaml > $MANIFESTS_DIR/petclinic-baseline-$inst.yaml
-		        sed -i 's/PETCLINIC_SERVICE_NAME/petclinic-service-'$inst'/g' $MANIFESTS_DIR/petclinic-baseline-$inst.yaml
-		        sed -i 's/PETCLINIC_APP/petclinic-app-'$inst'/g' $MANIFESTS_DIR/petclinic-baseline-$inst.yaml
-		        sed -i 's/PETCLINIC_PORT/petclinic-port-'$inst'/g' $MANIFESTS_DIR/petclinic-baseline-$inst.yaml
-		        sed -i 's/NODE_PORT/'$port'/g' $MANIFESTS_DIR/petclinic-baseline-$inst.yaml
-
-		        $cmd create -f $MANIFESTS_DIR/petclinic-baseline-$inst.yaml -n $app_ns 
-			((port=port+1))
-        	done
-
-		sleep 100
-
-		# On Openshift expose the routes to the petclinic app instances
-		if [[ $cluster_type == "openshift" ]]; then
-			#Expose the services
-		        svc_list=($(kubectl get svc | grep "service" | grep "petclinic" | cut -d " " -f1))
-		        for sv in "${svc_list[@]}"
-		        do
-                		$cmd expose svc/$sv -n $app_ns
-		        done
+		if [ $cluster_type == "openshift" ]; then
+			$APP_REPO/spring-petclinic/scripts/petclinic-deploy-openshift.sh -s $kurl -i $num_instances
+		elif [[ $cluster_type == "minikube" || $cluster_type == "icp" ]]; then
+			$APP_REPO/spring-petclinic/scripts/petclinic-deploy-minikube.sh -i $num_instances
 		fi
+
 	fi
 	echo "done"
 
 }
 
-
-
-function run_petclinic_jmeter_multiple_instances() {
-	echo
-	num_instances=$1
-
-	PORT=32334
-	for(( inst=0; inst<${num_instances}; inst++ ))
-	do
-		if [ $cluster_type == "openshift" ]; then
-			JMETER_FOR_LOAD="kruize/jmeter_petclinic:noport"
-
-			IP_ADDR="petclinic-service-${inst}-${kruize_ns}.apps.${kurl}"
-		elif [[ $cluster_type == "icp" || $cluster_type == "minikube" ]]; then
-			IP_ADDR=$(echo $kurl | awk -F[/:] '{print $4}')
-			echo "IP_ADDR = ${IP_ADDR}"
-			JMETER_FOR_LOAD="kruize/jmeter_petclinic:3.1"
-
-			if [[ $cluster_type == "icp" || $cluster_type == "minikube" ]]; then
-				APP="petclinic-service-${inst}"
-				PORT=`kubectl get services -n ${app_ns} | grep $APP | cut -d':' -f2 | cut -d'/' -f1`
-				echo "PORT = $PORT"
-			fi
-
-		elif [ $cluster_type == "docker" ]; then
-			JMETER_FOR_LOAD="kruize/jmeter_petclinic:3.1"
-
-			IP_ADDR=$(ip addr | grep "global" | grep "dynamic" | awk '{ print $2 }' | cut -f 1 -d '/')
-			if [ -z "${IP_ADDR}" ]; then
-				IP_ADDR=$(ip addr | grep "global" | head -1 | awk '{ print $2 }' | cut -f 1 -d '/')
-			fi
-		fi
-
-		# Change these appropriately to vary load
-		JMETER_LOAD_USERS=150
-		JMETER_LOAD_DURATION=20
-
-		# Run the jmeter load
-
-	        echo "Running jmeter load with the following parameters"
-	        echo "JHOST=${IP_ADDR} JDURATION=${JMETER_LOAD_DURATION} JUSERS=${JMETER_LOAD_USERS} JPORT=${PORT} "
-		echo
-		if [ $cluster_type == "openshift" ]; then
-		        cmd="docker run --rm -e JHOST=${IP_ADDR} -e JDURATION=${JMETER_LOAD_DURATION} -e JUSERS=${JMETER_LOAD_USERS} ${JMETER_FOR_LOAD}"
-		else
-			cmd="docker run --rm -e JHOST=${IP_ADDR} -e JDURATION=${JMETER_LOAD_DURATION} -e JUSERS=${JMETER_LOAD_USERS} -e JPORT=${PORT} ${JMETER_FOR_LOAD}"
-		fi
-		echo $cmd
-		$cmd
-
-		((PORT=PORT+1))
-
-	done
-}
-
+#
+# Run jmeter load for petclinic application
+#
+# Input - Number of instances of petclinic
+#
 
 function run_petclinic_jmeter_load() {
+	num_instances=$1
+
         echo
         echo "Starting petclinic jmeter workload..."
-	pushd "$APP_REPO/spring-petclinic/scripts" > /dev/null
 
-	if [[ $cluster_type == "openshift" || $cluster_type == "docker" ]]; then
+	if [[ $cluster_type == "openshift" || $cluster_type == "docker" || $cluster_type == "minikube" ]]; then
 
 		# Invoke the jmeter load script
 		MAX_LOOP=1
-		./petclinic-load.sh $cluster_type $MAX_LOOP
+		$APP_REPO/spring-petclinic/scripts/petclinic-load.sh -c $cluster_type -i $num_instances -l $MAX_LOOP
 
 	elif [[ $cluster_type == "icp" || $cluster_type == "minikube" ]]; then
 		SERVER=$(echo $kurl | awk -F[/:] '{print $4}')
@@ -393,11 +292,14 @@ function run_petclinic_jmeter_load() {
 		MAX_LOOP=2
 
 		# Invoke the jmeter load script
-		./petclinic-load.sh $cluster_type $MAX_LOOP $SERVER
+		$APP_REPO/spring-petclinic/scripts/petclinic-load.sh -c $cluster_type -i $num_instances -l $MAX_LOOP -a $SERVER
 	fi
-	popd > /dev/null
 }
 
+
+#
+# Form the curl command for kruize 
+#
 
 function form_curl_cmd() {
         KRUIZE_PORT=31313
@@ -425,14 +327,35 @@ function form_curl_cmd() {
 }
 
 
+#
+# Get Kruize recommendations for the specified application
+#
+# Input - Application name
+# Output - JSON recommendations array
+#
+
 function get_recommendation_for_application() {
 	# Fetch recommendations for the specified application
         ${curl_cmd}/recommendations?application_name=$1 | jq -r '.[]'
 }
 
+#
+# Get the list of Applications monitored by kruize
+#
+# Output - JSON array with list of applications
+#
+
 function get_list_of_applications {
         ${curl_cmd}/listApplications | jq -c '.[]'
 }
+
+
+#
+# Validates the actual application status against the expected status for a specified application
+#
+# Input - app, expected_status
+# Output - Returns success or failure
+#
 
 function validate_app_status() {
 	app=$1
@@ -455,18 +378,39 @@ function validate_app_status() {
 	return 1
 }
 
+
+#
+# Fetches the memory request for a specified application from kruize using curl command
+#
+# Input - application_name, param - parameter for eg., memory request (.resources.requests.memory)
+# Output - cpu or memory value
+#
+
 function get_resource_value() {
-	# Fetch memory requests for the specified application
+	# Fetches the value for the specified parameter (for eg., mem/cpu req/limit) for the specified application
 	param=$2
         #${curl_cmd}/recommendations?application_name=$1 | jq -r '.[]' |  jq -r '.resources.requests.memory' | awk -F[M] {'print($1)'}
         ${curl_cmd}/recommendations?application_name=$1 | jq -r '.[]' |  jq -r $param | awk -F[M] {'print($1)'}
 }
-		
+
+#
+# Fetches the java runtime recommendations for a specified application from kruize using curl command
+#
+# Input - application name
+# Output - java runtime recommendations
+#
 
 function get_java_runtime_recommendations() {
-	# Fetch cpu limits for the specified application
+	# Fetch the runtime recommendations for the specified application
         ${curl_cmd}/recommendations?application_name=$1 | jq -r '.[]' |  jq -r '.resources.env[0].value' 
 }
+
+#
+# Check if the specified value of a parameter is 0 
+#
+# Input - param - parameter name (for eg., cpu/mem req/limit), value, app - application
+# Output - Returns 1 if value is zero otherwise 0
+# 
 
 function isZero() {
 	param=$1
@@ -481,6 +425,13 @@ function isZero() {
 		return 0
 	fi
 }
+
+#
+# Validate kruize recommendations - memory and cpu reqs/limits and heap recommendations are non-zero for a specified application
+#
+# Input - Application name
+# Output - Returns success or failure
+#
 
 function validate_resource_params() {
 	application_name=$1
@@ -560,6 +511,11 @@ function validate_resource_params() {
 	return $resource_status
 }
 
+#
+# Validate kruize recommendations for applications for which kruize has generated recommendations
+#
+# Output - Returns success or failure
+#
 
 function validate_all_recommendations() {
 	invalid=0
@@ -593,6 +549,14 @@ function validate_all_recommendations() {
 		return 0
 	fi
 }
+
+
+#
+# Validate kruize recommendations for a specified application. Also validate the actual application status against expected status
+#
+# Input - Application, Expected Application status
+# Output - Returns success or failure
+#
 
 function validate_recommendations() {
         echo
@@ -630,6 +594,10 @@ function validate_recommendations() {
 	fi
 }
 
+#
+# Get kruize log and store it kruize.log in results dir
+#
+
 function get_kruize_log(){
 	log="$RESULTS_DIR/kruize.log"
 	if [[ $cluster_type == "icp" || $cluster_type == "minikube" ]]; then
@@ -647,6 +615,10 @@ function get_kruize_log(){
 }
 
 
+#
+# Invoke the deploy script of kruize to terminate kruize. And delete the route in openshift case
+#
+
 function kruize_cleanup() {
 
 	pushd $KRUIZE_REPO > /dev/null
@@ -657,11 +629,19 @@ function kruize_cleanup() {
         popd > /dev/null
 }
 
+#
+# Backup prometheus.yaml for docker case
+#
+
 function backup_prometheus_yaml() {
 	# Backup prometheus.yaml
 	echo "Taking a backup of $KRUIZE_REPO/manifests/docker/prometheus.yaml..."
 	cp "$KRUIZE_REPO/manifests/docker/prometheus.yaml" "$KRUIZE_REPO/manifests/docker/prometheus-old.yaml"
 }
+
+#
+# Restore the original prometheus.yaml for docker case
+#
 
 function restore_prometheus_yaml() {
 	# Restore the original prometheus.yaml
@@ -672,11 +652,20 @@ function restore_prometheus_yaml() {
 	fi
 }
 
+#
+# Backup kruize-docker.yaml
+#
+
 function backup_kruize_docker_yaml() {
 	# Backup kruize-docker.yaml
 	echo "Taking a backup of $KRUIZE_REPO/manifests/docker/kruize-docker.yaml..."
 	cp "$KRUIZE_REPO/manifests/docker/kruize-docker.yaml" "$KRUIZE_REPO/manifests/docker/kruize-docker-old.yaml"
 }
+
+
+#
+# Restore the original kruize-docker.yaml
+#
 
 function restore_kruize_docker_yaml() {
 	# Restore the original kruize-docker.yaml
@@ -686,6 +675,10 @@ function restore_kruize_docker_yaml() {
 		echo
 	fi
 }
+
+#
+# Invoke the acmeair cleanup benchmark script for cleaning up acemair application  
+#
 
 function acmeair_cleanup() {
         echo
@@ -727,12 +720,15 @@ function acmeair_cleanup() {
 	echo "done"
 }
 
+
+#
+# Invoke the petclinic cleanup benchmark script by passing the cluster type
+#
+
 function petclinic_cleanup() {
 	echo
         echo "Removing spring petclinic app..."
-	if [ $cluster_type == "docker" ]; then
-		docker ps -a | awk '{ print $1,$2 }' | grep petclinic | awk '{print $1 }' | xargs -I {} docker stop {}
-	else
+	if [[ $cluster_type == "minikube" || $cluster_type == "openshift" || $cluster_type == "icp" ]]; then	
 		app_ns="default"
 		if [ $cluster_type == "icp" ]; then
 			app_ns="cert-manager"
@@ -753,41 +749,8 @@ function petclinic_cleanup() {
 			$login_cmd login ${url} -u ${user} -p ${password} -n $kruize_ns 
 		fi
 
-		# Delete the service monitors if any
-		echo "Fectching all the service monitors for petclinic..."
-                service_monitors=($($cmd get servicemonitor --namespace=$kruize_ns | grep "petclinic" | cut -d " " -f1))
-                for sm in "${service_monitors[@]}"
-                do
-                        echo "Deleting service monitor $sm..."
-                        $cmd delete servicemonitor $sm -n $kruize_ns
-                done
+		$APP_REPO/spring-petclinic/scripts/petclinic-cleanup.sh $cluster_type
 
-
-		# Delete the deployments first to avod createing replica pods
-	        petclinic_deployments=($($cmd get deployments --namespace=$app_ns | grep "petclinic" | cut -d " " -f1))
-
-        	for de in "${petclinic_deployments[@]}"
-	 	do
-			echo "Deleting deployment $de..."
-			$cmd delete deploy/$de -n $app_ns
-	        done
-
-		# Delete the services and routes if any
-	        petclinic_services=($($cmd get services --namespace=$app_ns | grep "petclinic" | cut -d " " -f1))
-        	for se in "${petclinic_services[@]}"
-	        do
-			echo "Deleting service $se..."
-			$cmd delete svc/$se -n $app_ns
-	        done
-
-		if [[ $cluster_type == "openshift" ]]; then
-        		petclinic_routes=($($cmd get route --namespace=$app_ns | grep "petclinic" | cut -d " " -f1))
-		        for ro in "${petclinic_routes[@]}"	
-        		do
-				echo "Deleting route $ro..."
-				$cmd delete route $ro
-        		done
-		fi
 		        
 	fi
 	echo "done"
