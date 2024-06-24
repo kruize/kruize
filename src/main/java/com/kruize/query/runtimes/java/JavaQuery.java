@@ -20,6 +20,9 @@ import com.kruize.environment.DeploymentInfo;
 import com.kruize.exceptions.InvalidValueException;
 import com.kruize.query.prometheus.runtimes.java.openj9.OpenJ9JavaQuery;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class JavaQuery
 {
     public String vm = null;
@@ -28,6 +31,7 @@ public class JavaQuery
     public NonHeapQuery nonHeapQuery = null;
 
     private static String podLabel = null;
+    private static Map<String, String> getJavaAppsQuery = null;
 
     static {
         if (DeploymentInfo.getClusterType().toUpperCase().equals("DOCKER"))
@@ -39,6 +43,11 @@ public class JavaQuery
         } else {
             podLabel = "kubernetes_name";
         }
+
+        getJavaAppsQuery = new HashMap<>();
+
+        getJavaAppsQuery.put("spring_actuator", "jvm_memory_used_bytes{area=\"heap\"}");
+        getJavaAppsQuery.put("quarkus", "vendor_memoryPool_usage_bytes");
     }
 
     /**
@@ -56,10 +65,10 @@ public class JavaQuery
     /**
      * @return String for a generic Java query that will fetch all applications exporting Java metrics
      */
-    public String fetchJavaAppsQuery() throws InvalidValueException
+    public Map<String, String> fetchJavaAppsQuery() throws InvalidValueException
     {
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
-            return "jvm_memory_used_bytes{area=\"heap\"}";
+            return getJavaAppsQuery;
 
         throw new InvalidValueException("JavaQuery not supported");
     }
@@ -73,6 +82,7 @@ public class JavaQuery
     {
         String gcPolicy = null;
 
+        System.out.println("Area of heap is: " + areaOfHeap);
         if (DeploymentInfo.getMonitoringAgent().toUpperCase().equals("PROMETHEUS"))
         {
             if ((gcPolicy = OpenJ9JavaQuery.getGcPolicyForHeap(areaOfHeap)) != null)

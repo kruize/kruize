@@ -28,9 +28,16 @@ public class OpenJ9NoGcHeapQuery extends NoGcHeapQuery
     }
 
     @Override
-    public String getTenured(String area, String name)
+    public String getTenured(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"heap\",id=\"tenured\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "tenured" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 }

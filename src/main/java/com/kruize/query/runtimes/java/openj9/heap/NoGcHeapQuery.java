@@ -30,14 +30,14 @@ public abstract class NoGcHeapQuery implements HeapQuery
     }
 
     @Override
-    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    public String getHeapQuery(String application, String dataSource, String partOfHeap, String area) throws InvalidValueException
     {
         if ("tenured".equals(partOfHeap)) {
-            return getTenured(area, application);
+            return getTenured(area, dataSource, application);
         }
         throw new InvalidValueException("No " + partOfHeap + " present in heap");
     }
 
-    public abstract String getTenured(String area, String name);
+    public abstract String getTenured(String area, String dataSource, String name);
 
 }
