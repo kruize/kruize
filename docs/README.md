@@ -242,7 +242,7 @@ spec:
 
 ### Install the Grafana dashboard
 
-Login to your Grafana dashboard and navigate to `Create` from the left bar, then click on `Import`. Click on `Upload .json file` and point it to the [dashboard](/grafana/kruize_kubernetes_dashboard.json) file that is part of this repo.
+Login to your Grafana dashboard and navigate to `Create` from the left bar, then click on `Import`. Click on `Upload .json file` and for docker point it to the [docker dashboard](/manifests/docker/grafana/dashboards/kruize_docker_dashboard.json) file and for kubernetes point it to the [kubernetes dashboard](/grafana/kruize_kubernetes_dashboard.json) file that is part of this repo.
 
 ![Import dashboard into Grafana](/docs/grafana-import.png)
 
