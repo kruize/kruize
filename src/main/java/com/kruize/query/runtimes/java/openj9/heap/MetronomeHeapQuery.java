@@ -30,14 +30,14 @@ public abstract class MetronomeHeapQuery implements HeapQuery
     }
 
     @Override
-    public String getHeapQuery(String application, String partOfHeap, String area) throws InvalidValueException
+    public String getHeapQuery(String application, String dataSource, String partOfHeap, String area) throws InvalidValueException
     {
         if ("JavaHeap".equals(partOfHeap)) {
-            return getJavaHeap(area, application);
+            return getJavaHeap(area, dataSource, application);
         }
         throw new InvalidValueException("No " + partOfHeap + " present in heap");
     }
 
-    public abstract String getJavaHeap(String area, String name);
+    public abstract String getJavaHeap(String area, String dataSource, String name);
 
 }

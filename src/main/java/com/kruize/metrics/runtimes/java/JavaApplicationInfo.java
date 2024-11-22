@@ -22,13 +22,15 @@ public class JavaApplicationInfo
 {
     private String VM;
     private String gcPolicy;
+    private String dataSource;
     private JavaRecommendations javaRecommendations;
 
-    public JavaApplicationInfo(String VM, String gcPolicy, JavaRecommendations javaRecommendations)
+    public JavaApplicationInfo(String VM, String gcPolicy, String dataSource, JavaRecommendations javaRecommendations)
     {
         this.VM = VM;
         this.gcPolicy = gcPolicy;
         this.javaRecommendations = javaRecommendations;
+        this.dataSource = dataSource;
     }
 
     public String getVM()
@@ -49,6 +51,14 @@ public class JavaApplicationInfo
     public void setGcPolicy(String gcPolicy)
     {
         this.gcPolicy = gcPolicy;
+    }
+
+    public String getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(String dataSource) {
+        this.dataSource = dataSource;
     }
 
     public JavaRecommendations getJavaRecommendations()

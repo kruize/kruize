@@ -36,43 +36,71 @@ public class OpenJ9NonHeapQuery implements NonHeapQuery
     }
 
     @Override
-    public String getNonHeapQuery(String application, String partOfNonHeap, String area) throws InvalidValueException
+    public String getNonHeapQuery(String application, String dataSource, String partOfNonHeap, String area) throws InvalidValueException
     {
         switch (partOfNonHeap) {
             case "miscellaneous":
-                return getMiscellaneous(area, application);
+                return getMiscellaneous(area, dataSource, application);
             case "class storage":
-                return getClassStorage(area, application);
+                return getClassStorage(area, dataSource, application);
             case "JIT code cache":
-                return getJitCodeCache(area, application);
+                return getJitCodeCache(area, dataSource, application);
             case "JIT data cache":
-                return getJitDataCache(area, application);
+                return getJitDataCache(area, dataSource, application);
             default:
                 throw new InvalidValueException("No " + partOfNonHeap + " present in non-heap");
         }
     }
 
-    public String getMiscellaneous(String area, String name)
+    public String getMiscellaneous(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"miscellaneous%20non-heap%20storage\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "miscellaneous%20non-heap%20storage" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 
-    public String getClassStorage(String area, String name)
+    public String getClassStorage(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"class%20storage\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "class%20storage" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 
-    public String getJitCodeCache(String area, String name)
+    public String getJitCodeCache(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20code%20cache\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "JIT%20code%20cache" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 
-    public String getJitDataCache(String area, String name)
+    public String getJitDataCache(String area, String dataSource, String name)
     {
-        return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
-                podLabel + "=\"" + name + "\"}";
+        if (dataSource.equals("spring_actuator")) {
+            return "jvm_memory_" + area + "_bytes{area=\"nonheap\",id=\"JIT%20data%20cache\"," +
+                    podLabel + "=\"" + name + "\"}";
+        } else if (dataSource.equals("quarkus")){
+            return "vendor_memoryPool_usage_bytes{name=\"" + "JIT%20data%20cache" + "\"," +
+                    podLabel + "=\"" + name + "\"}";
+        }
+
+        return null;
     }
 }

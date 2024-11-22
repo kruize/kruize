@@ -241,49 +241,65 @@ public class KubernetesEnvImpl extends EnvTypeImpl
             PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
             JavaQuery javaQuery = new JavaQuery();
 
-            JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                    + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery()));
-
-            if (javaApps == null) return;
-
-            for (JsonElement jsonElement : javaApps)
+            Map<String, String> javaAppsQueryMap = javaQuery.fetchJavaAppsQuery();
+            for (String dataSource : javaAppsQueryMap.keySet())
             {
-                JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+                JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                        + prometheusQuery.getAPIEndpoint() + javaAppsQueryMap.get(dataSource)));
 
-                String kubernetes_name;
-                String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
+                if (javaApps == null) return;
 
-                if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
-                    kubernetes_name = metric.get("pod").getAsString();
-                } else {
-                    kubernetes_name = metric.get("kubernetes_name").getAsString();
-                }
-
-                String heap_id = metric.get("id").getAsString();
-
-                javaQuery = JavaQuery.getInstance(heap_id);
-
-                /* Check if already in the list */
-                if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(kubernetes_name))
-                    continue;
-
-                if (!applicationRecommendations.runtimesMap.get("java").contains(kubernetes_name))
+                for (JsonElement jsonElement : javaApps)
                 {
-                    LOGGER.info("{} added to java runtime collection array", kubernetes_name);
-                    applicationRecommendations.runtimesMap.get("java").add(kubernetes_name);
+                    JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
 
-                    String vm = javaQuery.getVm();
-                    LOGGER.info("VM is {}", vm);
+                    String kubernetes_name;
+                    String kubernetesType = DeploymentInfo.getKubernetesType().toUpperCase();
 
-                    if (vm.equals("OpenJ9"))
+                    if (kubernetesType.equals("OPENSHIFT") || kubernetesType.equals("MINIKUBE")) {
+                        kubernetes_name = metric.get("pod").getAsString();
+                    } else {
+                        kubernetes_name = metric.get("kubernetes_name").getAsString();
+                    }
+
+                    String heap_id;
+                    if (dataSource.equals("spring_actuator")) {
+                        heap_id = metric.get("id").getAsString();
+                    } else {
+                        heap_id = metric.get("name").getAsString();
+                    }
+
+                    try {
+                        javaQuery = JavaQuery.getInstance(heap_id);
+                    } catch (InvalidValueException e) {
+                        continue;
+                    }
+
+                    /* Check if already in the list */
+                    if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(kubernetes_name))
+                        continue;
+
+                    if (!applicationRecommendations.runtimesMap.get("java").contains(kubernetes_name))
                     {
-                        JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
-                                kubernetes_name,
-                                new JavaApplicationInfo(
-                                        vm, javaQuery.getGcPolicy(),
-                                        new OpenJ9JavaRecommendations()));
+                        LOGGER.info("{} added to java runtime collection array", kubernetes_name);
+                        applicationRecommendations.runtimesMap.get("java").add(kubernetes_name);
+
+                        String vm = javaQuery.getVm();
+                        LOGGER.info("VM is {}", vm);
+
+                        if (vm.equals("OpenJ9"))
+                        {
+                            JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
+                                    kubernetes_name,
+                                    new JavaApplicationInfo(
+                                            vm,
+                                            javaQuery.getGcPolicy(),
+                                            dataSource,
+                                            new OpenJ9JavaRecommendations()));
+                        }
                     }
                 }
+
             }
         } catch (Exception e) {
             e.printStackTrace();

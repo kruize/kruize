@@ -90,8 +90,7 @@ public class DockerEnvImpl extends EnvTypeImpl
          *   ]
          * }
          */
-        try (FileReader reader = new FileReader("/opt/app/kruize-docker.json"))
-        {
+        try (FileReader reader = new FileReader("/opt/app/kruize-docker.json")) {
             containerList = new JsonParser()
                     .parse(reader)
                     .getAsJsonObject()
@@ -104,16 +103,17 @@ public class DockerEnvImpl extends EnvTypeImpl
 
         if (containerList != null && containerList.size() > 0) {
             for (JsonElement container : containerList) {
-                if (container != null && container.getAsJsonObject().size() > 0)
+                if (container != null && container.getAsJsonObject().size() > 0) {
                     insertMetrics(container);
                     monitoredInstances.add(container.getAsJsonObject().get("name").getAsString());
-            }
-        } else {
-            LOGGER.error("No containers to monitor.");
-            System.exit(1);
-        }
+                } else {
+                    LOGGER.error("No containers to monitor.");
+                    System.exit(1);
+                }
 
-        updateStatus(monitoredInstances);
+                updateStatus(monitoredInstances);
+            }
+        }
     }
 
     /**
@@ -145,44 +145,58 @@ public class DockerEnvImpl extends EnvTypeImpl
             PrometheusQuery prometheusQuery = PrometheusQuery.getInstance();
             JavaQuery javaQuery = new JavaQuery();
 
-            JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
-                    + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery()));
+            for (String dataSource : javaQuery.fetchJavaAppsQuery().keySet()) {
 
-            if (javaApps == null) return;
+                JsonArray javaApps = getJsonArray(new URL(DeploymentInfo.getMonitoringAgentEndpoint()
+                        + prometheusQuery.getAPIEndpoint() + javaQuery.fetchJavaAppsQuery().get(dataSource)));
 
-            for (JsonElement jsonElement : javaApps)
-            {
-                JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
-                String job = metric.get("job").getAsString();
-                String heap_id = metric.get("id").getAsString();
+                if (javaApps == null) return;
 
-                javaQuery = JavaQuery.getInstance(heap_id);
+                for (JsonElement jsonElement : javaApps) {
+                    JsonObject metric = jsonElement.getAsJsonObject().get("metric").getAsJsonObject();
+                    String job = metric.get("job").getAsString();
+                    String heap_id;
 
-                /* Check if already in the list */
-                if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
-                    continue;
+                    if (dataSource.equals("spring_actuator")) {
+                        heap_id = metric.get("id").getAsString();
+                    } else {
+                        heap_id = metric.get("name").getAsString();
+                    }
 
-                if (!applicationRecommendations.runtimesMap.get("java").contains(job))
-                {
-                    applicationRecommendations.runtimesMap.get("java").add(job);
+                    try {
+                        javaQuery = JavaQuery.getInstance(heap_id);
+                    } catch (InvalidValueException e) {
+                        continue;
+                    }
 
-                    String vm = javaQuery.getVm();
+                    /* Check if already in the list */
+                    if (JavaApplicationMetricsImpl.javaApplicationInfoMap.containsKey(job))
+                        continue;
 
-                    if (vm.equals("OpenJ9"))
-                    {
-                        JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
-                                job,
-                                new JavaApplicationInfo(
-                                        vm, javaQuery.getGcPolicy(),
-                                        new OpenJ9JavaRecommendations()));
+                    if (!applicationRecommendations.runtimesMap.get("java").contains(job)) {
+                        applicationRecommendations.runtimesMap.get("java").add(job);
+
+                        String vm = javaQuery.getVm();
+
+                        if (vm.equals("OpenJ9"))
+                        {
+                            JavaApplicationMetricsImpl.javaApplicationInfoMap.put(
+                                    job,
+                                    new JavaApplicationInfo(
+                                            vm,
+                                            javaQuery.getGcPolicy(),
+                                            dataSource,
+                                            new OpenJ9JavaRecommendations()));
+                        }
                     }
                 }
             }
-        } catch (InvalidValueException e) {
+        }catch(InvalidValueException e){
             e.printStackTrace();
         }
-
     }
+
+
 
     private void getNodeApps()
     {

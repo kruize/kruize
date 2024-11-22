@@ -68,7 +68,9 @@ class CollectRuntimeMetrics
                 OpenJ9MetricCollector openJ9MetricCollector = new OpenJ9MetricCollector(
                         JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName).getGcPolicy());
 
-                openJ9MetricCollector.collectOpenJ9Metrics(metrics, monitoringAgentEndpoint, "used");
+                String dataSource = JavaApplicationMetricsImpl.javaApplicationInfoMap.get(labelName).getDataSource();
+
+                openJ9MetricCollector.collectOpenJ9Metrics(metrics, monitoringAgentEndpoint, dataSource, "used");
 
                 if (!JavaApplicationMetricsImpl.javaApplicationMetricsMap.containsKey(labelName))
                 {
